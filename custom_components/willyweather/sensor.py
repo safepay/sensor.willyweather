@@ -14,6 +14,7 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.util import Throttle
 
 _RESOURCE = 'https://api.willyweather.com.au/v2/{}/locations/{}/weather.json?observational=true'
+_CLOSEST =  'https://api.willyweather.com.au/v2/{}/search.json'
 _LOGGER = logging.getLogger(__name__)
 
 ATTRIBUTION = "Weather details provided by WillyWeather Australia."
@@ -24,7 +25,7 @@ CONF_API_KEY = 'api_key'
 
 DEFAULT_NAME = 'WW'
 
-MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=10)
+MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=60)
 
 SENSOR_TYPES = {
     'temperature': ['Temperature', 'C'],
@@ -43,10 +44,10 @@ SENSOR_TYPES = {
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_API_KEY): cv.string,
-    vol.Required(CONF_STATION_ID): cv.string,
+    vol.Optional(CONF_STATION_ID): cv.string,
     vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Required(CONF_MONITORED_CONDITIONS, default=[]):
-        [vol.In(SENSOR_TYPES)],
+    vol.Required(CONF_MONITORED_CONDITIONS, default=list(SENSOR_TYPES)):
+        vol.All(cv.ensure_list, [vol.In(SENSOR_TYPES)]),
 })
 
 
@@ -65,7 +66,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     # If no station_id determine from Home Assistant lat/long
     if station_id is None:
-        station_id = get_station_id(hass.config.latitude, hass.config.longitude)
+        station_id = get_station_id(hass.config.latitude, hass.config.longitude, api_key)
         if station_id is None:
             _LOGGER.critical("Can't retrieve Station from WillyWeather")
             return False
@@ -185,3 +186,23 @@ class WeatherData:
         result = requests.get(self._build_url(), timeout=10).json()
         self._data = result['observational']
         return
+
+def get_station_id(lat, lng, api_key):
+
+    closestURL = _CLOSEST.format(api_key)
+    closestURLParams = [
+        ("lat", lat),
+        ("lng", lng),
+        ("units", "distance:km")
+    ]
+
+    try:
+        resp = requests.get(closestURL, params=closestURLParams, timeout=10).json()
+        if resp is None:
+            return
+        _LOGGER.critical("!!!!!!!!!!!!!!!!!!!!! Gor the Station from WillyWeather")
+
+        return resp['location']['id']
+
+    except ValueError as err:
+        _LOGGER.error("*** Error finding closest station")
