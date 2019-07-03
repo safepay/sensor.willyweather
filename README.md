@@ -7,7 +7,7 @@ https://www.willyweather.com.au/api/docs/v2.html
 Install the directory and all files within a custom_componenets directory within your Home Assistant config directory.
 You must obtain an API key from your WillyWeather account at www.willyweather.com.au.
 
-## Register for the WillyWeather API
+### Register for the WillyWeather API
 Go to https://www.willyweather.com.au/info/api.html.
 
 Select "Single Location" and click "Next".
@@ -16,7 +16,7 @@ Select "Show sub-items" next to "Weather" to reveal the sub-menu.
 
 Tick "Observational".
 
-## Location Selection
+### Location Selection
 The location is determined from the closest station based on the lat/long in Home Assistant.
 This can be over-written by station_id in the config
 
@@ -25,47 +25,49 @@ The willyweather sensor provides observational data for the closest weather stat
 
 To add WillyWeather sensors to your installation, add the desired lines from the following example to your configuration.yaml file:
 
-## Example configuration.yaml entry
+### Example configuration.yaml entry
 ```
 sensor:
   - platform: willyweather
     api_key: your_api_key
 ```
-## CONFIGURATION VARIABLES
+### CONFIGURATION VARIABLES
 
-### station_id
+#### station_id
 (string)(Optional) The station ID string as identified from the WillyWeather website.
 
 Default value: If not given, defaults to the closest station based on location data in Home Assistant.
 
-### name
+#### name
 (string)(Optional) The name you would like to give to the weather station.
 
-### monitored_conditions
+#### monitored_conditions
 (list)(Optional) A list of the conditions to monitor.
 Default value: If not given, defaults to all conditions listed below.
 
-#### temperature
+##### temperature
 Temperature in C
-#### apparent_temperature
+##### apparent_temperature
 Temperature in C
-#### cloud
+##### cloud
 Cloud in Oktas
-#### humidity
+##### humidity
 Humidity in %
-#### dewpoint
+##### dewpoint
 Temperature in C
-#### pressure
+##### pressure
 Pressure in hPa
-#### wind_speed
+##### wind_speed
 Wind speed in km/h
-#### wind_gust
+##### wind_gust
 Wind gust in km/h
-#### wind_direction
+##### wind_direction
 Wind direction
-#### rainlasthour
+##### rainlasthour
 Rain last hour in mm
-#### raintoday
+##### raintoday
 Rain today in mm
-#### rainsince9am
+##### rainsince9am
 Rain since 9am in mm
+
+## Weather
