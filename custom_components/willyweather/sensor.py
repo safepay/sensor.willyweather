@@ -51,10 +51,8 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
-    """Set up the Yahoo! weather sensor."""
-    #from yahooweather import get_woeid, UNIT_C, UNIT_F
+    """Set up the WillyWeather weather sensor."""
 
-    #unit = hass.config.units.temperature_unit
     station_id = config.get(CONF_STATION_ID)
     api_key = config.get(CONF_API_KEY)
     #forecast = config.get(CONF_FORECAST)
@@ -79,15 +77,6 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     except ValueError as err:
         _LOGGER.error("Received error from WillyWeather: %s", err)
         return
-
-#    if not ww_data.update():
-#        _LOGGER.critical("Can't retrieve weather data from WillyWeather")
-#        return False
-
-#    if forecast >= len(yahoo_api.yahoo.Forecast):
-#        _LOGGER.error("Yahoo! only support %d days forecast!",
-#                      len(yahoo_api.yahoo.Forecast))
-#        return False
 
     dev = []
     for variable in config[CONF_MONITORED_CONDITIONS]:
