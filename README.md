@@ -33,6 +33,9 @@ sensor:
 ```
 ### CONFIGURATION VARIABLES
 
+#### api_key
+(string)(Required) The api_key for your account at the WillyWeather website.
+
 #### station_id
 (string)(Optional) The station ID string as identified from the WillyWeather website.
 
@@ -71,3 +74,26 @@ Rain today in mm
 Rain since 9am in mm
 
 ## Weather
+
+The willyweather weather component provides observational data and a four day forecast for the closest weather station.
+
+To add WillyWeather sensors to your installation, add the desired lines from the following example to your configuration.yaml file:
+
+### Example configuration.yaml entry
+```
+weather:
+  - platform: willyweather
+    api_key: your_api_key
+```
+### CONFIGURATION VARIABLES
+
+#### api_key
+(string)(Required) The api_key for your account at the WillyWeather website.
+
+#### station_id
+(string)(Optional) The station ID string as identified from the WillyWeather website.
+
+Default value: If not given, defaults to the closest station based on location data in Home Assistant.
+
+#### name
+(string)(Optional) The name you would like to give to the weather station.
