@@ -30,3 +30,39 @@ sensor:
   - platform: willyweather
     api_key: your_api_key
 ```
+## CONFIGURATION VARIABLES
+
+### station_id
+(string)(Optional) The station ID string as identified from the WillyWeather website.
+
+Default value: If not given, defaults to the closest station based on location data in Home Assistant.
+
+### name
+(string)(Optional) The name you would like to give to the weather station.
+
+### monitored_conditions
+(list)(Optional) A list of the conditions to monitor.
+    #### temperature
+      Temperature in C
+    #### apparent_temperature
+      Temperature in C
+    #### cloud
+      Cloud in Oktas
+    #### humidity
+      Humidity in %
+    #### dewpoint
+      Temperature in C
+    #### pressure
+      Pressure in hPa
+    #### wind_speed
+      Wind speed in km/h
+    #### wind_gust
+      Wind gust in km/h
+    #### wind_direction
+      Wind direction
+    #### rainlasthour
+      Rain last hour in mm
+    #### raintoday
+      Rain today in mm
+    #### rainsince9am
+      Rain since 9am in mm
