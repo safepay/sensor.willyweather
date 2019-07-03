@@ -13,7 +13,7 @@ from homeassistant.const import (
 from homeassistant.helpers.entity import Entity
 from homeassistant.util import Throttle
 
-_RESOURCE = 'https://api.willyweather.com.au/v2/{}/locations/{}/weather.json?observational=true&forecasts=weather&days=4'
+_RESOURCE = 'https://api.willyweather.com.au/v2/{}/locations/{}/weather.json?observational=true'
 _CLOSEST =  'https://api.willyweather.com.au/v2/{}/search.json'
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=60)
 SENSOR_TYPES = {
     'temperature': ['Temperature', TEMP_CELSIUS, 'mdi:thermometer'],
     'apparent_temperature': ['Feels like', TEMP_CELSIUS, 'mdi:thermometer'],
-    'cloud': ['Cloud', 'Oktas', 'mdi:weather-partlycloudy'],
+    'cloud': ['Cloud', 'okta', 'mdi:weather-partlycloudy'],
     'humidity': ['Humidity', '%', 'mdi:water-percent'],
     'dewpoint': ['Dew point', TEMP_CELSIUS, 'mdi:thermometer'],
     'pressure': ['Pressure', 'hPa', 'mdi:gauge'],
@@ -180,11 +180,6 @@ class WeatherData:
         if self._data:
             return self._data
         return None
-
-    #@property
-    #def willyweather(self):
-    #    """Return WillyWeather API object."""
-    #    return self._willyweather
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     def update(self):

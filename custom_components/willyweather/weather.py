@@ -78,7 +78,7 @@ class WWWeatherForecast(WeatherEntity):
     @property
     def condition(self):
         """Return the current condition."""
-        return 2
+        return self._data.latest_data['forecasts']["weather"]["days"][0]["entries"][0].get("precisCode")
 
     @property
     def temperature(self):
