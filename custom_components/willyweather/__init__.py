@@ -1,0 +1,1 @@
+"""The willyweather component."""
