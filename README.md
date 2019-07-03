@@ -1,9 +1,10 @@
 # WillyWeather Custom Module for Home Assistant
 WillyWeather is an Australian weather service that presents Bureau of Meteorology data is an easy to use interface.
 It also provides a Rest API that is easier to use than the cumbersome BoM API's.
+https://www.willyweather.com.au/api/docs/v2.html
 
+## Installation
 Install the directory and all files within a custom_componenets directory within your Home Assistant config directory.
-
 You must obtain an API key from your WillyWeather account at www.willyweather.com.au.
 
 ## Register for the Willyweather API
@@ -42,6 +43,8 @@ Default value: If not given, defaults to the closest station based on location d
 
 ### monitored_conditions
 (list)(Optional) A list of the conditions to monitor.
+Default value: If not given, defaults to all conditions listed below.
+
 #### temperature
 Temperature in C
 #### apparent_temperature
