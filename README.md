@@ -26,7 +26,7 @@ The willyweather sensor provides observational data for the closest weather stat
 
 To add WillyWeather sensors to your installation, add the desired lines from the following example to your configuration.yaml file:
 
-# Example configuration.yaml entry
+## Example configuration.yaml entry
 ```
 sensor:
   - platform: willyweather
