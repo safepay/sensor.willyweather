@@ -13,7 +13,7 @@ from homeassistant.const import (
 from homeassistant.helpers.entity import Entity
 from homeassistant.util import Throttle
 
-_RESOURCE = 'https://api.willyweather.com.au/v2/{}/locations/{}/weather.json?observational=true'
+_RESOURCE = 'https://api.willyweather.com.au/v2/{}/locations/{}/weather.json?observational=true&forecasts=weather&days=4'
 _CLOSEST =  'https://api.willyweather.com.au/v2/{}/search.json'
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,18 +28,18 @@ DEFAULT_NAME = 'WW'
 MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=60)
 
 SENSOR_TYPES = {
-    'temperature': ['Temperature', 'C'],
-    'apparent_temperature': ['Feels like', 'C'],
-    'cloud': ['Cloud', 'Oktas'],
-    'humidity': ['Humidity', '%'],
-    'dewpoint': ['Dew point', 'C'],
-    'pressure': ['Pressure', 'hPa'],
-    'wind_speed': ['Wind speed', 'km/h'],
-    'wind_gust': ['Wind gust', 'km/h'],
-    'wind_direction': ['Wind direction', None],
-    'rainlasthour': ['Rain last hour', 'mm'],
-    'raintoday': ['Rain today', 'mm'],
-    'rainsince9am': ['Rain since 9am', 'mm']
+    'temperature': ['Temperature', TEMP_CELSIUS, 'mdi:thermometer'],
+    'apparent_temperature': ['Feels like', TEMP_CELSIUS, 'mdi:thermometer'],
+    'cloud': ['Cloud', 'Oktas', 'mdi:weather-partlycloudy'],
+    'humidity': ['Humidity', '%', 'mdi:water-percent'],
+    'dewpoint': ['Dew point', TEMP_CELSIUS, 'mdi:thermometer'],
+    'pressure': ['Pressure', 'hPa', 'mdi:gauge'],
+    'wind_speed': ['Wind speed', 'km/h', 'mdi:weather-windy'],
+    'wind_gust': ['Wind gust', 'km/h', 'mdi:weather-windy-variant'],
+    'wind_direction': ['Wind direction', None, 'mdi:compass'],
+    'rainlasthour': ['Rain last hour', 'mm', 'mdi:weather-rainy'],
+    'raintoday': ['Rain today', 'mm', 'mdi:weather-rainy'],
+    'rainsince9am': ['Rain since 9am', 'mm', 'mdi:weather-rainy']
 }
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
@@ -98,6 +98,7 @@ class WWWeatherSensor(Entity):
         self._unit = SENSOR_TYPES[sensor_type][1]
         self._data = weather_data
         self._code = None
+        self._icon = SENSOR_TYPES[sensor_type][2]
 
     @property
     def name(self):
@@ -119,6 +120,11 @@ class WWWeatherSensor(Entity):
         """Return the state attributes."""
         attrs = {ATTR_ATTRIBUTION: ATTRIBUTION}
         return attrs
+
+    @property
+    def icon(self):
+        """Icon to use in the frontend, if any."""
+        return self._icon
 
     def update(self):
         """Get the latest data from WillyWeather and updates the states."""
@@ -200,7 +206,6 @@ def get_station_id(lat, lng, api_key):
         resp = requests.get(closestURL, params=closestURLParams, timeout=10).json()
         if resp is None:
             return
-        _LOGGER.critical("!!!!!!!!!!!!!!!!!!!!! Gor the Station from WillyWeather")
 
         return resp['location']['id']
 
