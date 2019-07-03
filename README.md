@@ -7,7 +7,7 @@ https://www.willyweather.com.au/api/docs/v2.html
 Install the directory and all files within a custom_componenets directory within your Home Assistant config directory.
 You must obtain an API key from your WillyWeather account at www.willyweather.com.au.
 
-## Register for the Willyweather API
+## Register for the WillyWeather API
 Go to https://www.willyweather.com.au/info/api.html.
 
 Select "Single Location" and click "Next".
