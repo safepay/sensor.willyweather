@@ -25,22 +25,36 @@ DEFAULT_NAME = 'WW'
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=60)
 
-CONDITION_CLASSES = {
-    'clear-night': [31, 33],
-    'cloudy': [26, 27, 28],
-    'fog': [20, 21],
-    'hail': [17, 35],
-    'lightning': [],
-    'lightning-rainy': [3, 4, 37, 38, 39, 45, 47],
-    'partlycloudy': [29, 30, 44],
-    'pouring': [],
-    'rainy': [9, 10, 11, 12, 40],
-    'snowy': [8, 13, 14, 15, 16, 41, 42, 43, 46],
-    'snowy-rainy': [5, 6, 7, 18],
-    'sunny': [25, 32, 34, 36],
-    'windy': [23, 24],
-    'windy-variant': [],
-    'exceptional': [0, 1, 2, 19, 22],
+MAP_CONDITION = {
+'fine' : 'sunny',
+'mostly-fine' : 'sunny',
+'high-cloud' : 'partlycloudy',
+'partly-cloudy' : 'partlycloudy',
+'mostly-cloudy' : 'cloudy',
+'cloudy' : 'cloudy',
+'overcast' : 'cloudy',
+'shower-or-two' : 'rainy',
+'chance-shower-fine' : 'rainy',
+'chance-shower-cloud' : 'rainy',
+'drizzle' : 'rainy',
+'few-showers' : 'rainy',
+'showers-rain' : 'rainy',
+'heavy-showers-rain' : 'pouring',
+'chance-thunderstorm-fine' : 'lightning',
+'chance-thunderstorm-cloud' : 'lightning',
+'chance-thunderstorm-showers' :  'lightning-rainy',
+'thunderstorm' : 'lightning-rainy',
+'chance-snow-fine' : 'snowy',
+'chance-snow-cloud' : 'snowy',
+'snow-and-rain' : 'snowy-rainy',
+'light-snow' : 'snowy',
+'snow' : 'snowy',
+'heavy-snow' : 'snowy',
+'wind' : 'snowy',
+'frost' : 'clear-night',
+'fog' : 'fog',
+'hail' : 'hail',
+'dust' : None
 }
 
 def validate_days(days):
@@ -99,8 +113,8 @@ class WWWeatherForecast(WeatherEntity):
 
     @property
     def condition(self):
-        """Return the current condition."""
-        return self._data.latest_data['forecasts']["weather"]["days"][0]["entries"][0].get("precisCode")
+        """Return the weather condition."""
+        return MAP_CONDITION.get(self._data.latest_data['forecasts']["weather"]["days"][0]["entries"][0].get("precisCode"))
 
     @property
     def temperature(self):
@@ -147,7 +161,7 @@ class WWWeatherForecast(WeatherEntity):
                     ATTR_FORECAST_TEMP: v['entries'][0]['max'],
                     ATTR_FORECAST_TEMP_LOW: v['entries'][0]['min'],
                     ATTR_FORECAST_PRECIPITATION: self._data.latest_data['forecasts']["rainfall"]["days"][num]['entries'][0]['endRange'],
-                    ATTR_FORECAST_CONDITION: v['entries'][0]['precis']
+                    ATTR_FORECAST_CONDITION: MAP_CONDITION.get(v['entries'][0]['precisCode'])
                 } for  num, v in enumerate(self._data.latest_data['forecasts']["weather"]["days"])]
         except (ValueError, IndexError):
             return STATE_UNKNOWN
