@@ -3,6 +3,8 @@ WillyWeather is an Australian weather service that presents Bureau of Meteorolog
 It also provides a Rest API that is easier to use than the cumbersome BoM API's.
 https://www.willyweather.com.au/api/docs/v2.html
 
+Note that the service is commercial but it is very cheap.
+
 ## Installation
 Install the directory and all files within a custom_componenets directory within your Home Assistant config directory.
 You must obtain an API key from your WillyWeather account at www.willyweather.com.au.
@@ -15,6 +17,12 @@ Select "Single Location" and click "Next".
 Select "Show sub-items" next to "Weather" to reveal the sub-menu.
 
 Tick "Observational".
+
+Select "Show sub-items" next to "Forecasts" to reveal the sub-menu.
+
+Tick "Weather" and "Rainfall" and click "Next".
+
+Complete the process with your own information, including your credit card.
 
 ### Location Selection
 The location is determined from the closest station based on the lat/long in Home Assistant.
