@@ -7,18 +7,17 @@ import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.weather import (
-    ATTR_FORECAST_CONDITION, ATTR_FORECAST_TEMP, ATTR_FORECAST_TEMP_LOW,
+    ATTR_FORECAST_CONDITION, ATTR_FORECAST_TEMP, ATTR_FORECAST_TEMP_LOW, ATTR_FORECAST_PRECIPITATION,
     ATTR_FORECAST_TIME, PLATFORM_SCHEMA, WeatherEntity)
 from homeassistant.const import (TEMP_CELSIUS, CONF_NAME, STATE_UNKNOWN)
 from homeassistant.util import Throttle
-
-_RESOURCE = 'https://api.willyweather.com.au/v2/{}/locations/{}/weather.json?observational=true&forecasts=weather&days=4'
+_RESOURCE = 'https://api.willyweather.com.au/v2/{}/locations/{}/weather.json?observational=true&forecasts=weather,rainfall&days={}'
 _CLOSEST =  'https://api.willyweather.com.au/v2/{}/search.json'
 _LOGGER = logging.getLogger(__name__)
 
-ATTRIBUTION = "Weather details provided by WillyWeather Australia."
+ATTRIBUTION = "Weather provided by WillyWeather Australia."
 
-#CONF_FORECAST = 'forecast'
+CONF_DAYS = 'days'
 CONF_STATION_ID = 'station_id'
 CONF_API_KEY = 'api_key'
 
@@ -26,12 +25,36 @@ DEFAULT_NAME = 'WW'
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=60)
 
+CONDITION_CLASSES = {
+    'clear-night': [31, 33],
+    'cloudy': [26, 27, 28],
+    'fog': [20, 21],
+    'hail': [17, 35],
+    'lightning': [],
+    'lightning-rainy': [3, 4, 37, 38, 39, 45, 47],
+    'partlycloudy': [29, 30, 44],
+    'pouring': [],
+    'rainy': [9, 10, 11, 12, 40],
+    'snowy': [8, 13, 14, 15, 16, 41, 42, 43, 46],
+    'snowy-rainy': [5, 6, 7, 18],
+    'sunny': [25, 32, 34, 36],
+    'windy': [23, 24],
+    'windy-variant': [],
+    'exceptional': [0, 1, 2, 19, 22],
+}
+
+def validate_days(days):
+    """Check that days is within bounds."""
+    if days not in range(1,7):
+        raise vol.error.Invalid("Days is out of Range")
+    return days
+    
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_API_KEY): cv.string,
     vol.Optional(CONF_STATION_ID): cv.string,
+    vol.Optional(CONF_DAYS, default=5): validate_days,
     vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
 })
-
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the WillyWeather weather sensor."""
@@ -39,7 +62,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     unit = hass.config.units.temperature_unit
     station_id = config.get(CONF_STATION_ID)
     api_key = config.get(CONF_API_KEY)
-    #forecast = config.get(CONF_FORECAST)
+    days = config.get(CONF_DAYS)
     name = config.get(CONF_NAME)
 
     # If no station_id determine from Home Assistant lat/long
@@ -49,7 +72,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
             _LOGGER.critical("Can't retrieve Station from WillyWeather")
             return False
 
-    ww_data = WeatherData(api_key, station_id)
+    ww_data = WeatherData(api_key, station_id, days)
 
     try:
         ww_data.update()
@@ -68,7 +91,6 @@ class WWWeatherForecast(WeatherEntity):
         self._name = name
         self._data = weather_data
         self._unit = unit
-#        _LOGGER.critical("!!!!!!!!!!!!!!!!!!!!!!!HUMIDITY!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! %s", self._data.latest_data['observational']["observations"]["humidity"].get("percentage"))
 
     @property
     def name(self):
@@ -115,6 +137,21 @@ class WWWeatherForecast(WeatherEntity):
         """Return the unit of measurement."""
         return self._unit
 
+    @property
+    def forecast(self):
+        """Return the forecast array."""
+        try:
+            return [
+                {
+                    ATTR_FORECAST_TIME: v['entries'][0]['dateTime'],
+                    ATTR_FORECAST_TEMP: v['entries'][0]['max'],
+                    ATTR_FORECAST_TEMP_LOW: v['entries'][0]['min'],
+                    ATTR_FORECAST_PRECIPITATION: self._data.latest_data['forecasts']["rainfall"]["days"][num]['entries'][0]['endRange'],
+                    ATTR_FORECAST_CONDITION: v['entries'][0]['precis']
+                } for  num, v in enumerate(self._data.latest_data['forecasts']["weather"]["days"])]
+        except (ValueError, IndexError):
+            return STATE_UNKNOWN
+
     def update(self):
         """Get the latest data from WillyWeather and updates the states."""
         self._data.update()
@@ -125,14 +162,15 @@ class WWWeatherForecast(WeatherEntity):
 class WeatherData:
     """Handle WillyWeather API object and limit updates."""
 
-    def __init__(self, api_key, station_id):
+    def __init__(self, api_key, station_id, days):
         """Initialize the data object."""
         self._api_key = api_key
         self._station_id = station_id
+        self._days = days
 
     def _build_url(self):
         """Build the URL for the requests."""
-        url = _RESOURCE.format(self._api_key, self._station_id)
+        url = _RESOURCE.format(self._api_key, self._station_id, self._days)
         _LOGGER.debug("WillyWeather URL: %s", url)
         return url
 
