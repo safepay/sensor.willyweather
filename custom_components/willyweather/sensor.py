@@ -19,7 +19,6 @@ _LOGGER = logging.getLogger(__name__)
 
 ATTRIBUTION = "Weather details provided by WillyWeather Australia."
 
-#CONF_FORECAST = 'forecast'
 CONF_STATION_ID = 'station_id'
 CONF_API_KEY = 'api_key'
 
@@ -56,13 +55,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     station_id = config.get(CONF_STATION_ID)
     api_key = config.get(CONF_API_KEY)
-    #forecast = config.get(CONF_FORECAST)
     name = config.get(CONF_NAME)
-
-    #yunit = UNIT_C if unit == TEMP_CELSIUS else UNIT_F
-
-    #SENSOR_TYPES['temperature'][1] = unit
-    #SENSOR_TYPES['apparent_temperature'][1] = unit
 
     # If no station_id determine from Home Assistant lat/long
     if station_id is None:

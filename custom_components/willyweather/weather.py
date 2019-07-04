@@ -98,7 +98,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
 
 class WWWeatherForecast(WeatherEntity):
-    """Implementation of the WillyWeather weather sensor."""
+    """Implementation of the WillyWeather weather component."""
 
     def __init__(self, weather_data, name, unit):
         """Initialize the component."""
@@ -109,6 +109,8 @@ class WWWeatherForecast(WeatherEntity):
     @property
     def name(self):
         """Return the name."""
+        if self._name == 'WW':
+            return self._data.latest_data['location']["name"]
         return self._name
 
     @property
