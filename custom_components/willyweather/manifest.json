@@ -1,8 +1,8 @@
 {
   "domain": "willyweather",
   "name": "WillyWeather",
-  "documentation": "",
+  "documentation": "https://github.com/safepay/Home-Assistant-WillyWeather/blob/master/README.md",
   "dependencies": [],
-  "codeowners": [],
+  "codeowners": ["@safepay"],
   "requirements": []
 }
