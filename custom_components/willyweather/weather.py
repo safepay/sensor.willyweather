@@ -23,7 +23,7 @@ CONF_API_KEY = 'api_key'
 
 DEFAULT_NAME = 'WW'
 
-MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=60)
+MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=10)
 
 MAP_CONDITION = {
 'fine' : 'sunny',
