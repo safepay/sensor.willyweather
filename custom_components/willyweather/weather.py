@@ -50,7 +50,7 @@ MAP_CONDITION = {
 'light-snow' : 'snowy',
 'snow' : 'snowy',
 'heavy-snow' : 'snowy',
-'wind' : 'snowy',
+'wind' : 'windy',
 'frost' : 'clear-night',
 'fog' : 'fog',
 'hail' : 'hail',
