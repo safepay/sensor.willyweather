@@ -15,7 +15,7 @@ _RESOURCE = 'https://api.willyweather.com.au/v2/{}/locations/{}/weather.json?obs
 _CLOSEST =  'https://api.willyweather.com.au/v2/{}/search.json'
 _LOGGER = logging.getLogger(__name__)
 
-ATTRIBUTION = "Data provided by WillyWeather Australia"
+ATTRIBUTION = "Data provided by WillyWeather"
 
 CONF_DAYS = 'days'
 CONF_STATION_ID = 'station_id'
