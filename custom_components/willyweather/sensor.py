@@ -24,7 +24,7 @@ CONF_API_KEY = 'api_key'
 
 DEFAULT_NAME = 'WW'
 
-MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=10)
+MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=30)
 
 SENSOR_TYPES = {
     'temperature': ['Temperature', TEMP_CELSIUS, 'mdi:thermometer'],
