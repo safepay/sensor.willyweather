@@ -1,4 +1,4 @@
-# An Australian BoM alternative using WillyWeather
+## An Australian BoM alternative using WillyWeather
 
 www.willyweather.com.au provide a cheap API that is more usable than the BoM API.
 
@@ -6,12 +6,12 @@ The advantage is that they source data for your location from the closest weathe
 
 This is much better if you are in a rural area and the closest weather station does not provide all data.
 
-# Setup
+### Setup
 You will need to obtain an API key from https://www.willyweather.com.au/account/api.html
 
 Full instructions in the README.md
 
-# Configuration
+### Configuration
 ```
 sensor:
   - platform: willyweather
