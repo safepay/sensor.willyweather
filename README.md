@@ -7,6 +7,11 @@ https://www.willyweather.com.au/api/docs/v2.html
 
 Note that the service is commercial but it is very cheap.
 
+The main difference with this sensor is that it returns all data regardless of your location.
+In some areas of Australia, a single weather station will not provide all data. WillyWeather sources data from multiple local weather stations to give you the best result.
+
+This is also very easy to configure, using your lat and long settings in HA.
+
 ## Installation
 Install the directory and all files within a custom_componenets directory within your Home Assistant config directory.
 You must obtain an API key from your WillyWeather account at www.willyweather.com.au.
