@@ -15,6 +15,6 @@ Full instructions in the README.md
 ```
 sensor:
   - platform: willyweather
-    api_key: MjYzMDM0NGRmYmQ4ZjEwZWU1NGJjMG
+    api_key: your_api_key
 
 ```
