@@ -1,3 +1,5 @@
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
+
 # WillyWeather Custom Component for Home Assistant
 WillyWeather is an Australian weather service that presents Bureau of Meteorology data is an easy to use interface.
 It also provides a Rest API that is easier to use than the cumbersome BoM API's.
