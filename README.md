@@ -48,46 +48,12 @@ sensor:
     api_key: your_api_key
 ```
 ### CONFIGURATION VARIABLES
-
-#### api_key
-(string)(Required) The api_key for your account at the WillyWeather website.
-
-#### station_id
-(string)(Optional) The station ID string as identified from the WillyWeather website.
-
-Default value: If not given, defaults to the closest station based on location data in Home Assistant.
-
-#### name
-(string)(Optional) The name you would like to give to the weather station.
-
-#### monitored_conditions
-(list)(Optional) A list of the conditions to monitor.
-Default value: If not given, defaults to all conditions listed below.
-
-##### temperature
-Temperature in C
-##### apparent_temperature
-Temperature in C
-##### cloud
-Cloud in Oktas
-##### humidity
-Humidity in %
-##### dewpoint
-Temperature in C
-##### pressure
-Pressure in hPa
-##### wind_speed
-Wind speed in km/h
-##### wind_gust
-Wind gust in km/h
-##### wind_direction
-Wind direction
-##### rainlasthour
-Rain last hour in mm
-##### raintoday
-Rain today in mm
-##### rainsince9am
-Rain since 9am in mm
+key | required | type | default | description
+--- | -------- | ---- | ------- | -----------
+api_key | yes | string | | The api_key for your account at the WillyWeather website.
+station_id | no | string | closest | The station ID string as identified from the WillyWeather website.
+name | no | string | ``WW`` | The name you would like to give to the weather station.
+monitored_conditions | no | list | all | A list of the conditions to monitor from ``temperature, apparent_temperature, cloud, humidity, dewpoint, pressure, wind_speed, wind_gust, wind_direction, rainlasthour, raintoday, rainsince9am``
 
 ## Weather
 
@@ -102,14 +68,8 @@ weather:
     api_key: your_api_key
 ```
 ### CONFIGURATION VARIABLES
-
-#### api_key
-(string)(Required) The api_key for your account at the WillyWeather website.
-
-#### station_id
-(string)(Optional) The station ID string as identified from the WillyWeather website.
-
-Default value: If not given, defaults to the closest station based on location data in Home Assistant.
-
-#### name
-(string)(Optional) The name you would like to give to the weather station.
+key | required | type | default | description
+--- | -------- | ---- | ------- | -----------
+api_key | yes | string | | The api_key for your account at the WillyWeather website.
+station_id | no | string | closest | The station ID string as identified from the WillyWeather website.
+name | no | string | ``WW`` | The name you would like to give to the weather station.
