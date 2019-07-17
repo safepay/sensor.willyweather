@@ -1,3 +1,5 @@
+![Maintenance](https://img.shields.io/maintenance/yes/2019.svg)
+
 ## An Australian BoM alternative using WillyWeather
 
 www.willyweather.com.au provide a cheap API that is more usable than the BoM API.
