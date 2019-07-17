@@ -30,6 +30,8 @@ Select "Show sub-items" next to "Forecasts" to reveal the sub-menu.
 
 Tick "Weather" and "Rainfall" and click "Next".
 
+![WillyWeather Example Config](https://github.com/safepay/sensor.willyweather/raw/master/willyweather_api_config.png)
+
 Complete the process with your own information, including your credit card.
 
 ### Location Selection
