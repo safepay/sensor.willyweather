@@ -70,7 +70,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
 })
 
-def setup_platform(hass, config, add_entities, discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the WillyWeather weather sensor."""
 
     unit = hass.config.units.temperature_unit
@@ -89,12 +89,12 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     ww_data = WeatherData(api_key, station_id, days)
 
     try:
-        ww_data.update()
+        await ww_data.async_update()
     except ValueError as err:
         _LOGGER.error("Received error from WillyWeather: %s", err)
         return
 
-    add_entities([WWWeatherForecast(ww_data, name, unit)], True)
+    async_add_entities([WWWeatherForecast(ww_data, name, unit)], True)
 
 
 class WWWeatherForecast(WeatherEntity):
@@ -168,9 +168,9 @@ class WWWeatherForecast(WeatherEntity):
         except (ValueError, IndexError):
             return STATE_UNKNOWN
 
-    def update(self):
+    async def async_update(self):
         """Get the latest data from WillyWeather and updates the states."""
-        self._data.update()
+        await self._data.async_update()
         if not self._data:
             _LOGGER.info("Didn't receive weather data from WillyWeather")
             return
@@ -198,7 +198,7 @@ class WeatherData:
         return None
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
-    def update(self):
+    async def async_update(self):
         """Get the latest data from WillyWeather."""
         result = requests.get(self._build_url(), timeout=10).json()
         self._data = result
