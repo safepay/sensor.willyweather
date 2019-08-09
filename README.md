@@ -44,7 +44,7 @@ The willyweather sensor provides observational data for the closest weather stat
 To add WillyWeather sensors to your installation, add the desired lines from the following example to your configuration.yaml file:
 
 ### Example configuration.yaml entry
-```
+```yaml
 sensor:
   - platform: willyweather
     api_key: your_api_key
@@ -60,10 +60,10 @@ key | required | type | default | description
 
 ### DarkSky Weather Card
 
-These sensors support the DarkSky Weather Card https://github.com/iammexx/home-assistant-config/tree/master/ui/darksky
+These sensors support the [DarkSky Weather Card](https://github.com/iammexx/home-assistant-config/tree/master/ui/darksky)
 
 Add:
-```
+```yaml
 days: 7
 ```
 to your config, then follow the DarkSky README.
@@ -116,7 +116,7 @@ The willyweather weather component provides observational data and a four day fo
 To add WillyWeather sensors to your installation, add the desired lines from the following example to your configuration.yaml file:
 
 ### Example configuration.yaml entry
-```
+```yaml
 weather:
   - platform: willyweather
     api_key: your_api_key
