@@ -72,6 +72,7 @@ To get the card working use:
 ```
 type: 'custom:dark-sky-weather-card'
 entity_current_conditions: sensor.ww_day_0_icon
+entity_current_text: sensor.ww_day_0_summary
 entity_forecast_high_temp_1: sensor.ww_day_1_max_temp
 entity_forecast_high_temp_2: sensor.ww_day_2_max_temp
 entity_forecast_high_temp_3: sensor.ww_day_3_max_temp
@@ -94,7 +95,6 @@ entity_summary_4: sensor.ww_day_3_summary
 entity_summary_5: sensor.ww_day_4_summary
 entity_temperature: sensor.ww_temperature
 entity_sun: sun.sun
-entity_daily_summary: sensor.ww_day_0_summary
 entity_daytime_high: sensor.ww_day_0_max_temp
 entity_wind_bearing: sensor.ww_wind_direction
 entity_wind_speed: sensor.ww_wind_speed
