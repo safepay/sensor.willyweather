@@ -55,7 +55,7 @@ key | required | type | default | description
 `api_key` | yes | string | | The API Key for your account at the WillyWeather website.
 `station_id` | no | string | closest | The station ID as identified from the WillyWeather website.
 `name` | no | string | `WW` | The name you would like to give to the weather station.
-`days` | no | int | None | Generate additional sensors for each forecast day which can then be used in other components such as the DarkSky Weather Card.
+`forecast_days` | no | int | None | Generate additional sensors for each forecast day which can then be used in other components such as the DarkSky Weather Card.
 `monitored_conditions` | no | list | all | A list of the conditions to monitor from: `temperature`, `apparent_temperature`, `cloud`, `humidity`, `dewpoint`, `pressure`, `wind_speed`, `wind_gust`, `wind_direction`, `rainlasthour`, `raintoday`, `rainsince9am`
 
 ### DarkSky Weather Card
@@ -64,7 +64,7 @@ These sensors support the [DarkSky Weather Card](https://github.com/iammexx/home
 
 Add:
 ```yaml
-days: 7
+    forecast_days: 7
 ```
 to your config, then follow the DarkSky README.
 
