@@ -1,6 +1,6 @@
 """Support for the WillyWeather Australia service."""
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import requests
 import voluptuous as vol
@@ -157,14 +157,20 @@ class WWWeatherForecast(WeatherEntity):
     def forecast(self):
         """Return the forecast array."""
         try:
-            return [
-                {
-                    ATTR_FORECAST_TIME: v['entries'][0]['dateTime'],
+
+            forecast_data = []
+            for  num, v in enumerate(self._data.latest_data['forecasts']["weather"]["days"]):
+                date_string = datetime.strptime(v['entries'][0]['dateTime'], "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%dT%H:%M:%S")
+                data_dict = {
+                    ATTR_FORECAST_TIME: date_string,
                     ATTR_FORECAST_TEMP: v['entries'][0]['max'],
                     ATTR_FORECAST_TEMP_LOW: v['entries'][0]['min'],
                     ATTR_FORECAST_PRECIPITATION: self._data.latest_data['forecasts']["rainfall"]["days"][num]['entries'][0]['endRange'],
                     ATTR_FORECAST_CONDITION: MAP_CONDITION.get(v['entries'][0]['precisCode'])
-                } for  num, v in enumerate(self._data.latest_data['forecasts']["weather"]["days"])]
+                }
+                forecast_data.append(data_dict)
+            return forecast_data
+
         except (ValueError, IndexError):
             return STATE_UNKNOWN
 
