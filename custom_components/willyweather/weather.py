@@ -54,7 +54,7 @@ MAP_CONDITION = {
 'frost' : 'clear-night',
 'fog' : 'fog',
 'hail' : 'hail',
-'dust' : None
+'dust' : 'exceptional'
 }
 
 def validate_days(days):
