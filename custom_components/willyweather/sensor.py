@@ -210,6 +210,14 @@ class WWWeatherSensor(Entity):
         return self._state
 
     @property
+    def unique_id(self):
+        """Return the sensor unique id."""
+        if self._day is not None:
+            return f"{self._client} {self._day} {self._name}"
+        else:
+            return f"{self._client} {self._name}"
+
+    @property
     def unit_of_measurement(self):
         """Return the unit of measurement of this entity, if any."""
         return self._unit
