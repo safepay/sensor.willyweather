@@ -114,6 +114,11 @@ class WWWeatherForecast(WeatherEntity):
         return self._name
 
     @property
+    def unique_id(self):
+        """Return the sensor unique id."""
+        return f"{self._name} weather"
+
+    @property
     def condition(self):
         """Return the weather condition."""
         return MAP_CONDITION.get(self._data.latest_data['forecasts']["weather"]["days"][0]["entries"][0].get("precisCode"))
