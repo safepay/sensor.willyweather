@@ -134,7 +134,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 })
 
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the WillyWeather weather sensor."""
 
     station_id = config.get(CONF_STATION_ID)
@@ -152,7 +152,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     ww_data = WeatherData(api_key, station_id)
 
     try:
-        await ww_data.async_update()
+        ww_data.update()
     except ValueError as err:
         _LOGGER.error("Received error from WillyWeather: %s", err)
         return
@@ -164,7 +164,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     if days:
         ww_forecast = ForecastData(api_key, station_id, days)
         try:
-            await ww_forecast.async_update()
+            ww_forecast.update()
         except ValueError as err:
             _LOGGER.error("Received error from WillyWeather: %s", err)
             return
@@ -173,7 +173,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             for variable in FORECAST_TYPES:
                 dev.append(WWWeatherSensor(ww_forecast, name, variable, day))
 
-    async_add_entities(dev, True)
+    add_entities(dev, True)
 
 
 class WWWeatherSensor(Entity):
@@ -233,9 +233,9 @@ class WWWeatherSensor(Entity):
         """Icon to use in the frontend, if any."""
         return self._icon
 
-    async def async_update(self):
+    def update(self):
         """Get the latest data from WillyWeather and updates the states."""
-        await self._data.async_update()
+        self._data.update()
         if not self._data:
             _LOGGER.info("Didn't receive weather data from WillyWeather")
             return
@@ -302,7 +302,7 @@ class WeatherData:
         return None
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
-    async def async_update(self):
+    def update(self):
         """Get the latest data from WillyWeather."""
         result = requests.get(self._build_url(), timeout=10).json()
         self._data = result['observational']
@@ -331,7 +331,7 @@ class ForecastData:
         return None
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
-    async def async_update(self):
+    def update(self):
         """Get the latest data from WillyWeather."""
         result = requests.get(self._build_url(), timeout=10).json()
         self._data = result
