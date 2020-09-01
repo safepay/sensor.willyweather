@@ -14,7 +14,7 @@ In some areas of Australia, a single weather station will not provide all data. 
 This is also very easy to configure, using your lat and long settings in HA, and creates minimal HA overhead due to RESTful API.
 
 ## Installation
-Install the directory and all files within a custom_componenets directory within your Home Assistant config directory.
+Install the directory and all files within a custom_componenets directory within your Home Assistant config directory or, alternatively, install via [HACS](http://hacs.xyz).
 You must obtain an API key from your WillyWeather account at www.willyweather.com.au.
 
 ### Register for the WillyWeather API
