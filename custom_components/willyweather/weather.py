@@ -8,7 +8,7 @@ import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.weather import (
     ATTR_FORECAST_CONDITION, ATTR_FORECAST_TEMP, ATTR_FORECAST_TEMP_LOW, ATTR_FORECAST_PRECIPITATION,
-    ATTR_FORECAST_TIME, PLATFORM_SCHEMA, WeatherEntity)
+    ATTR_FORECAST_PRECIPITATION_PROBABILITY, ATTR_FORECAST_TIME, PLATFORM_SCHEMA, WeatherEntity)
 from homeassistant.const import (TEMP_CELSIUS, CONF_NAME, STATE_UNKNOWN)
 from homeassistant.util import Throttle
 _RESOURCE = 'https://api.willyweather.com.au/v2/{}/locations/{}/weather.json?observational=true&forecasts=weather,rainfall&days={}'
@@ -171,6 +171,7 @@ class WWWeatherForecast(WeatherEntity):
                     ATTR_FORECAST_TEMP: v['entries'][0]['max'],
                     ATTR_FORECAST_TEMP_LOW: v['entries'][0]['min'],
                     ATTR_FORECAST_PRECIPITATION: self._data.latest_data['forecasts']["rainfall"]["days"][num]['entries'][0]['endRange'],
+                    ATTR_FORECAST_PRECIPITATION_PROBABILITY: self._data.latest_data['forecasts']["rainfall"]["days"][num]['entries'][0]['probability'],
                     ATTR_FORECAST_CONDITION: MAP_CONDITION.get(v['entries'][0]['precisCode'])
                 }
                 forecast_data.append(data_dict)
