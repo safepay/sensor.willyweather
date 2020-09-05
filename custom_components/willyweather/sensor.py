@@ -37,6 +37,7 @@ SENSOR_TYPES = {
     'pressure': ['Pressure', 'hPa', 'mdi:gauge'],
     'wind_speed': ['Wind speed', 'km/h', 'mdi:weather-windy'],
     'wind_gust': ['Wind gust', 'km/h', 'mdi:weather-windy-variant'],
+    'wind_bearing': ['Wind Bearing', None, 'mdi:compass'],
     'wind_direction': ['Wind direction', None, 'mdi:compass'],
     'rainlasthour': ['Rain last hour', 'mm', 'mdi:weather-rainy'],
     'raintoday': ['Rain today', 'mm', 'mdi:weather-rainy'],
@@ -257,6 +258,8 @@ class WWWeatherSensor(Entity):
             self._state = self._data.latest_data["observations"]["wind"].get("speed")
         elif self._type == 'wind_gust':
             self._state = self._data.latest_data["observations"]["wind"].get("gustSpeed")
+        elif self._type == 'wind_bearing':
+            self._state = self._data.latest_data["observations"]["wind"].get("direction")
         elif self._type == 'wind_direction':
             self._state = self._data.latest_data["observations"]["wind"].get("directionText")
         elif self._type == 'rainlasthour':
