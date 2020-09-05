@@ -146,7 +146,7 @@ class WWWeatherForecast(WeatherEntity):
     @property
     def wind_bearing(self):
         """Return the wind direction."""
-        return self._data.latest_data['observational']["observations"]["wind"].get("directionText")
+        return self._data.latest_data['observational']["observations"]["wind"].get("direction")
 
     @property
     def attribution(self):
