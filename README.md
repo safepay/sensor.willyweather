@@ -96,7 +96,7 @@ entity_summary_5: sensor.ww_day_4_summary
 entity_temperature: sensor.ww_temperature
 entity_sun: sun.sun
 entity_daytime_high: sensor.ww_day_0_max_temp
-entity_wind_bearing: sensor.ww_wind_direction
+entity_wind_bearing: sensor.ww_wind_bearing
 entity_wind_speed: sensor.ww_wind_speed
 entity_humidity: sensor.ww_humidity
 entity_pressure: sensor.ww_pressure
