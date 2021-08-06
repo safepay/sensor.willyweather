@@ -250,7 +250,7 @@ class WWWeatherSensor(Entity):
             self._state = self._data.latest_data["observations"]["cloud"].get("oktas")
         elif self._type == 'humidity':
             self._state = self._data.latest_data["observations"]["humidity"].get("percentage")
-        elif self._type == 'depoint':
+        elif self._type == 'dewpoint':
             self._state = self._data.latest_data["observations"]["dewPoint"].get("temperature")
         elif self._type == 'pressure':
             self._state = self._data.latest_data["observations"]["pressure"].get("pressure")
