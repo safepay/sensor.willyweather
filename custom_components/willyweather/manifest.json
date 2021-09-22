@@ -3,6 +3,7 @@
   "name": "WillyWeather",
   "version": "1.5.3",
   "documentation": "https://github.com/safepay/Home-Assistant-WillyWeather/blob/master/README.md",
+  "issue_tracker": "https://github.com/safepay/sensor.willyweather/issues",
   "dependencies": [],
   "codeowners": ["@safepay"],
   "requirements": []
