@@ -224,7 +224,7 @@ class WWWeatherSensor(Entity):
         return self._unit
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Return the state attributes."""
         attrs = {ATTR_ATTRIBUTION: ATTRIBUTION}
         return attrs
