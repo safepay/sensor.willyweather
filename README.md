@@ -60,7 +60,7 @@ key | required | type | default | description
 
 ### DarkSky Weather Card
 
-These sensors support the [DarkSky Weather Card](https://github.com/iammexx/home-assistant-config/tree/master/ui/darksky)
+These sensors support the [DarkSky Weather Card](https://github.com/clayauld/lovelace-darksky-card)
 
 Add:
 ```yaml
@@ -70,7 +70,7 @@ to your config, then follow the DarkSky README.
 
 To get the card working use:
 ```
-type: 'custom:dark-sky-weather-card'
+type: custom:lovelace-darksky-card
 entity_current_conditions: sensor.ww_day_0_icon
 entity_current_text: sensor.ww_day_0_summary
 entity_forecast_high_temp_1: sensor.ww_day_1_max_temp
@@ -78,21 +78,21 @@ entity_forecast_high_temp_2: sensor.ww_day_2_max_temp
 entity_forecast_high_temp_3: sensor.ww_day_3_max_temp
 entity_forecast_high_temp_4: sensor.ww_day_4_max_temp
 entity_forecast_high_temp_5: sensor.ww_day_5_max_temp
-entity_forecast_icon_1: sensor.ww_day_0_icon
-entity_forecast_icon_2: sensor.ww_day_1_icon
-entity_forecast_icon_3: sensor.ww_day_2_icon
-entity_forecast_icon_4: sensor.ww_day_3_icon
-entity_forecast_icon_5: sensor.ww_day_4_icon
-entity_forecast_low_temp_1: sensor.ww_day_0_min_temp
-entity_forecast_low_temp_2: sensor.ww_day_1_min_temp
-entity_forecast_low_temp_3: sensor.ww_day_2_min_temp
-entity_forecast_low_temp_4: sensor.ww_day_3_min_temp
-entity_forecast_low_temp_5: sensor.ww_day_4_min_temp
-entity_summary_1: sensor.ww_day_0_summary
-entity_summary_2: sensor.ww_day_1_summary
-entity_summary_3: sensor.ww_day_2_summary
-entity_summary_4: sensor.ww_day_3_summary
-entity_summary_5: sensor.ww_day_4_summary
+entity_forecast_icon_1: sensor.ww_day_1_icon
+entity_forecast_icon_2: sensor.ww_day_2_icon
+entity_forecast_icon_3: sensor.ww_day_3_icon
+entity_forecast_icon_4: sensor.ww_day_4_icon
+entity_forecast_icon_5: sensor.ww_day_5_icon
+entity_forecast_low_temp_1: sensor.ww_day_1_min_temp
+entity_forecast_low_temp_2: sensor.ww_day_2_min_temp
+entity_forecast_low_temp_3: sensor.ww_day_3_min_temp
+entity_forecast_low_temp_4: sensor.ww_day_4_min_temp
+entity_forecast_low_temp_5: sensor.ww_day_5_min_temp
+entity_summary_1: sensor.ww_day_1_summary
+entity_summary_2: sensor.ww_day_2_summary
+entity_summary_3: sensor.ww_day_3_summary
+entity_summary_4: sensor.ww_day_4_summary
+entity_summary_5: sensor.ww_day_5_summary
 entity_temperature: sensor.ww_temperature
 entity_sun: sun.sun
 entity_daytime_high: sensor.ww_day_0_max_temp
