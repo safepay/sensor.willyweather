@@ -7,7 +7,7 @@ import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.weather import (
-    ATTR_FORECAST_CONDITION, ATTR_FORECAST_TEMP, ATTR_FORECAST_TEMP_LOW, ATTR_FORECAST_PRECIPITATION,
+    ATTR_FORECAST_CONDITION, ATTR_FORECAST_NATIVE_TEMP, ATTR_FORECAST_NATIVE_TEMP_LOW, ATTR_FORECAST_NATIVE_PRECIPITATION,
     ATTR_FORECAST_PRECIPITATION_PROBABILITY, ATTR_FORECAST_TIME, PLATFORM_SCHEMA, WeatherEntity)
 from homeassistant.const import (TEMP_CELSIUS, CONF_NAME, STATE_UNKNOWN)
 from homeassistant.util import Throttle
@@ -124,12 +124,12 @@ class WWWeatherForecast(WeatherEntity):
         return MAP_CONDITION.get(self._data.latest_data['forecasts']["weather"]["days"][0]["entries"][0].get("precisCode"))
 
     @property
-    def temperature(self):
+    def native_temperature(self):
         """Return the temperature."""
         return self._data.latest_data['observational']["observations"]["temperature"].get("temperature")
 
     @property
-    def pressure(self):
+    def native_pressure(self):
         """Return the pressure."""
         return self._data.latest_data['observational']["observations"]["pressure"].get("pressure")
 
@@ -139,7 +139,7 @@ class WWWeatherForecast(WeatherEntity):
         return self._data.latest_data['observational']["observations"]["humidity"].get("percentage")
 
     @property
-    def wind_speed(self):
+    def native_wind_speed(self):
         """Return the wind speed."""
         return self._data.latest_data['observational']["observations"]["wind"].get("speed")
 
@@ -154,7 +154,7 @@ class WWWeatherForecast(WeatherEntity):
         return ATTRIBUTION
 
     @property
-    def temperature_unit(self):
+    def native_temperature_unit(self):
         """Return the unit of measurement."""
         return self._unit
 
@@ -168,9 +168,9 @@ class WWWeatherForecast(WeatherEntity):
                 date_string = datetime.strptime(v['entries'][0]['dateTime'], "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%dT%H:%M:%S")
                 data_dict = {
                     ATTR_FORECAST_TIME: date_string,
-                    ATTR_FORECAST_TEMP: v['entries'][0]['max'],
-                    ATTR_FORECAST_TEMP_LOW: v['entries'][0]['min'],
-                    ATTR_FORECAST_PRECIPITATION: self._data.latest_data['forecasts']["rainfall"]["days"][num]['entries'][0]['endRange'],
+                    ATTR_FORECAST_NATIVE_TEMP: v['entries'][0]['max'],
+                    ATTR_FORECAST_NATIVE_TEMP_LOW: v['entries'][0]['min'],
+                    ATTR_FORECAST_NATIVE_PRECIPITATION: self._data.latest_data['forecasts']["rainfall"]["days"][num]['entries'][0]['endRange'],
                     ATTR_FORECAST_PRECIPITATION_PROBABILITY: self._data.latest_data['forecasts']["rainfall"]["days"][num]['entries'][0]['probability'],
                     ATTR_FORECAST_CONDITION: MAP_CONDITION.get(v['entries'][0]['precisCode'])
                 }
