@@ -1,236 +1,165 @@
-"""Support for the WillyWeather Australia service."""
+"""Support for the WillyWeather Australia weather service."""
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
+from typing import Any
 
-import requests
-import voluptuous as vol
-
-import homeassistant.helpers.config_validation as cv
 from homeassistant.components.weather import (
-    ATTR_FORECAST_CONDITION, ATTR_FORECAST_NATIVE_TEMP, ATTR_FORECAST_NATIVE_TEMP_LOW, ATTR_FORECAST_NATIVE_PRECIPITATION,
-    ATTR_FORECAST_PRECIPITATION_PROBABILITY, ATTR_FORECAST_TIME, PLATFORM_SCHEMA, WeatherEntity)
-from homeassistant.const import (TEMP_CELSIUS, CONF_NAME, STATE_UNKNOWN)
-from homeassistant.util import Throttle
-_RESOURCE = 'https://api.willyweather.com.au/v2/{}/locations/{}/weather.json?observational=true&forecasts=weather,rainfall&days={}'
-_CLOSEST =  'https://api.willyweather.com.au/v2/{}/search.json'
+    ATTR_FORECAST_CONDITION,
+    ATTR_FORECAST_NATIVE_PRECIPITATION,
+    ATTR_FORECAST_NATIVE_TEMP,
+    ATTR_FORECAST_NATIVE_TEMP_LOW,
+    ATTR_FORECAST_PRECIPITATION_PROBABILITY,
+    ATTR_FORECAST_TIME,
+    Forecast,
+    WeatherEntity,
+)
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import UnitOfTemperature
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
+from .const import (
+    ATTRIBUTION,
+    CONF_API_KEY,
+    CONF_DAYS,
+    CONF_STATION_ID,
+    DEFAULT_DAYS,
+    DOMAIN,
+    MAP_CONDITION,
+)
+from .coordinator import WillyWeatherForecastCoordinator
+
 _LOGGER = logging.getLogger(__name__)
 
-ATTRIBUTION = "Data provided by WillyWeather"
 
-CONF_DAYS = 'days'
-CONF_STATION_ID = 'station_id'
-CONF_API_KEY = 'api_key'
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up WillyWeather weather based on a config entry."""
+    api_key = entry.data[CONF_API_KEY]
+    station_id = entry.data[CONF_STATION_ID]
+    days = entry.data.get(CONF_DAYS, DEFAULT_DAYS)
 
-DEFAULT_NAME = 'WW'
+    coordinator = WillyWeatherForecastCoordinator(hass, api_key, station_id, days)
+    await coordinator.async_config_entry_first_refresh()
 
-MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=30)
-
-MAP_CONDITION = {
-'fine' : 'sunny',
-'mostly-fine' : 'sunny',
-'high-cloud' : 'partlycloudy',
-'partly-cloudy' : 'partlycloudy',
-'mostly-cloudy' : 'cloudy',
-'cloudy' : 'cloudy',
-'overcast' : 'cloudy',
-'shower-or-two' : 'rainy',
-'chance-shower-fine' : 'rainy',
-'chance-shower-cloud' : 'rainy',
-'drizzle' : 'rainy',
-'few-showers' : 'rainy',
-'showers-rain' : 'rainy',
-'heavy-showers-rain' : 'pouring',
-'chance-thunderstorm-fine' : 'lightning',
-'chance-thunderstorm-cloud' : 'lightning',
-'chance-thunderstorm-showers' :  'lightning-rainy',
-'thunderstorm' : 'lightning-rainy',
-'chance-snow-fine' : 'snowy',
-'chance-snow-cloud' : 'snowy',
-'snow-and-rain' : 'snowy-rainy',
-'light-snow' : 'snowy',
-'snow' : 'snowy',
-'heavy-snow' : 'snowy',
-'wind' : 'windy',
-'frost' : 'clear-night',
-'fog' : 'fog',
-'hail' : 'hail',
-'dust' : 'exceptional'
-}
-
-def validate_days(days):
-    """Check that days is within bounds."""
-    if days not in range(1,7):
-        raise vol.error.Invalid("Days is out of Range")
-    return days
-    
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_API_KEY): cv.string,
-    vol.Optional(CONF_STATION_ID): cv.string,
-    vol.Optional(CONF_DAYS, default=5): validate_days,
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-})
-
-def setup_platform(hass, config, add_entities, discovery_info=None):
-    """Set up the WillyWeather weather sensor."""
-
-    unit = hass.config.units.temperature_unit
-    station_id = config.get(CONF_STATION_ID)
-    api_key = config.get(CONF_API_KEY)
-    days = config.get(CONF_DAYS)
-    name = config.get(CONF_NAME)
-
-    # If no station_id determine from Home Assistant lat/long
-    if station_id is None:
-        station_id = get_station_id(hass.config.latitude, hass.config.longitude, api_key)
-        if station_id is None:
-            _LOGGER.critical("Can't retrieve Station from WillyWeather")
-            return False
-
-    ww_data = WeatherData(api_key, station_id, days)
-
-    try:
-        ww_data.update()
-    except ValueError as err:
-        _LOGGER.error("Received error from WillyWeather: %s", err)
-        return
-
-    add_entities([WWWeatherForecast(ww_data, name, unit)], True)
+    async_add_entities([WWWeatherForecast(coordinator, station_id)])
 
 
-class WWWeatherForecast(WeatherEntity):
+class WWWeatherForecast(CoordinatorEntity, WeatherEntity):
     """Implementation of the WillyWeather weather component."""
 
-    def __init__(self, weather_data, name, unit):
+    _attr_attribution = ATTRIBUTION
+    _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
+    _attr_native_pressure_unit = "hPa"
+    _attr_native_wind_speed_unit = "km/h"
+    _attr_native_precipitation_unit = "mm"
+
+    def __init__(
+        self,
+        coordinator: WillyWeatherForecastCoordinator,
+        station_id: str,
+    ) -> None:
         """Initialize the component."""
-        self._name = name
-        self._data = weather_data
-        self._unit = unit
-
-    @property
-    def name(self):
-        """Return the name."""
-        if self._name == 'WW':
-            return self._data.latest_data['location']["name"]
-        return self._name
-
-    @property
-    def unique_id(self):
-        """Return the sensor unique id."""
-        return f"{self._name} weather"
-
-    @property
-    def condition(self):
-        """Return the weather condition."""
-        return MAP_CONDITION.get(self._data.latest_data['forecasts']["weather"]["days"][0]["entries"][0].get("precisCode"))
-
-    @property
-    def native_temperature(self):
-        """Return the temperature."""
-        return self._data.latest_data['observational']["observations"]["temperature"].get("temperature")
-
-    @property
-    def native_pressure(self):
-        """Return the pressure."""
-        return self._data.latest_data['observational']["observations"]["pressure"].get("pressure")
-
-    @property
-    def humidity(self):
-        """Return the humidity."""
-        return self._data.latest_data['observational']["observations"]["humidity"].get("percentage")
-
-    @property
-    def native_wind_speed(self):
-        """Return the wind speed."""
-        return self._data.latest_data['observational']["observations"]["wind"].get("speed")
-
-    @property
-    def wind_bearing(self):
-        """Return the wind direction."""
-        return self._data.latest_data['observational']["observations"]["wind"].get("direction")
-
-    @property
-    def attribution(self):
-        """Return the attribution."""
-        return ATTRIBUTION
-
-    @property
-    def native_temperature_unit(self):
-        """Return the unit of measurement."""
-        return self._unit
-
-    @property
-    def forecast(self):
-        """Return the forecast array."""
-        try:
-
-            forecast_data = []
-            for  num, v in enumerate(self._data.latest_data['forecasts']["weather"]["days"]):
-                date_string = datetime.strptime(v['entries'][0]['dateTime'], "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%dT%H:%M:%S")
-                data_dict = {
-                    ATTR_FORECAST_TIME: date_string,
-                    ATTR_FORECAST_NATIVE_TEMP: v['entries'][0]['max'],
-                    ATTR_FORECAST_NATIVE_TEMP_LOW: v['entries'][0]['min'],
-                    ATTR_FORECAST_NATIVE_PRECIPITATION: self._data.latest_data['forecasts']["rainfall"]["days"][num]['entries'][0]['endRange'],
-                    ATTR_FORECAST_PRECIPITATION_PROBABILITY: self._data.latest_data['forecasts']["rainfall"]["days"][num]['entries'][0]['probability'],
-                    ATTR_FORECAST_CONDITION: MAP_CONDITION.get(v['entries'][0]['precisCode'])
-                }
-                forecast_data.append(data_dict)
-            return forecast_data
-
-        except (ValueError, IndexError):
-            return STATE_UNKNOWN
-
-    def update(self):
-        """Get the latest data from WillyWeather and updates the states."""
-        self._data.update()
-        if not self._data:
-            _LOGGER.info("Didn't receive weather data from WillyWeather")
-            return
-
-class WeatherData:
-    """Handle WillyWeather API object and limit updates."""
-
-    def __init__(self, api_key, station_id, days):
-        """Initialize the data object."""
-        self._api_key = api_key
+        super().__init__(coordinator)
         self._station_id = station_id
-        self._days = days
-
-    def _build_url(self):
-        """Build the URL for the requests."""
-        url = _RESOURCE.format(self._api_key, self._station_id, self._days)
-        _LOGGER.debug("WillyWeather URL: %s", url)
-        return url
+        self._attr_unique_id = f"{station_id}_weather"
 
     @property
-    def latest_data(self):
-        """Return the latest data object."""
-        if self._data:
-            return self._data
+    def name(self) -> str:
+        """Return the name."""
+        if self.coordinator.data:
+            location_name = self.coordinator.data.get("location", {}).get("name")
+            if location_name:
+                return f"WillyWeather {location_name}"
+        return f"WillyWeather {self._station_id}"
+
+    @property
+    def condition(self) -> str | None:
+        """Return the weather condition."""
+        if not self.coordinator.data:
+            return None
+
+        try:
+            forecasts = self.coordinator.data.get("forecasts", {})
+            weather_days = forecasts.get("weather", {}).get("days", [])
+            if weather_days:
+                precis_code = weather_days[0].get("entries", [{}])[0].get("precisCode")
+                return MAP_CONDITION.get(precis_code)
+        except (KeyError, IndexError, TypeError):
+            return None
+
         return None
 
-    @Throttle(MIN_TIME_BETWEEN_UPDATES)
-    def update(self):
-        """Get the latest data from WillyWeather."""
-        result = requests.get(self._build_url(), timeout=10).json()
-        self._data = result
-        return
+    @property
+    def native_temperature(self) -> float | None:
+        """Return the temperature."""
+        if not self.coordinator.data:
+            return None
 
-def get_station_id(lat, lng, api_key):
+        try:
+            observational = self.coordinator.data.get("observational", {})
+            return observational.get("observations", {}).get("temperature", {}).get("temperature")
+        except (KeyError, TypeError):
+            return None
 
-    closestURL = _CLOSEST.format(api_key)
-    closestURLParams = [
-        ("lat", lat),
-        ("lng", lng),
-        ("units", "distance:km")
-    ]
+    @property
+    def native_pressure(self) -> float | None:
+        """Return the pressure."""
+        if not self.coordinator.data:
+            return None
 
-    try:
-        resp = requests.get(closestURL, params=closestURLParams, timeout=10).json()
-        if resp is None:
-            return
+        try:
+            observational = self.coordinator.data.get("observational", {})
+            return observational.get("observations", {}).get("pressure", {}).get("pressure")
+        except (KeyError, TypeError):
+            return None
 
-        return resp['location']['id']
+    @property
+    def humidity(self) -> float | None:
+        """Return the humidity."""
+        if not self.coordinator.data:
+            return None
 
-    except ValueError as err:
-        _LOGGER.error("*** Error finding closest station")
+        try:
+            observational = self.coordinator.data.get("observational", {})
+            return observational.get("observations", {}).get("humidity", {}).get("percentage")
+        except (KeyError, TypeError):
+            return None
+
+    @property
+    def native_wind_speed(self) -> float | None:
+        """Return the wind speed."""
+        if not self.coordinator.data:
+            return None
+
+        try:
+            observational = self.coordinator.data.get("observational", {})
+            return observational.get("observations", {}).get("wind", {}).get("speed")
+        except (KeyError, TypeError):
+            return None
+
+    @property
+    def wind_bearing(self) -> float | None:
+        """Return the wind direction."""
+        if not self.coordinator.data:
+            return None
+
+        try:
+            observational = self.coordinator.data.get("observational", {})
+            return observational.get("observations", {}).get("wind", {}).get("direction")
+        except (KeyError, TypeError):
+            return None
+
+    @property
+    def forecast(self) -> list[Forecast] | None:
+        """Return the forecast array."""
+        if not self.coordinator.data:
+            return None
+
+        try:
+            forecasts = self.coordinator.data.get("forecasts", {})
+            weather_days = forec
