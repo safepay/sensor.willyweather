@@ -162,4 +162,48 @@ class WWWeatherForecast(CoordinatorEntity, WeatherEntity):
 
         try:
             forecasts = self.coordinator.data.get("forecasts", {})
-            weather_days = forec
+            weather_days = forecasts.get("weather", {}).get("days", [])
+            rainfall_days = forecasts.get("rainfall", {}).get("days", [])
+
+            forecast_data = []
+            for num, day in enumerate(weather_days):
+                if not day.get("entries"):
+                    continue
+
+                entry = day["entries"][0]
+                date_string = entry.get("dateTime")
+                
+                if date_string:
+                    # Parse and format the datetime
+                    dt = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+                    formatted_time = dt.isoformat()
+                else:
+                    continue
+
+                # Get rainfall data if available
+                rain_amount = None
+                rain_prob = None
+                if num < len(rainfall_days) and rainfall_days[num].get("entries"):
+                    rain_entry = rainfall_days[num]["entries"][0]
+                    rain_amount = rain_entry.get("endRange")
+                    rain_prob = rain_entry.get("probability")
+
+                forecast_dict: Forecast = {
+                    ATTR_FORECAST_TIME: formatted_time,
+                    ATTR_FORECAST_NATIVE_TEMP: entry.get("max"),
+                    ATTR_FORECAST_NATIVE_TEMP_LOW: entry.get("min"),
+                    ATTR_FORECAST_CONDITION: MAP_CONDITION.get(entry.get("precisCode")),
+                }
+
+                if rain_amount is not None:
+                    forecast_dict[ATTR_FORECAST_NATIVE_PRECIPITATION] = rain_amount
+                if rain_prob is not None:
+                    forecast_dict[ATTR_FORECAST_PRECIPITATION_PROBABILITY] = rain_prob
+
+                forecast_data.append(forecast_dict)
+
+            return forecast_data if forecast_data else None
+
+        except (KeyError, IndexError, TypeError, ValueError) as err:
+            _LOGGER.error("Error parsing forecast data: %s", err)
+            return None
