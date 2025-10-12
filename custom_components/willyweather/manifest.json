@@ -1,10 +1,12 @@
 {
   "domain": "willyweather",
   "name": "WillyWeather",
-  "version": "1.5.3",
+  "version": "2.0.0",
   "documentation": "https://github.com/safepay/Home-Assistant-WillyWeather/blob/master/README.md",
   "issue_tracker": "https://github.com/safepay/sensor.willyweather/issues",
   "dependencies": [],
   "codeowners": ["@safepay"],
-  "requirements": []
+  "requirements": ["aiohttp>=3.8.0"],
+  "config_flow": true,
+  "iot_class": "cloud_polling"
 }
