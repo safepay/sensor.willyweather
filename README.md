@@ -1,117 +1,90 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/custom-components/hacs) [![willyweather](https://img.shields.io/github/release/safepay/sensor.willyweather.svg)](https://github.com/safepay/sensor.willyweather) ![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)
 
 
-# WillyWeather Custom Component for Home Assistant
-WillyWeather is an Australian weather service that presents Bureau of Meteorology data in an easy to use interface.
-It also provides a Rest API that is easier to use than the cumbersome BoM API's.
-https://www.willyweather.com.au/api/docs/v2.html
+# WillyWeather Integration for Home Assistant
 
-Note that the service is commercial but it is very cheap.
+This custom integration provides weather data from WillyWeather Australia to Home Assistant.
 
-The main difference with this sensor is that it returns all data regardless of your location.
-In some areas of Australia, a single weather station will not provide all data. WillyWeather sources data from multiple local weather stations to give you the best result.
+## Features
 
-This is also very easy to configure, using your lat and long settings in HA, and creates minimal HA overhead due to RESTful API.
+- **Weather Entity**: Real-time weather conditions with daily forecast support via the `weather.get_forecasts` service
+- **Observational Sensors**: Temperature, humidity, pressure, wind speed, rainfall, UV index, and more
+- **Automatic Station Detection**: Finds the closest WillyWeather station based on your Home Assistant location
+- **Configurable**: Enable/disable individual sensors through the UI
 
 ## Installation
-Install the directory and all files within a custom_componenets directory within your Home Assistant config directory or, alternatively, install via [HACS](http://hacs.xyz).
-You must obtain an API key from your WillyWeather account at www.willyweather.com.au.
 
-### Register for the WillyWeather API
-Go to https://www.willyweather.com.au/info/api.html.
+### HACS (Recommended)
 
-Select "Single Location" and click "Next".
+1. Add this repository as a custom repository in HACS
+2. Search for "WillyWeather" in HACS
+3. Click Install
+4. Restart Home Assistant
 
-Select "Show sub-items" next to "Weather" to reveal the sub-menu.
+### Manual Installation
 
-Tick "Observational".
+1. Copy the `custom_components/willyweather` folder to your Home Assistant's `custom_components` directory
+2. Restart Home Assistant
 
-Select "Show sub-items" next to "Forecasts" to reveal the sub-menu.
+## Configuration
 
-Tick "Weather" and "Rainfall" and click "Next".
+### Through the UI (Recommended)
 
-![WillyWeather Example Config](https://github.com/safepay/sensor.willyweather/raw/master/willyweather_api_config.png)
+1. Go to **Settings** → **Devices & Services**
+2. Click **Add Integration**
+3. Search for "WillyWeather"
+4. Enter your WillyWeather API key
+5. (Optional) Enter a specific station ID, or leave blank to auto-detect the closest station
 
-Complete the process with your own information, including your credit card.
+### API Key
 
-### Add Home Assistant Integration
-In Home Assistant, add a new integration and select Willy Weather.
+You need a WillyWeather API key to use this integration. Get your API key from:
+https://www.willyweather.com.au/info/api.html
 
-### CONFIGURATION VARIABLES
-key | required | type | default | description
---- | -------- | ---- | ------- | -----------
-`api_key` | yes | string | | The API Key for your account at the WillyWeather website.
-`station_id` | no | string | closest | The station ID as identified from the WillyWeather website.
-`name` | no | string | `WW` | The name you would like to give to the weather station.
-`forecast_days` | no | int | None | Generate additional sensors for each forecast day which can then be used in other components such as the DarkSky Weather Card.
-`monitored_conditions` | no | list | all | A list of the conditions to monitor from: `temperature`, `apparent_temperature`, `cloud`, `humidity`, `dewpoint`, `pressure`, `wind_speed`, `wind_gust`, `wind_direction`, `rainlasthour`, `raintoday`, `rainsince9am`
+## Entities
 
-### DarkSky Weather Card
+### Weather Entity
 
-These sensors support the [DarkSky Weather Card](https://github.com/clayauld/lovelace-darksky-card)
+The integration creates a weather entity that provides:
+- Current conditions
+- Temperature (actual and apparent)
+- Humidity
+- Pressure
+- Wind speed and direction
+- Daily forecasts (accessed via `weather.get_forecasts` service)
 
-Add:
+### Sensors
+
+The following sensors are available (can be disabled in options):
+
+**Temperature & Humidity**
+- Temperature
+- Feels Like (Apparent Temperature)
+- Humidity
+- Dew Point
+
+**Wind**
+- Wind Speed
+- Wind Gust
+- Wind Direction (degrees)
+- Wind Direction (text)
+
+**Precipitation**
+- Rain Last Hour
+- Rain Today
+- Rain Since 9am
+
+**Other**
+- Pressure
+- Cloud Cover
+- UV Index
+
+## Using Forecasts
+
+Home Assistant 2024.3+ uses a service-based approach for weather forecasts. To get forecast data:
 ```yaml
-    forecast_days: 7
-```
-to your config, then follow the DarkSky README.
-
-To get the card working use:
-```
-type: custom:lovelace-darksky-card
-entity_current_conditions: sensor.ww_day_0_icon
-entity_current_text: sensor.ww_day_0_summary
-entity_forecast_high_temp_1: sensor.ww_day_1_max_temp
-entity_forecast_high_temp_2: sensor.ww_day_2_max_temp
-entity_forecast_high_temp_3: sensor.ww_day_3_max_temp
-entity_forecast_high_temp_4: sensor.ww_day_4_max_temp
-entity_forecast_high_temp_5: sensor.ww_day_5_max_temp
-entity_forecast_icon_1: sensor.ww_day_1_icon
-entity_forecast_icon_2: sensor.ww_day_2_icon
-entity_forecast_icon_3: sensor.ww_day_3_icon
-entity_forecast_icon_4: sensor.ww_day_4_icon
-entity_forecast_icon_5: sensor.ww_day_5_icon
-entity_forecast_low_temp_1: sensor.ww_day_1_min_temp
-entity_forecast_low_temp_2: sensor.ww_day_2_min_temp
-entity_forecast_low_temp_3: sensor.ww_day_3_min_temp
-entity_forecast_low_temp_4: sensor.ww_day_4_min_temp
-entity_forecast_low_temp_5: sensor.ww_day_5_min_temp
-entity_summary_1: sensor.ww_day_1_summary
-entity_summary_2: sensor.ww_day_2_summary
-entity_summary_3: sensor.ww_day_3_summary
-entity_summary_4: sensor.ww_day_4_summary
-entity_summary_5: sensor.ww_day_5_summary
-entity_temperature: sensor.ww_temperature
-entity_sun: sun.sun
-entity_daytime_high: sensor.ww_day_0_max_temp
-entity_wind_bearing: sensor.ww_wind_bearing
-entity_wind_speed: sensor.ww_wind_speed
-entity_humidity: sensor.ww_humidity
-entity_pressure: sensor.ww_pressure
-entity_apparent_temp: sensor.ww_feels_like
-entity_pop: sensor.ww_day_0_rain_probability
-entity_pop_1: sensor.ww_day_1_rain_probability
-entity_pop_2: sensor.ww_day_2_rain_probability
-entity_pop_3: sensor.ww_day_3_rain_probability
-entity_pop_4: sensor.ww_day_4_rain_probability
-entity_pop_5: sensor.ww_day_5_rain_probability
-```
-
-## Weather
-
-The willyweather weather component provides observational data and a four day forecast for the closest weather station.
-
-To add WillyWeather sensors to your installation, add the desired lines from the following example to your configuration.yaml file:
-
-### Example configuration.yaml entry
-```yaml
-weather:
-  - platform: willyweather
-    api_key: your_api_key
-```
-### CONFIGURATION VARIABLES
-key | required | type | default | description
---- | -------- | ---- | ------- | -----------
-`api_key` | yes | string | | The API Key for your account at the WillyWeather website.
-`station_id` | no | string | closest | The station ID as identified from the WillyWeather website.
-`name` | no | string | closest | The name you would like to give to the weather station.
+service: weather.get_forecasts
+data:
+  type: daily
+target:
+  entity_id: weather.willyweather_<your_station>
