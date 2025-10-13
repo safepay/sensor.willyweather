@@ -34,21 +34,9 @@ Tick "Weather" and "Rainfall" and click "Next".
 
 Complete the process with your own information, including your credit card.
 
-### Location Selection
-The location is determined from the closest station based on the lat/long in Home Assistant.
-This can be over-written by station_id in the config
+### Add Home Assistant Integration
+In Home Assistant, add a new integration and select Willy Weather.
 
-## Sensor
-The willyweather sensor provides observational data for the closest weather station.
-
-To add WillyWeather sensors to your installation, add the desired lines from the following example to your configuration.yaml file:
-
-### Example configuration.yaml entry
-```yaml
-sensor:
-  - platform: willyweather
-    api_key: your_api_key
-```
 ### CONFIGURATION VARIABLES
 key | required | type | default | description
 --- | -------- | ---- | ------- | -----------
