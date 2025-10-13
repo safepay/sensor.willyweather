@@ -13,18 +13,15 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv
 
 from .const import (
-    CONF_FORECAST_DAYS,
-    CONF_FORECAST_RAINFALL,
-    CONF_FORECAST_SUNRISESUNSET,
-    CONF_FORECAST_TIDES,
-    CONF_FORECAST_UV,
-    CONF_SENSOR_FORMAT,
+    CONF_INCLUDE_OBSERVATIONAL,
+    CONF_INCLUDE_WARNINGS,
+    CONF_ADDITIONAL_FORECAST,
+    CONF_INCLUDE_UV,
+    CONF_INCLUDE_TIDES,
+    CONF_INCLUDE_WIND,
     CONF_STATION_ID,
     CONF_STATION_NAME,
-    DEFAULT_FORECAST_DAYS,
     DOMAIN,
-    SENSOR_FORMAT_BOM,
-    SENSOR_FORMAT_DARKSKY,
 )
 from .coordinator import async_get_station_id, async_get_station_name
 
@@ -97,7 +94,7 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_STATION_ID: station_id,
                     CONF_STATION_NAME: station_name,
                 }
-                return await self.async_step_forecasts()
+                return await self.async_step_sensors()
 
         data_schema = vol.Schema(
             {
@@ -115,10 +112,10 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             },
         )
 
-    async def async_step_forecasts(
+    async def async_step_sensors(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Configure forecast options."""
+        """Configure sensor options."""
         if user_input is not None:
             await self.async_set_unique_id(f"{DOMAIN}_{self.init_data[CONF_STATION_ID]}")
             self._abort_if_unique_id_configured()
@@ -127,35 +124,26 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 title=self.init_data[CONF_STATION_NAME] or f"WillyWeather {self.init_data[CONF_STATION_ID]}",
                 data=self.init_data,
                 options={
-                    CONF_SENSOR_FORMAT: user_input[CONF_SENSOR_FORMAT],
-                    CONF_FORECAST_DAYS: user_input[CONF_FORECAST_DAYS],
-                    CONF_FORECAST_RAINFALL: user_input.get(CONF_FORECAST_RAINFALL, False),
-                    CONF_FORECAST_UV: user_input.get(CONF_FORECAST_UV, False),
-                    CONF_FORECAST_SUNRISESUNSET: user_input.get(CONF_FORECAST_SUNRISESUNSET, False),
-                    CONF_FORECAST_TIDES: user_input.get(CONF_FORECAST_TIDES, False),
+                    CONF_INCLUDE_OBSERVATIONAL: user_input.get(CONF_INCLUDE_OBSERVATIONAL, True),
+                    CONF_INCLUDE_WARNINGS: user_input.get(CONF_INCLUDE_WARNINGS, False),
+                    CONF_INCLUDE_UV: user_input.get(CONF_INCLUDE_UV, False),
+                    CONF_INCLUDE_TIDES: user_input.get(CONF_INCLUDE_TIDES, False),
+                    CONF_INCLUDE_WIND: user_input.get(CONF_INCLUDE_WIND, False),
                 },
             )
 
         data_schema = vol.Schema(
             {
-                vol.Required(CONF_SENSOR_FORMAT, default=SENSOR_FORMAT_DARKSKY): vol.In(
-                    {
-                        SENSOR_FORMAT_DARKSKY: "Dark Sky Compatible (for weather cards)",
-                        SENSOR_FORMAT_BOM: "Bureau of Meteorology Compatible (for BoM weather card)",
-                    }
-                ),
-                vol.Required(CONF_FORECAST_DAYS, default=DEFAULT_FORECAST_DAYS): vol.All(
-                    vol.Coerce(int), vol.Range(min=1, max=7)
-                ),
-                vol.Optional(CONF_FORECAST_RAINFALL, default=False): cv.boolean,
-                vol.Optional(CONF_FORECAST_UV, default=False): cv.boolean,
-                vol.Optional(CONF_FORECAST_SUNRISESUNSET, default=False): cv.boolean,
-                vol.Optional(CONF_FORECAST_TIDES, default=False): cv.boolean,
+                vol.Required(CONF_INCLUDE_OBSERVATIONAL, default=True): cv.boolean,
+                vol.Required(CONF_INCLUDE_WARNINGS, default=False): cv.boolean,
+                vol.Optional(CONF_INCLUDE_UV, default=False): cv.boolean,
+                vol.Optional(CONF_INCLUDE_TIDES, default=False): cv.boolean,
+                vol.Optional(CONF_INCLUDE_WIND, default=False): cv.boolean,
             }
         )
 
         return self.async_show_form(
-            step_id="forecasts",
+            step_id="sensors",
             data_schema=data_schema,
             description_placeholders={
                 "station_name": self.init_data[CONF_STATION_NAME],
@@ -190,34 +178,24 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
             data_schema=vol.Schema(
                 {
                     vol.Required(
-                        CONF_SENSOR_FORMAT,
-                        default=self.config_entry.options.get(CONF_SENSOR_FORMAT, SENSOR_FORMAT_DARKSKY),
-                    ): vol.In(
-                        {
-                            SENSOR_FORMAT_DARKSKY: "Dark Sky Compatible (for weather cards)",
-                            SENSOR_FORMAT_BOM: "Bureau of Meteorology Compatible (for BoM weather card)",
-                        }
-                    ),
+                        CONF_INCLUDE_OBSERVATIONAL,
+                        default=self.config_entry.options.get(CONF_INCLUDE_OBSERVATIONAL, True),
+                    ): cv.boolean,
                     vol.Required(
-                        CONF_FORECAST_DAYS,
-                        default=self.config_entry.options.get(CONF_FORECAST_DAYS, DEFAULT_FORECAST_DAYS),
-                    ): vol.All(vol.Coerce(int), vol.Range(min=1, max=7)),
-                    vol.Optional(
-                        CONF_FORECAST_RAINFALL,
-                        default=self.config_entry.options.get(CONF_FORECAST_RAINFALL, False),
+                        CONF_INCLUDE_WARNINGS,
+                        default=self.config_entry.options.get(CONF_INCLUDE_WARNINGS, False),
                     ): cv.boolean,
                     vol.Optional(
-                        CONF_FORECAST_UV,
-                        default=self.config_entry.options.get(CONF_FORECAST_UV, False),
+                        CONF_INCLUDE_UV,
+                        default=self.config_entry.options.get(CONF_INCLUDE_UV, False),
                     ): cv.boolean,
                     vol.Optional(
-                        CONF_FORECAST_SUNRISESUNSET,
-                        default=self.config_entry.options.get(CONF_FORECAST_SUNRISESUNSET, False),
+                        CONF_INCLUDE_TIDES,
+                        default=self.config_entry.options.get(CONF_INCLUDE_TIDES, False),
                     ): cv.boolean,
                     vol.Optional(
-                        CONF_FORECAST_TIDES,
-                        default=self.config_entry.options.get(CONF_FORECAST_TIDES, False),
+                        CONF_INCLUDE_WIND,
+                        default=self.config_entry.options.get(CONF_INCLUDE_WIND, False),
                     ): cv.boolean,
                 }
-            ),
-        )
+            ),        )

@@ -17,13 +17,12 @@ from homeassistant.util import dt as dt_util
 from .const import (
     API_BASE_URL,
     API_TIMEOUT,
-    CONF_FORECAST_DAYS,
-    CONF_FORECAST_RAINFALL,
-    CONF_FORECAST_SUNRISESUNSET,
-    CONF_FORECAST_TIDES,
-    CONF_FORECAST_UV,
     CONF_STATION_ID,
-    DEFAULT_FORECAST_DAYS,
+    CONF_INCLUDE_OBSERVATIONAL,
+    CONF_INCLUDE_UV,
+    CONF_INCLUDE_TIDES,
+    CONF_INCLUDE_WIND,
+    CONF_INCLUDE_WARNINGS,
     DOMAIN,
     UPDATE_INTERVAL_OBSERVATION,
 )
@@ -65,27 +64,32 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
             # Build forecast parameters based on enabled options
             forecast_types = ["weather"]  # Always include weather
             
-            if self.entry.options.get(CONF_FORECAST_RAINFALL, False):
-                forecast_types.append("rainfall")
-            if self.entry.options.get(CONF_FORECAST_UV, False):
+            if self.entry.options.get(CONF_INCLUDE_UV, False):
                 forecast_types.append("uv")
-            if self.entry.options.get(CONF_FORECAST_SUNRISESUNSET, False):
-                forecast_types.append("sunrisesunset")
-            if self.entry.options.get(CONF_FORECAST_TIDES, False):
+            if self.entry.options.get(CONF_INCLUDE_WIND, False):
+                forecast_types.append("wind")
+            if self.entry.options.get(CONF_INCLUDE_TIDES, False):
                 forecast_types.append("tides")
             
-            # Get number of forecast days
-            forecast_days = self.entry.options.get(CONF_FORECAST_DAYS, DEFAULT_FORECAST_DAYS)
+            # Always fetch sun/moon for weather entity if observational is enabled
+            if self.entry.options.get(CONF_INCLUDE_OBSERVATIONAL, True):
+                forecast_types.append("sunrisesunset")
             
             # Fetch observational and forecast data
             observational_data = await self._fetch_observational_data()
-            forecast_data = await self._fetch_forecast_data(forecast_types, forecast_days)
+            forecast_data = await self._fetch_forecast_data(forecast_types)
+            
+            # Fetch warning data if enabled
+            warning_data = None
+            if self.entry.options.get(CONF_INCLUDE_WARNINGS, False):
+                warning_data = await self._fetch_warning_data()
 
             _LOGGER.debug("Successfully fetched data from WillyWeather API")
 
             return {
                 "observational": observational_data,
                 "forecast": forecast_data,
+                "warnings": warning_data,
                 "last_update": dt_util.utcnow(),
             }
 
@@ -122,7 +126,7 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                         _LOGGER.error("API key is invalid (401 Unauthorized)")
                         raise UpdateFailed("Invalid API key")
                     elif response.status == 403:
-                        _LOGGER.error("API key doesn't have access (403 Forbidden)")
+                        _LOGGER.error("API key does not have access (403 Forbidden)")
                         raise UpdateFailed("API key access denied")
                     elif response.status == 404:
                         _LOGGER.error("Station ID %s not found (404)", self.station_id)
@@ -139,13 +143,9 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                         raise UpdateFailed(f"HTTP error {response.status}")
                     
                     data = await response.json()
-                    _LOGGER.debug("Observational data structure: %s", data.keys() if isinstance(data, dict) else type(data))
-                    
                     obs_data = data.get("observational", {})
                     if not obs_data:
                         _LOGGER.warning("No observational data in response")
-                    else:
-                        _LOGGER.debug("Observational sub-keys: %s", obs_data.keys())
                     
                     return obs_data
                     
@@ -156,12 +156,12 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER.error("Network error fetching observational data: %s", err)
             raise UpdateFailed(f"Network error: {err}") from err
 
-    async def _fetch_forecast_data(self, forecast_types: list[str], days: int) -> dict[str, Any]:
+    async def _fetch_forecast_data(self, forecast_types: list[str]) -> dict[str, Any]:
         """Fetch forecast weather data."""
         url = f"{API_BASE_URL}/{self.api_key}/locations/{self.station_id}/weather.json"
         params = {
             "forecasts": ",".join(forecast_types),
-            "days": str(days),
+            "days": "7",
             "units": "distance:km,temperature:c,amount:mm,speed:km/h,pressure:hpa,tideHeight:m,swellHeight:m",
         }
 
@@ -176,7 +176,7 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                         _LOGGER.error("API key is invalid (401 Unauthorized)")
                         raise UpdateFailed("Invalid API key")
                     elif response.status == 403:
-                        _LOGGER.error("API key doesn't have access (403 Forbidden)")
+                        _LOGGER.error("API key does not have access (403 Forbidden)")
                         raise UpdateFailed("API key access denied")
                     elif response.status == 404:
                         _LOGGER.error("Station ID %s not found (404)", self.station_id)
@@ -193,8 +193,6 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                         raise UpdateFailed(f"HTTP error {response.status}")
                     
                     data = await response.json()
-                    _LOGGER.debug("Forecast data structure: %s", data.keys() if isinstance(data, dict) else type(data))
-                    
                     return {
                         "location": data.get("location", {}),
                         "forecasts": data.get("forecasts", {}),
@@ -207,6 +205,45 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER.error("Network error fetching forecast data: %s", err)
             raise UpdateFailed(f"Network error: {err}") from err
 
+    async def _fetch_warning_data(self) -> dict[str, Any]:
+        """Fetch warning data for location."""
+        url = f"{API_BASE_URL}/{self.api_key}/locations/{self.station_id}/warnings.json"
+        params = {
+            "area": "location",
+        }
+
+        _LOGGER.debug("Fetching warning data from: %s", url)
+
+        try:
+            async with async_timeout.timeout(API_TIMEOUT):
+                async with self._session.get(url, params=params) as response:
+                    if response.status == 401:
+                        _LOGGER.error("API key is invalid (401 Unauthorized)")
+                        return {}
+                    elif response.status == 403:
+                        _LOGGER.error("API key does not have access (403 Forbidden)")
+                        return {}
+                    elif response.status == 404:
+                        _LOGGER.debug("No warnings available for this location")
+                        return {}
+                    elif response.status != 200:
+                        _LOGGER.debug(
+                            "Warning data not available: HTTP %s",
+                            response.status,
+                        )
+                        return {}
+                    
+                    data = await response.json()
+                    # Response is an array of warnings
+                    return {"warnings": data if isinstance(data, list) else []}
+                    
+        except asyncio.TimeoutError:
+            _LOGGER.debug("Timeout fetching warning data")
+            return {}
+        except aiohttp.ClientError as err:
+            _LOGGER.debug("Network error fetching warning data: %s", err)
+            return {}
+        
     async def async_shutdown(self) -> None:
         """Close the aiohttp session."""
         await self._session.close()
@@ -224,7 +261,6 @@ async def async_get_station_id(
     }
 
     _LOGGER.debug("Searching for station at lat=%s, lng=%s", lat, lng)
-    _LOGGER.debug("Search URL: %s?%s", url, "&".join(f"{k}={v}" for k, v in params.items()))
 
     try:
         async with async_timeout.timeout(API_TIMEOUT):
@@ -232,14 +268,11 @@ async def async_get_station_id(
                 async with session.get(url, params=params) as response:
                     response_text = await response.text()
                     
-                    _LOGGER.debug("Search response status: %s", response.status)
-                    _LOGGER.debug("Search response body: %s", response_text[:1000])
-                    
                     if response.status == 401:
                         _LOGGER.error("API key is invalid (401 Unauthorized)")
                         return None
                     elif response.status == 403:
-                        _LOGGER.error("API key doesn't have access (403 Forbidden)")
+                        _LOGGER.error("API key does not have access (403 Forbidden)")
                         return None
                     elif response.status != 200:
                         _LOGGER.error(
@@ -250,9 +283,6 @@ async def async_get_station_id(
                         return None
                     
                     data = await response.json()
-                    _LOGGER.debug("Search response JSON structure: %s", data.keys() if isinstance(data, dict) else type(data))
-                    
-                    # WillyWeather API returns location directly
                     location = data.get("location")
                     if location:
                         station_id = str(location.get("id"))
@@ -291,7 +321,6 @@ async def async_get_station_name(
     }
 
     _LOGGER.debug("Fetching station name for ID: %s", station_id)
-    _LOGGER.debug("Station info URL: %s?%s", url, "&".join(f"{k}={v}" for k, v in params.items()))
 
     try:
         async with async_timeout.timeout(API_TIMEOUT):
@@ -299,14 +328,11 @@ async def async_get_station_name(
                 async with session.get(url, params=params) as response:
                     response_text = await response.text()
                     
-                    _LOGGER.debug("Station info response status: %s", response.status)
-                    _LOGGER.debug("Station info response body: %s", response_text[:1000])
-                    
                     if response.status == 401:
                         _LOGGER.error("API key is invalid (401 Unauthorized)")
                         return None
                     elif response.status == 403:
-                        _LOGGER.error("API key doesn't have access (403 Forbidden)")
+                        _LOGGER.error("API key does not have access (403 Forbidden)")
                         return None
                     elif response.status == 404:
                         _LOGGER.error("Station ID %s not found (404)", station_id)
@@ -320,9 +346,6 @@ async def async_get_station_name(
                         return None
                     
                     data = await response.json()
-                    _LOGGER.debug("Station info JSON structure: %s", data.keys() if isinstance(data, dict) else type(data))
-                    
-                    # Location info is at the root level
                     location = data.get("location", {})
                     station_name = location.get("name")
                     
@@ -331,7 +354,6 @@ async def async_get_station_name(
                         return station_name
                     else:
                         _LOGGER.warning("No station name found in response. Location data: %s", location)
-                        # Still return something so setup can continue
                         return f"Station {station_id}"
                     
     except asyncio.TimeoutError:

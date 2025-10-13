@@ -12,6 +12,9 @@ from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorStateClass,
 )
+from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
+)
 
 DOMAIN: Final = "willyweather"
 ATTRIBUTION: Final = "Data provided by WillyWeather"
@@ -20,20 +23,14 @@ MANUFACTURER: Final = "WillyWeather"
 # Configuration
 CONF_STATION_ID: Final = "station_id"
 CONF_STATION_NAME: Final = "station_name"
-CONF_FORECAST_DAYS: Final = "forecast_days"
-CONF_SENSOR_FORMAT: Final = "sensor_format"
+CONF_INCLUDE_OBSERVATIONAL: Final = "include_observational"
+CONF_INCLUDE_WARNINGS: Final = "include_warnings"
+CONF_ADDITIONAL_FORECAST: Final = "additional_forecast"
 
-# Forecast options
-CONF_FORECAST_RAINFALL: Final = "forecast_rainfall"
-CONF_FORECAST_SUNRISESUNSET: Final = "forecast_sunrisesunset"
-CONF_FORECAST_TIDES: Final = "forecast_tides"
-CONF_FORECAST_UV: Final = "forecast_uv"
-
-# Sensor format options
-SENSOR_FORMAT_DARKSKY: Final = "darksky"
-SENSOR_FORMAT_BOM: Final = "bom"
-
-DEFAULT_FORECAST_DAYS: Final = 5
+# Additional forecast options (checkboxes)
+CONF_INCLUDE_UV: Final = "include_uv"
+CONF_INCLUDE_TIDES: Final = "include_tides"
+CONF_INCLUDE_WIND: Final = "include_wind"
 
 # API
 API_BASE_URL: Final = "https://api.willyweather.com.au/v2"
@@ -75,7 +72,7 @@ CONDITION_MAP: Final = {
     'dust': 'exceptional',
 }
 
-# Observational sensor types (always created)
+# Observational sensor types (created when enabled)
 SENSOR_TYPES: Final = {
     "temperature": {
         "name": "Temperature",
@@ -183,128 +180,6 @@ SENSOR_TYPES: Final = {
     },
 }
 
-# Dark Sky format forecast sensor types
-DARKSKY_FORECAST_TYPES: Final = {
-    "forecast_icon": {
-        "name": "Icon",
-        "unit": None,
-        "icon": "mdi:weather-partly-cloudy",
-    },
-    "forecast_summary": {
-        "name": "Summary",
-        "unit": None,
-        "icon": "mdi:text",
-    },
-    "forecast_temp_high": {
-        "name": "Daytime High Temperature",
-        "unit": UnitOfTemperature.CELSIUS,
-        "icon": "mdi:thermometer",
-        "device_class": SensorDeviceClass.TEMPERATURE,
-    },
-    "forecast_temp_low": {
-        "name": "Overnight Low Temperature",
-        "unit": UnitOfTemperature.CELSIUS,
-        "icon": "mdi:thermometer",
-        "device_class": SensorDeviceClass.TEMPERATURE,
-    },
-}
-
-# Dark Sky format rainfall sensors (if rainfall enabled)
-DARKSKY_RAINFALL_TYPES: Final = {
-    "forecast_precip": {
-        "name": "Precipitation",
-        "unit": UnitOfPrecipitationDepth.MILLIMETERS,
-        "icon": "mdi:weather-rainy",
-        "device_class": SensorDeviceClass.PRECIPITATION,
-    },
-    "forecast_precip_probability": {
-        "name": "Precipitation Probability",
-        "unit": PERCENTAGE,
-        "icon": "mdi:weather-rainy",
-    },
-}
-
-# Dark Sky format UV sensors (if UV enabled)
-DARKSKY_UV_TYPES: Final = {
-    "forecast_uv_index": {
-        "name": "UV Index",
-        "unit": None,
-        "icon": "mdi:weather-sunny-alert",
-    },
-}
-
-# BoM format forecast sensor types
-BOM_FORECAST_TYPES: Final = {
-    "icon_descriptor": {
-        "name": "Icon Descriptor",
-        "unit": None,
-        "icon": "mdi:weather-partly-cloudy",
-    },
-    "short_text": {
-        "name": "Short Text",
-        "unit": None,
-        "icon": "mdi:text",
-    },
-    "temp_max": {
-        "name": "Max Temp",
-        "unit": UnitOfTemperature.CELSIUS,
-        "icon": "mdi:thermometer",
-        "device_class": SensorDeviceClass.TEMPERATURE,
-    },
-    "temp_min": {
-        "name": "Min Temp",
-        "unit": UnitOfTemperature.CELSIUS,
-        "icon": "mdi:thermometer",
-        "device_class": SensorDeviceClass.TEMPERATURE,
-    },
-}
-
-# BoM format rainfall sensors (if rainfall enabled)
-BOM_RAINFALL_TYPES: Final = {
-    "rain_amount_min": {
-        "name": "Rain Amount Min",
-        "unit": UnitOfPrecipitationDepth.MILLIMETERS,
-        "icon": "mdi:weather-rainy",
-        "device_class": SensorDeviceClass.PRECIPITATION,
-    },
-    "rain_amount_max": {
-        "name": "Rain Amount Max",
-        "unit": UnitOfPrecipitationDepth.MILLIMETERS,
-        "icon": "mdi:weather-rainy",
-        "device_class": SensorDeviceClass.PRECIPITATION,
-    },
-    "rain_amount_range": {
-        "name": "Rain Amount Range",
-        "unit": UnitOfPrecipitationDepth.MILLIMETERS,
-        "icon": "mdi:weather-rainy",
-        "device_class": SensorDeviceClass.PRECIPITATION,
-    },
-    "rain_chance": {
-        "name": "Rain Chance",
-        "unit": PERCENTAGE,
-        "icon": "mdi:weather-rainy",
-    },
-}
-
-# BoM format UV sensors (if UV enabled)
-BOM_UV_TYPES: Final = {
-    "uv_alert": {
-        "name": "UV Alert",
-        "unit": None,
-        "icon": "mdi:weather-sunny-alert",
-    },
-    "uv_category": {
-        "name": "UV Category",
-        "unit": None,
-        "icon": "mdi:weather-sunny-alert",
-    },
-    "uv_max_index": {
-        "name": "UV Max Index",
-        "unit": None,
-        "icon": "mdi:weather-sunny-alert",
-    },
-}
-
 # Sun/Moon sensor types (if sunrisesunset enabled)
 SUNMOON_SENSOR_TYPES: Final = {
     "sunrise": {
@@ -361,5 +236,63 @@ TIDES_SENSOR_TYPES: Final = {
         "name": "Next Low Tide Height",
         "unit": "m",
         "icon": "mdi:waves-arrow-down",
+    },
+}
+
+# UV sensor types (if UV enabled)
+UV_SENSOR_TYPES: Final = {
+    "uv_index": {
+        "name": "UV Index",
+        "unit": None,
+        "icon": "mdi:weather-sunny-alert",
+    },
+    "uv_alert": {
+        "name": "UV Alert",
+        "unit": None,
+        "icon": "mdi:weather-sunny-alert",
+    },
+}
+
+# Wind forecast sensor types (if wind enabled)
+WIND_FORECAST_TYPES: Final = {
+    "wind_speed_forecast": {
+        "name": "Wind Speed Forecast",
+        "unit": UnitOfSpeed.KILOMETERS_PER_HOUR,
+        "icon": "mdi:weather-windy",
+        "device_class": SensorDeviceClass.WIND_SPEED,
+    },
+    "wind_direction_forecast": {
+        "name": "Wind Direction Forecast",
+        "unit": "°",
+        "icon": "mdi:compass",
+    },
+}
+
+# Warning binary sensor types (created when enabled)
+WARNING_BINARY_SENSOR_TYPES: Final = {
+    "storm_warning": {
+        "name": "Storm Warning",
+        "icon": "mdi:weather-lightning-rainy",
+        "device_class": BinarySensorDeviceClass.SAFETY,
+    },
+    "flood_warning": {
+        "name": "Flood Warning",
+        "icon": "mdi:water-alert",
+        "device_class": BinarySensorDeviceClass.SAFETY,
+    },
+    "fire_warning": {
+        "name": "Fire Warning",
+        "icon": "mdi:fire-alert",
+        "device_class": BinarySensorDeviceClass.SAFETY,
+    },
+    "heat_warning": {
+        "name": "Heat Warning",
+        "icon": "mdi:thermometer-alert",
+        "device_class": BinarySensorDeviceClass.SAFETY,
+    },
+    "wind_warning": {
+        "name": "Wind Warning",
+        "icon": "mdi:weather-windy-variant",
+        "device_class": BinarySensorDeviceClass.SAFETY,
     },
 }

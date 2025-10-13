@@ -24,8 +24,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import (
     ATTRIBUTION,
     CONDITION_MAP,
-    CONF_FORECAST_RAINFALL,
-    CONF_FORECAST_UV,
+    CONF_INCLUDE_UV,
     CONF_STATION_ID,
     CONF_STATION_NAME,
     DOMAIN,
@@ -60,9 +59,7 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
     _attr_native_pressure_unit = UnitOfPressure.HPA
     _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_native_wind_speed_unit = UnitOfSpeed.KILOMETERS_PER_HOUR
-    _attr_supported_features = (
-        WeatherEntityFeature.FORECAST_DAILY
-    )
+    _attr_supported_features = WeatherEntityFeature.FORECAST_DAILY
 
     def __init__(
         self,
@@ -139,11 +136,15 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
     @property
     def cloud_coverage(self) -> float | None:
         """Return the cloud coverage in percentage."""
-        # Convert oktas (0-8) to percentage (0-100)
         oktas = self._get_observation_value(["cloud", "oktas"])
         if oktas is not None:
             return (oktas / 8) * 100
         return None
+
+    @property
+    def dew_point(self) -> float | None:
+        """Return the dew point."""
+        return self._get_observation_value(["dewPoint", "temperature"])
 
     def _get_observation_value(self, path: list[str]) -> Any:
         """Get value from observational data using path."""
@@ -172,12 +173,8 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
             forecasts = self.coordinator.data.get("forecast", {}).get("forecasts", {})
             weather_days = forecasts.get("weather", {}).get("days", [])
 
-            # Check if rainfall is enabled
-            rainfall_enabled = self._entry.options.get(CONF_FORECAST_RAINFALL, False)
-            rainfall_days = forecasts.get("rainfall", {}).get("days", []) if rainfall_enabled else []
-            
             # Check if UV is enabled
-            uv_enabled = self._entry.options.get(CONF_FORECAST_UV, False)
+            uv_enabled = self._entry.options.get(CONF_INCLUDE_UV, False)
             uv_days = forecasts.get("uv", {}).get("days", []) if uv_enabled else []
 
             forecast_data = []
@@ -203,22 +200,6 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
                     "templow": entry.get("min"),
                     "condition": CONDITION_MAP.get(entry.get("precisCode"), "unknown"),
                 }
-
-                # Add rainfall data if enabled
-                if rainfall_enabled and idx < len(rainfall_days):
-                    rainfall_day = rainfall_days[idx]
-                    if rainfall_day.get("entries"):
-                        rain_entry = rainfall_day["entries"][0]
-                        start_range = rain_entry.get("startRange")
-                        end_range = rain_entry.get("endRange")
-                        if start_range is not None and end_range is not None:
-                            forecast_dict["precipitation"] = (start_range + end_range) / 2
-                        elif end_range is not None:
-                            forecast_dict["precipitation"] = end_range
-                        
-                        rain_prob = rain_entry.get("probability")
-                        if rain_prob is not None:
-                            forecast_dict["precipitation_probability"] = rain_prob
 
                 # Add UV data if enabled
                 if uv_enabled and idx < len(uv_days):
