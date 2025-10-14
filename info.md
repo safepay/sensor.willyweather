@@ -10,5 +10,4 @@ A custom Home Assistant integration providing comprehensive weather data from Wi
 - **Tide Information**: High and low tide times and heights (coastal locations)
 - **Severe Weather Warnings**: Binary sensors for active storm, flood, fire, heat, and wind warnings
 - **Automatic Station Detection**: Automatically finds the closest WillyWeather station based on your Home Assistant location
-- **Configurable Data**: Enable/disable forecast types and optional sensors through the UI
-- **Multiple Forecast Formats**: Choose between BoM (Bureau of Meteorology) and Dark Sky compatible formats
+- **Configurable Data**: Enable/disable optional sensors through the UI
