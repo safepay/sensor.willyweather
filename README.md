@@ -38,6 +38,7 @@ A custom Home Assistant integration providing comprehensive weather data from Wi
 4. Follow the setup wizard:
    - **Step 1**: Enter your WillyWeather API key (optional: specify a station ID, or leave blank for auto-detection)
    - **Step 2**: Select which sensors and data types to include
+5. For full support, select single location, weather (observation and forecasts) and warnings.
 
 ### Getting an API Key
 
