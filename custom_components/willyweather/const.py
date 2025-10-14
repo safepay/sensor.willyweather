@@ -31,6 +31,7 @@ CONF_ADDITIONAL_FORECAST: Final = "additional_forecast"
 CONF_INCLUDE_UV: Final = "include_uv"
 CONF_INCLUDE_TIDES: Final = "include_tides"
 CONF_INCLUDE_WIND: Final = "include_wind"
+CONF_INCLUDE_SWELL: Final = "include_swell"
 
 # API
 API_BASE_URL: Final = "https://api.willyweather.com.au/v2"
@@ -180,6 +181,30 @@ SENSOR_TYPES: Final = {
     },
 }
 
+# Swell sensor types (if swell enabled)
+SWELL_SENSOR_TYPES: Final = {
+    "swell_height": {
+        "name": "Swell Height",
+        "unit": "m",
+        "icon": "mdi:waves",
+    },
+    "swell_period": {
+        "name": "Swell Period",
+        "unit": "s",
+        "icon": "mdi:waves",
+    },
+    "swell_direction": {
+        "name": "Swell Direction",
+        "unit": "°",
+        "icon": "mdi:compass",
+    },
+    "swell_direction_text": {
+        "name": "Swell Direction Text",
+        "unit": None,
+        "icon": "mdi:compass",
+    },
+}
+
 # Sun/Moon sensor types (if sunrisesunset enabled)
 SUNMOON_SENSOR_TYPES: Final = {
     "sunrise": {
@@ -224,7 +249,7 @@ TIDES_SENSOR_TYPES: Final = {
     "next_low_tide": {
         "name": "Next Low Tide",
         "unit": None,
-        "icon": "mdi:waves-arrow-down",
+        "icon": "mdi:waves",
         "device_class": SensorDeviceClass.TIMESTAMP,
     },
     "next_high_tide_height": {
@@ -235,7 +260,7 @@ TIDES_SENSOR_TYPES: Final = {
     "next_low_tide_height": {
         "name": "Next Low Tide Height",
         "unit": "ft",
-        "icon": "mdi:waves-arrow-down",
+        "icon": "mdi:waves",
     },
 }
 

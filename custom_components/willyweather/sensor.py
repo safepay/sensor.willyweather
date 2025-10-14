@@ -19,12 +19,14 @@ from .const import (
     CONF_INCLUDE_UV,
     CONF_INCLUDE_TIDES,
     CONF_INCLUDE_WIND,
+    CONF_INCLUDE_SWELL,
     CONF_STATION_ID,
     CONF_STATION_NAME,
     DOMAIN,
     MANUFACTURER,
     SENSOR_TYPES,
     SUNMOON_SENSOR_TYPES,
+    SWELL_SENSOR_TYPES,
     TIDES_SENSOR_TYPES,
     UV_SENSOR_TYPES,
     WIND_FORECAST_TYPES,
@@ -103,6 +105,18 @@ async def async_setup_entry(
         for sensor_type in WIND_FORECAST_TYPES:
             entities.append(
                 WillyWeatherWindForecastSensor(
+                    coordinator,
+                    station_id,
+                    station_name,
+                    sensor_type,
+                )
+            )
+
+    # Add swell sensors if enabled
+    if entry.options.get(CONF_INCLUDE_SWELL, False):
+        for sensor_type in SWELL_SENSOR_TYPES:
+            entities.append(
+                WillyWeatherSwellSensor(
                     coordinator,
                     station_id,
                     station_name,
@@ -542,6 +556,70 @@ class WillyWeatherWindForecastSensor(CoordinatorEntity, SensorEntity):
 
         except (KeyError, IndexError, TypeError) as err:
             _LOGGER.debug("Error getting wind forecast value for %s: %s", self._sensor_type, err)
+            return None
+
+        return None
+
+class WillyWeatherSwellSensor(CoordinatorEntity, SensorEntity):
+    """Implementation of a WillyWeather swell sensor."""
+
+    _attr_attribution = ATTRIBUTION
+    _attr_has_entity_name = True
+
+    def __init__(
+        self,
+        coordinator: WillyWeatherDataUpdateCoordinator,
+        station_id: str,
+        station_name: str,
+        sensor_type: str,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._sensor_type = sensor_type
+        self._station_id = station_id
+        self._station_name = station_name
+
+        sensor_info = SWELL_SENSOR_TYPES[sensor_type]
+        self._attr_name = sensor_info["name"]
+        self._attr_unique_id = f"{station_id}_{sensor_type}"
+        self._attr_native_unit_of_measurement = sensor_info.get("unit")
+        self._attr_icon = sensor_info["icon"]
+
+        self._attr_device_info = DeviceInfo(
+            entry_type=DeviceEntryType.SERVICE,
+            identifiers={(DOMAIN, f"{station_id}_sensors")},
+            manufacturer=MANUFACTURER,
+            name=f"{station_name} Sensors",
+            via_device=(DOMAIN, station_id),
+        )
+
+    @property
+    def native_value(self) -> Any:
+        """Return the state of the sensor."""
+        if not self.coordinator.data:
+            return None
+
+        try:
+            forecasts = self.coordinator.data.get("forecast", {}).get("forecasts", {})
+            swell_days = forecasts.get("swell", {}).get("days", [])
+            
+            if not swell_days or not swell_days[0].get("entries"):
+                return None
+            
+            # Get the first swell entry (most current)
+            entry = swell_days[0]["entries"][0]
+            
+            if self._sensor_type == "swell_height":
+                return entry.get("height")
+            elif self._sensor_type == "swell_period":
+                return entry.get("period")
+            elif self._sensor_type == "swell_direction":
+                return entry.get("direction")
+            elif self._sensor_type == "swell_direction_text":
+                return entry.get("directionText")
+
+        except (KeyError, IndexError, TypeError) as err:
+            _LOGGER.debug("Error getting swell value for %s: %s", self._sensor_type, err)
             return None
 
         return None

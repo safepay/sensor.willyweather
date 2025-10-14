@@ -22,6 +22,7 @@ from .const import (
     CONF_INCLUDE_UV,
     CONF_INCLUDE_TIDES,
     CONF_INCLUDE_WIND,
+    CONF_INCLUDE_SWELL,
     CONF_INCLUDE_WARNINGS,
     DOMAIN,
     UPDATE_INTERVAL_OBSERVATION,
@@ -68,22 +69,25 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                 "sunrisesunset",
                 "moonphases",
                 "rainfall",
+                "temperature",
+                "wind",
             ]
             
             include_tides = self.entry.options.get(CONF_INCLUDE_TIDES, False)
             include_uv = self.entry.options.get(CONF_INCLUDE_UV, False)
-            include_wind = self.entry.options.get(CONF_INCLUDE_WIND, False)
+            include_swell = self.entry.options.get(CONF_INCLUDE_SWELL, False)
             
-            _LOGGER.debug("Options - Tides: %s, UV: %s, Wind: %s", 
-                         include_tides, include_uv, include_wind)
+            _LOGGER.debug("Options - Tides: %s, UV: %s, Swell: %s", 
+                         include_tides, include_uv, include_swell)
             
             if include_tides:
                 forecast_types.append("tides")
                 _LOGGER.debug("Added tides to forecast types")
             if include_uv:
                 forecast_types.append("uv")
-            if include_wind:
-                forecast_types.append("wind")
+            if include_swell:
+                forecast_types.append("swell")
+                _LOGGER.debug("Added swell to forecast types")
             
             _LOGGER.debug("Final forecast types: %s", forecast_types)
             

@@ -18,6 +18,7 @@ from .const import (
     CONF_INCLUDE_UV,
     CONF_INCLUDE_TIDES,
     CONF_INCLUDE_WIND,
+    CONF_INCLUDE_SWELL,
     CONF_STATION_ID,
     CONF_STATION_NAME,
     DOMAIN,
@@ -119,6 +120,7 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_INCLUDE_UV: user_input.get(CONF_INCLUDE_UV, False),
                     CONF_INCLUDE_TIDES: user_input.get(CONF_INCLUDE_TIDES, False),
                     CONF_INCLUDE_WIND: user_input.get(CONF_INCLUDE_WIND, False),
+                    CONF_INCLUDE_SWELL: user_input.get(CONF_INCLUDE_SWELL, False),
                 },
             )
 
@@ -129,6 +131,7 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional(CONF_INCLUDE_UV, default=False): cv.boolean,
                 vol.Optional(CONF_INCLUDE_TIDES, default=False): cv.boolean,
                 vol.Optional(CONF_INCLUDE_WIND, default=False): cv.boolean,
+                vol.Optional(CONF_INCLUDE_SWELL, default=False): cv.boolean,
             }
         )
 
@@ -188,6 +191,10 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
                     vol.Optional(
                         CONF_INCLUDE_WIND,
                         default=self.config_entry.options.get(CONF_INCLUDE_WIND, False),
+                    ): cv.boolean,
+                    vol.Optional(
+                        CONF_INCLUDE_SWELL,
+                        default=self.config_entry.options.get(CONF_INCLUDE_SWELL, False),
                     ): cv.boolean,
                 }
             ),
