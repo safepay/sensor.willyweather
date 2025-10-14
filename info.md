@@ -1,22 +1,14 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/custom-components/hacs) [![willyweather](https://img.shields.io/github/release/safepay/sensor.willyweather.svg)](https://github.com/safepay/sensor.willyweather) ![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)
 
-## An Australian BoM alternative using WillyWeather
+A custom Home Assistant integration providing comprehensive weather data from WillyWeather Australia.
 
-www.willyweather.com.au provide a cheap API that is more usable than the BoM API.
+## Features
 
-The advantage is that they source data for your location from the closest weather stations, rather than you choosing a specific weather station.
-
-This is much better if you are in a rural area and the closest weather station does not provide all data.
-
-### Setup
-You will need to obtain an API key from https://www.willyweather.com.au/account/api.html
-
-Full instructions in the README.md
-
-### Configuration
-```
-sensor:
-  - platform: willyweather
-    api_key: your_api_key
-
-```
+- **Weather Entity**: Real-time weather conditions with full daily forecast support
+- **Observational Sensors**: Current weather measurements including temperature, humidity, pressure, wind, rainfall, and more
+- **Sun/Moon Data**: Sunrise, sunset, moonrise, moonset, and moon phase information
+- **Tide Information**: High and low tide times and heights (coastal locations)
+- **Severe Weather Warnings**: Binary sensors for active storm, flood, fire, heat, and wind warnings
+- **Automatic Station Detection**: Automatically finds the closest WillyWeather station based on your Home Assistant location
+- **Configurable Data**: Enable/disable forecast types and optional sensors through the UI
+- **Multiple Forecast Formats**: Choose between BoM (Bureau of Meteorology) and Dark Sky compatible formats
