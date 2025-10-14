@@ -144,9 +144,10 @@ class WillyWeatherSensor(CoordinatorEntity, SensorEntity):
 
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, station_id)},
+            identifiers={(DOMAIN, f"{station_id}_sensors")},
             manufacturer=MANUFACTURER,
-            name=station_name,
+            name=f"{station_name} Sensors",
+            via_device=(DOMAIN, station_id),
         )
 
     @property
@@ -198,9 +199,10 @@ class WillyWeatherSunMoonSensor(CoordinatorEntity, SensorEntity):
 
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, station_id)},
+            identifiers={(DOMAIN, f"{station_id}_sensors")},
             manufacturer=MANUFACTURER,
-            name=station_name,
+            name=f"{station_name} Sensors",
+            via_device=(DOMAIN, station_id),
         )
 
     @property
@@ -211,32 +213,60 @@ class WillyWeatherSunMoonSensor(CoordinatorEntity, SensorEntity):
 
         try:
             forecasts = self.coordinator.data.get("forecast", {}).get("forecasts", {})
-            sunrisesunset_data = forecasts.get("sunrisesunset", {})
-            days = sunrisesunset_data.get("days", [])
             
-            if not days or not days[0].get("entries"):
-                return None
+            # Handle sunrise/sunset
+            if self._sensor_type in ["sunrise", "sunset"]:
+                sunrisesunset_data = forecasts.get("sunrisesunset", {})
+                if not sunrisesunset_data:
+                    _LOGGER.debug("No sunrisesunset data available")
+                    return None
+                    
+                days = sunrisesunset_data.get("days", [])
+                if days and days[0].get("entries"):
+                    entry = days[0]["entries"][0]
+                    if self._sensor_type == "sunrise":
+                        time_val = entry.get("riseDateTime")
+                    else:  # sunset
+                        time_val = entry.get("setDateTime")
+                    if time_val:
+                        dt = dt_util.parse_datetime(time_val)
+                        if dt and dt.tzinfo is None:
+                            # Assume UTC and convert to local timezone
+                            dt = dt.replace(tzinfo=dt_util.UTC)
+                            tz = self.coordinator.hass.config.time_zone
+                            if tz:
+                                local_tz = dt_util.get_time_zone(tz)
+                                if local_tz:
+                                    dt = dt.astimezone(local_tz)
+                        return dt
             
-            entry = days[0]["entries"][0]
-            
-            if self._sensor_type == "sunrise":
-                sunrise_time = entry.get("firstLightDateTime")
-                if sunrise_time:
-                    return dt_util.parse_datetime(sunrise_time)
-            elif self._sensor_type == "sunset":
-                sunset_time = entry.get("lastLightDateTime")
-                if sunset_time:
-                    return dt_util.parse_datetime(sunset_time)
-            elif self._sensor_type == "moonrise":
-                moonrise_time = entry.get("moonrise")
-                if moonrise_time:
-                    return dt_util.parse_datetime(moonrise_time)
-            elif self._sensor_type == "moonset":
-                moonset_time = entry.get("moonset")
-                if moonset_time:
-                    return dt_util.parse_datetime(moonset_time)
-            elif self._sensor_type == "moon_phase":
-                return entry.get("moonPhaseDescription")
+            # Handle moon phases
+            elif self._sensor_type in ["moonrise", "moonset", "moon_phase"]:
+                moonphases_data = forecasts.get("moonphases", {})
+                if not moonphases_data:
+                    _LOGGER.debug("No moonphases data available")
+                    return None
+                    
+                days = moonphases_data.get("days", [])
+                if days and days[0].get("entries"):
+                    entry = days[0]["entries"][0]
+                    if self._sensor_type == "moonrise":
+                        time_val = entry.get("riseDateTime")
+                    elif self._sensor_type == "moonset":
+                        time_val = entry.get("setDateTime")
+                    else:  # moon_phase
+                        return entry.get("phase")
+                    
+                    if time_val:
+                        dt = dt_util.parse_datetime(time_val)
+                        if dt and dt.tzinfo is None:
+                            dt = dt.replace(tzinfo=dt_util.UTC)
+                            tz = self.coordinator.hass.config.time_zone
+                            if tz:
+                                local_tz = dt_util.get_time_zone(tz)
+                                if local_tz:
+                                    dt = dt.astimezone(local_tz)
+                        return dt
 
         except (KeyError, IndexError, TypeError) as err:
             _LOGGER.debug("Error getting sun/moon value for %s: %s", self._sensor_type, err)
@@ -273,9 +303,10 @@ class WillyWeatherTideSensor(CoordinatorEntity, SensorEntity):
 
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, station_id)},
+            identifiers={(DOMAIN, f"{station_id}_sensors")},
             manufacturer=MANUFACTURER,
-            name=station_name,
+            name=f"{station_name} Sensors",
+            via_device=(DOMAIN, station_id),
         )
 
     @property
@@ -286,7 +317,12 @@ class WillyWeatherTideSensor(CoordinatorEntity, SensorEntity):
 
         try:
             forecasts = self.coordinator.data.get("forecast", {}).get("forecasts", {})
-            tides_data = forecasts.get("tides", {})
+            tides_data = forecasts.get("tides")
+            
+            if not tides_data:
+                _LOGGER.debug("No tides data available")
+                return None
+            
             days = tides_data.get("days", [])
             
             if not days or not days[0].get("entries"):
@@ -294,19 +330,36 @@ class WillyWeatherTideSensor(CoordinatorEntity, SensorEntity):
             
             entries = days[0]["entries"]
             
+            # Find next high or low tide
             if self._sensor_type == "next_high_tide":
                 for entry in entries:
                     if entry.get("type") == "high":
                         tide_time = entry.get("dateTime")
                         if tide_time:
-                            return dt_util.parse_datetime(tide_time)
+                            dt = dt_util.parse_datetime(tide_time)
+                            if dt and dt.tzinfo is None:
+                                dt = dt.replace(tzinfo=dt_util.UTC)
+                                tz = self.coordinator.hass.config.time_zone
+                                if tz:
+                                    local_tz = dt_util.get_time_zone(tz)
+                                    if local_tz:
+                                        dt = dt.astimezone(local_tz)
+                            return dt
                         break
             elif self._sensor_type == "next_low_tide":
                 for entry in entries:
                     if entry.get("type") == "low":
                         tide_time = entry.get("dateTime")
                         if tide_time:
-                            return dt_util.parse_datetime(tide_time)
+                            dt = dt_util.parse_datetime(tide_time)
+                            if dt and dt.tzinfo is None:
+                                dt = dt.replace(tzinfo=dt_util.UTC)
+                                tz = self.coordinator.hass.config.time_zone
+                                if tz:
+                                    local_tz = dt_util.get_time_zone(tz)
+                                    if local_tz:
+                                        dt = dt.astimezone(local_tz)
+                            return dt
                         break
             elif self._sensor_type == "next_high_tide_height":
                 for entry in entries:
@@ -351,9 +404,10 @@ class WillyWeatherUVSensor(CoordinatorEntity, SensorEntity):
 
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, station_id)},
+            identifiers={(DOMAIN, f"{station_id}_sensors")},
             manufacturer=MANUFACTURER,
-            name=station_name,
+            name=f"{station_name} Sensors",
+            via_device=(DOMAIN, station_id),
         )
 
     @property
@@ -423,9 +477,10 @@ class WillyWeatherWindForecastSensor(CoordinatorEntity, SensorEntity):
 
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, station_id)},
+            identifiers={(DOMAIN, f"{station_id}_sensors")},
             manufacturer=MANUFACTURER,
-            name=station_name,
+            name=f"{station_name} Sensors",
+            via_device=(DOMAIN, station_id),
         )
 
     @property

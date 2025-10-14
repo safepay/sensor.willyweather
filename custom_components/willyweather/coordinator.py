@@ -62,14 +62,20 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
         
         try:
             # Build forecast parameters based on enabled options
-            forecast_types = ["weather"]  # Always include weather
+            forecast_types = [
+                "weather",
+                "precis", 
+                "sunrisesunset",
+                "moonphases",
+                "rainfall",
+            ]
             
+            if self.entry.options.get(CONF_INCLUDE_TIDES, False):
+                forecast_types.append("tides")
             if self.entry.options.get(CONF_INCLUDE_UV, False):
                 forecast_types.append("uv")
             if self.entry.options.get(CONF_INCLUDE_WIND, False):
                 forecast_types.append("wind")
-            if self.entry.options.get(CONF_INCLUDE_TIDES, False):
-                forecast_types.append("tides")
             
             # Always fetch sun/moon for weather entity if observational is enabled
             if self.entry.options.get(CONF_INCLUDE_OBSERVATIONAL, True):

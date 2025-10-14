@@ -7,8 +7,9 @@ from typing import TYPE_CHECKING
 from homeassistant.const import CONF_API_KEY, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.device_registry import async_get as async_get_device_registry
 
-from .const import DOMAIN
+from .const import CONF_STATION_ID, CONF_STATION_NAME, DOMAIN, MANUFACTURER
 from .coordinator import WillyWeatherDataUpdateCoordinator
 
 if TYPE_CHECKING:
@@ -28,6 +29,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator
+
+    # Create main parent device
+    station_id = entry.data.get(CONF_STATION_ID)
+    station_name = entry.data.get(CONF_STATION_NAME, f"Station {station_id}")
+    
+    device_registry = async_get_device_registry(hass)
+    device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, station_id)},
+        manufacturer=MANUFACTURER,
+        name=station_name,
+    )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
