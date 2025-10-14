@@ -32,69 +32,55 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
+    def __init__(self) -> None:
+        """Initialize."""
+        self._api_key: str = ""
+        self._station_id: str = ""
+        self._station_name: str = ""
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Handle the initial step."""
+        """Handle user step."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            try:
-                api_key = user_input[CONF_API_KEY].strip()
-                station_id = user_input.get(CONF_STATION_ID, "").strip()
+            self._api_key = user_input[CONF_API_KEY].strip()
+            station_id = user_input.get(CONF_STATION_ID, "").strip()
 
-                _LOGGER.debug("Starting WillyWeather setup")
-                
-                # If no station_id, find closest
-                if not station_id:
-                    _LOGGER.info("Auto-detecting station")
+            _LOGGER.debug("Starting WillyWeather setup")
+            
+            # Auto-detect station if not provided
+            if not station_id:
+                _LOGGER.info("Auto-detecting station")
+                try:
                     station_id = await async_get_station_id(
                         self.hass,
                         self.hass.config.latitude,
                         self.hass.config.longitude,
-                        api_key,
+                        self._api_key,
                     )
                     if not station_id:
                         errors["base"] = "no_station_found"
-                        _LOGGER.error("Could not auto-detect station")
-                
-                # Get station name
-                if not errors:
+                except Exception as err:
+                    _LOGGER.error("Error auto-detecting station: %s", err)
+                    errors["base"] = "search_failed"
+            
+            # Get station name
+            if not errors and station_id:
+                try:
                     station_name = await async_get_station_name(
-                        self.hass, station_id, api_key
+                        self.hass, station_id, self._api_key
                     )
                     if not station_name:
                         errors["base"] = "invalid_station_or_key"
-                        _LOGGER.error("Could not fetch station name")
                     else:
-                        _LOGGER.info("Found station: %s", station_name)
-
-                if not errors:
-                    unique_id = f"{DOMAIN}_{station_id}"
-                    await self.async_set_unique_id(unique_id)
-                    self._abort_if_unique_id_configured()
-
-                    return self.async_create_entry(
-                        title=station_name or f"Station {station_id}",
-                        data={
-                            CONF_API_KEY: api_key,
-                            CONF_STATION_ID: station_id,
-                            CONF_STATION_NAME: station_name,
-                        },
-                        options={
-                            CONF_INCLUDE_OBSERVATIONAL: True,
-                            CONF_INCLUDE_WARNINGS: False,
-                            CONF_INCLUDE_UV: False,
-                            CONF_INCLUDE_TIDES: False,
-                            CONF_INCLUDE_WIND: False,
-                        },
-                    )
-
-            except config_entries.AbortFlow:
-                raise
-            except Exception as err:
-                _LOGGER.error("Config flow error: %s", err, exc_info=True)
-                errors["base"] = "unknown_error"
+                        self._station_id = station_id
+                        self._station_name = station_name
+                        return await self.async_step_options()
+                except Exception as err:
+                    _LOGGER.error("Error fetching station name: %s", err)
+                    errors["base"] = "api_error"
 
         data_schema = vol.Schema(
             {
@@ -110,6 +96,46 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             description_placeholders={
                 "api_url": "https://www.willyweather.com.au/info/api.html"
             },
+        )
+
+    async def async_step_options(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle options step."""
+        if user_input is not None:
+            await self.async_set_unique_id(f"{DOMAIN}_{self._station_id}")
+            self._abort_if_unique_id_configured()
+
+            return self.async_create_entry(
+                title=self._station_name or f"Station {self._station_id}",
+                data={
+                    CONF_API_KEY: self._api_key,
+                    CONF_STATION_ID: self._station_id,
+                    CONF_STATION_NAME: self._station_name,
+                },
+                options={
+                    CONF_INCLUDE_OBSERVATIONAL: user_input.get(CONF_INCLUDE_OBSERVATIONAL, True),
+                    CONF_INCLUDE_WARNINGS: user_input.get(CONF_INCLUDE_WARNINGS, False),
+                    CONF_INCLUDE_UV: user_input.get(CONF_INCLUDE_UV, False),
+                    CONF_INCLUDE_TIDES: user_input.get(CONF_INCLUDE_TIDES, False),
+                    CONF_INCLUDE_WIND: user_input.get(CONF_INCLUDE_WIND, False),
+                },
+            )
+
+        data_schema = vol.Schema(
+            {
+                vol.Required(CONF_INCLUDE_OBSERVATIONAL, default=True): cv.boolean,
+                vol.Required(CONF_INCLUDE_WARNINGS, default=False): cv.boolean,
+                vol.Optional(CONF_INCLUDE_UV, default=False): cv.boolean,
+                vol.Optional(CONF_INCLUDE_TIDES, default=False): cv.boolean,
+                vol.Optional(CONF_INCLUDE_WIND, default=False): cv.boolean,
+            }
+        )
+
+        return self.async_show_form(
+            step_id="options",
+            data_schema=data_schema,
+            description_placeholders={"station_name": self._station_name},
         )
 
     @staticmethod

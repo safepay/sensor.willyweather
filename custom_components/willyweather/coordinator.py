@@ -56,7 +56,7 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
             update_interval=timedelta(minutes=UPDATE_INTERVAL_OBSERVATION),
         )
 
-    async def _async_update_data(self) -> dict[str, Any]:
+async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data from API."""
         _LOGGER.debug("Updating WillyWeather data for station %s", self.station_id)
         
@@ -70,20 +70,31 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                 "rainfall",
             ]
             
-            if self.entry.options.get(CONF_INCLUDE_TIDES, False):
+            include_tides = self.entry.options.get(CONF_INCLUDE_TIDES, False)
+            include_uv = self.entry.options.get(CONF_INCLUDE_UV, False)
+            include_wind = self.entry.options.get(CONF_INCLUDE_WIND, False)
+            
+            _LOGGER.debug("Options - Tides: %s, UV: %s, Wind: %s", 
+                         include_tides, include_uv, include_wind)
+            
+            if include_tides:
                 forecast_types.append("tides")
-            if self.entry.options.get(CONF_INCLUDE_UV, False):
+                _LOGGER.debug("Added tides to forecast types")
+            if include_uv:
                 forecast_types.append("uv")
-            if self.entry.options.get(CONF_INCLUDE_WIND, False):
+            if include_wind:
                 forecast_types.append("wind")
             
-            # Always fetch sun/moon for weather entity if observational is enabled
-            if self.entry.options.get(CONF_INCLUDE_OBSERVATIONAL, True):
-                forecast_types.append("sunrisesunset")
+            _LOGGER.debug("Final forecast types: %s", forecast_types)
             
             # Fetch observational and forecast data
             observational_data = await self._fetch_observational_data()
             forecast_data = await self._fetch_forecast_data(forecast_types)
+            
+            # Log what we got back
+            if forecast_data and "forecasts" in forecast_data:
+                available_forecasts = list(forecast_data["forecasts"].keys())
+                _LOGGER.debug("Available forecasts in response: %s", available_forecasts)
             
             # Fetch warning data if enabled
             warning_data = None
@@ -91,6 +102,11 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                 warning_data = await self._fetch_warning_data()
 
             _LOGGER.debug("Successfully fetched data from WillyWeather API")
+            _LOGGER.debug("Forecast types requested: %s", forecast_types)
+            _LOGGER.debug("Available forecasts in response: %s", 
+                         forecast_data.get("forecasts", {}).keys() if forecast_data else "None")
+            _LOGGER.debug("Tides data present: %s", 
+                         "tides" in forecast_data.get("forecasts", {}))
 
             return {
                 "observational": observational_data,

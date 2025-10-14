@@ -313,28 +313,54 @@ class WillyWeatherTideSensor(CoordinatorEntity, SensorEntity):
     def native_value(self) -> Any:
         """Return the state of the sensor."""
         if not self.coordinator.data:
+            _LOGGER.debug("No coordinator data for tides")
             return None
 
         try:
-            forecasts = self.coordinator.data.get("forecast", {}).get("forecasts", {})
-            tides_data = forecasts.get("tides")
+            forecasts = self.coordinator.data.get("forecast", {})
+            if not forecasts:
+                _LOGGER.debug("No forecast data available")
+                return None
+                
+            forecasts_dict = forecasts.get("forecasts", {})
+            if not forecasts_dict:
+                _LOGGER.debug("No forecasts dict available")
+                return None
+            
+            tides_data = forecasts_dict.get("tides")
+            
+            _LOGGER.debug("Tides data structure: %s", 
+                         type(tides_data) if tides_data else "None")
             
             if not tides_data:
-                _LOGGER.debug("No tides data available")
+                _LOGGER.debug("No tides data in forecasts")
                 return None
             
             days = tides_data.get("days", [])
+            _LOGGER.debug("Tides days count: %d", len(days))
             
-            if not days or not days[0].get("entries"):
+            if not days:
+                _LOGGER.debug("No days in tides data")
                 return None
             
-            entries = days[0]["entries"]
+            day_data = days[0]
+            _LOGGER.debug("First day tides data keys: %s", day_data.keys() if isinstance(day_data, dict) else type(day_data))
+            
+            entries = day_data.get("entries", [])
+            _LOGGER.debug("Tides entries count: %d", len(entries))
+            
+            if not entries:
+                _LOGGER.debug("No entries in first tides day")
+                return None
             
             # Find next high or low tide
             if self._sensor_type == "next_high_tide":
                 for entry in entries:
-                    if entry.get("type") == "high":
+                    entry_type = entry.get("type")
+                    _LOGGER.debug("Tide entry type: %s", entry_type)
+                    if entry_type == "high":
                         tide_time = entry.get("dateTime")
+                        _LOGGER.debug("Found high tide time: %s", tide_time)
                         if tide_time:
                             dt = dt_util.parse_datetime(tide_time)
                             if dt and dt.tzinfo is None:
@@ -344,12 +370,16 @@ class WillyWeatherTideSensor(CoordinatorEntity, SensorEntity):
                                     local_tz = dt_util.get_time_zone(tz)
                                     if local_tz:
                                         dt = dt.astimezone(local_tz)
+                            _LOGGER.debug("Returning high tide: %s", dt)
                             return dt
                         break
+                _LOGGER.debug("No high tide found in entries")
+                
             elif self._sensor_type == "next_low_tide":
                 for entry in entries:
                     if entry.get("type") == "low":
                         tide_time = entry.get("dateTime")
+                        _LOGGER.debug("Found low tide time: %s", tide_time)
                         if tide_time:
                             dt = dt_util.parse_datetime(tide_time)
                             if dt and dt.tzinfo is None:
@@ -359,23 +389,30 @@ class WillyWeatherTideSensor(CoordinatorEntity, SensorEntity):
                                     local_tz = dt_util.get_time_zone(tz)
                                     if local_tz:
                                         dt = dt.astimezone(local_tz)
+                            _LOGGER.debug("Returning low tide: %s", dt)
                             return dt
                         break
+                _LOGGER.debug("No low tide found in entries")
+                
             elif self._sensor_type == "next_high_tide_height":
                 for entry in entries:
                     if entry.get("type") == "high":
-                        return entry.get("height")
+                        height = entry.get("height")
+                        _LOGGER.debug("High tide height: %s", height)
+                        return height
+                        
             elif self._sensor_type == "next_low_tide_height":
                 for entry in entries:
                     if entry.get("type") == "low":
-                        return entry.get("height")
+                        height = entry.get("height")
+                        _LOGGER.debug("Low tide height: %s", height)
+                        return height
 
         except (KeyError, IndexError, TypeError) as err:
-            _LOGGER.debug("Error getting tide value for %s: %s", self._sensor_type, err)
+            _LOGGER.error("Error getting tide value for %s: %s", self._sensor_type, err, exc_info=True)
             return None
 
         return None
-
 
 class WillyWeatherUVSensor(CoordinatorEntity, SensorEntity):
     """Implementation of a WillyWeather UV sensor."""
