@@ -229,12 +229,12 @@ TIDES_SENSOR_TYPES: Final = {
     },
     "next_high_tide_height": {
         "name": "Next High Tide Height",
-        "unit": "m",
+        "unit": "ft",
         "icon": "mdi:waves-arrow-up",
     },
     "next_low_tide_height": {
         "name": "Next Low Tide Height",
-        "unit": "m",
+        "unit": "ft",
         "icon": "mdi:waves-arrow-down",
     },
 }

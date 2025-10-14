@@ -9,15 +9,15 @@
           "station_id": "Station ID (optional - leave blank for auto-detection)"
         }
       },
-      "sensors": {
+      "options": {
         "title": "WillyWeather Setup - Sensor Configuration",
-        "description": "Step 2 of 2: Configure sensors for {station_name}\n\nObservational sensors provide current weather data.\nWarning sensors provide alert information.\nAdditional forecast data can be enabled for UV, tides, and wind information.",
+        "description": "Step 2 of 2: Configure optional sensors for {station_name}\n\nObservational sensors (current weather) are enabled by default.\n\n**Optional Sensors:**",
         "data": {
-          "include_observational": "Include observational sensors",
-          "include_warnings": "Include warning sensors",
-          "include_uv": "Add UV data",
-          "include_tides": "Add tides data",
-          "include_wind": "Add wind data"
+          "include_observational": "Include observational sensors (temperature, humidity, wind, pressure, etc.)",
+          "include_warnings": "Include severe weather warning sensors",
+          "include_uv": "Include UV index sensors",
+          "include_tides": "Include tide information (Note: Not all areas have tidal information)",
+          "include_wind": "Include wind forecast data"
         }
       }
     },
@@ -38,11 +38,11 @@
         "title": "WillyWeather Sensor Options",
         "description": "Configure which sensors are available.\n\nChanging these options will reload the integration.",
         "data": {
-          "include_observational": "Include observational sensors",
-          "include_warnings": "Include warning sensors",
-          "include_uv": "Add UV data",
-          "include_tides": "Add tides data",
-          "include_wind": "Add wind data"
+          "include_observational": "Include observational sensors (temperature, humidity, wind, pressure, etc.)",
+          "include_warnings": "Include severe weather warning sensors",
+          "include_uv": "Include UV index sensors",
+          "include_tides": "Include tide information (Note: Not all areas have tidal information)",
+          "include_wind": "Include wind forecast data"
         }
       }
     }

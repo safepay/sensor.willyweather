@@ -56,7 +56,7 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
             update_interval=timedelta(minutes=UPDATE_INTERVAL_OBSERVATION),
         )
 
-async def _async_update_data(self) -> dict[str, Any]:
+    async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data from API."""
         _LOGGER.debug("Updating WillyWeather data for station %s", self.station_id)
         
@@ -102,11 +102,6 @@ async def _async_update_data(self) -> dict[str, Any]:
                 warning_data = await self._fetch_warning_data()
 
             _LOGGER.debug("Successfully fetched data from WillyWeather API")
-            _LOGGER.debug("Forecast types requested: %s", forecast_types)
-            _LOGGER.debug("Available forecasts in response: %s", 
-                         forecast_data.get("forecasts", {}).keys() if forecast_data else "None")
-            _LOGGER.debug("Tides data present: %s", 
-                         "tides" in forecast_data.get("forecasts", {}))
 
             return {
                 "observational": observational_data,
@@ -137,7 +132,7 @@ async def _async_update_data(self) -> dict[str, Any]:
             "units": "distance:km,temperature:c,amount:mm,speed:km/h,pressure:hpa,tideHeight:m,swellHeight:m",
         }
 
-        _LOGGER.debug("Fetching observational data from: %s with params: %s", url, params)
+        _LOGGER.debug("Fetching observational data from: %s", url)
 
         try:
             async with async_timeout.timeout(API_TIMEOUT):
@@ -187,7 +182,7 @@ async def _async_update_data(self) -> dict[str, Any]:
             "units": "distance:km,temperature:c,amount:mm,speed:km/h,pressure:hpa,tideHeight:m,swellHeight:m",
         }
 
-        _LOGGER.debug("Fetching forecast data from: %s with params: %s", url, params)
+        _LOGGER.debug("Fetching forecast data with types: %s", forecast_types)
 
         try:
             async with async_timeout.timeout(API_TIMEOUT):
@@ -234,7 +229,7 @@ async def _async_update_data(self) -> dict[str, Any]:
             "area": "location",
         }
 
-        _LOGGER.debug("Fetching warning data from: %s", url)
+        _LOGGER.debug("Fetching warning data")
 
         try:
             async with async_timeout.timeout(API_TIMEOUT):
@@ -256,7 +251,6 @@ async def _async_update_data(self) -> dict[str, Any]:
                         return {}
                     
                     data = await response.json()
-                    # Response is an array of warnings
                     return {"warnings": data if isinstance(data, list) else []}
                     
         except asyncio.TimeoutError:
@@ -265,7 +259,7 @@ async def _async_update_data(self) -> dict[str, Any]:
         except aiohttp.ClientError as err:
             _LOGGER.debug("Network error fetching warning data: %s", err)
             return {}
-        
+
     async def async_shutdown(self) -> None:
         """Close the aiohttp session."""
         await self._session.close()
@@ -288,8 +282,6 @@ async def async_get_station_id(
         async with async_timeout.timeout(API_TIMEOUT):
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, params=params) as response:
-                    response_text = await response.text()
-                    
                     if response.status == 401:
                         _LOGGER.error("API key is invalid (401 Unauthorized)")
                         return None
@@ -298,9 +290,8 @@ async def async_get_station_id(
                         return None
                     elif response.status != 200:
                         _LOGGER.error(
-                            "Error finding closest station: HTTP %s - %s",
+                            "Error finding closest station: HTTP %s",
                             response.status,
-                            response_text[:500],
                         )
                         return None
                     
@@ -318,7 +309,7 @@ async def async_get_station_id(
                         )
                         return station_id
                     else:
-                        _LOGGER.error("No location data in search response: %s", data)
+                        _LOGGER.error("No location data in search response")
                         return None
                         
     except asyncio.TimeoutError:
@@ -335,7 +326,7 @@ async def async_get_station_id(
 async def async_get_station_name(
     hass: HomeAssistant, station_id: str, api_key: str
 ) -> str | None:
-    """Get the station name by fetching weather data (which includes location info)."""
+    """Get the station name by fetching weather data."""
     url = f"{API_BASE_URL}/{api_key}/locations/{station_id}/weather.json"
     params = {
         "observational": "true",
@@ -348,8 +339,6 @@ async def async_get_station_name(
         async with async_timeout.timeout(API_TIMEOUT):
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, params=params) as response:
-                    response_text = await response.text()
-                    
                     if response.status == 401:
                         _LOGGER.error("API key is invalid (401 Unauthorized)")
                         return None
@@ -361,9 +350,8 @@ async def async_get_station_name(
                         return None
                     elif response.status != 200:
                         _LOGGER.error(
-                            "Error fetching station info: HTTP %s - %s",
+                            "Error fetching station info: HTTP %s",
                             response.status,
-                            response_text[:500],
                         )
                         return None
                     
@@ -375,7 +363,7 @@ async def async_get_station_name(
                         _LOGGER.info("Station name: %s", station_name)
                         return station_name
                     else:
-                        _LOGGER.warning("No station name found in response. Location data: %s", location)
+                        _LOGGER.warning("No station name found in response")
                         return f"Station {station_id}"
                     
     except asyncio.TimeoutError:
