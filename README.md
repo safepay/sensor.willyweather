@@ -10,9 +10,10 @@ A custom Home Assistant integration providing comprehensive weather data from Wi
 - **Observational Sensors**: Current weather measurements including temperature, humidity, pressure, wind, rainfall, and more
 - **Sun/Moon Data**: Sunrise, sunset, moonrise, moonset, and moon phase information
 - **Tide Information**: High and low tide times and heights (coastal locations)
+- **Swell Information**: Times, heights and periods (coastal locations)
 - **Severe Weather Warnings**: Binary sensors for active storm, flood, fire, heat, and wind warnings
 - **Automatic Station Detection**: Automatically finds the closest WillyWeather station based on your Home Assistant location
-- **Configurable Data**: Enable/disable forecast types and optional sensors through the UI
+- **Configurable Data**: Enable/disable optional sensors through the UI
 
 ## Installation
 
@@ -57,6 +58,7 @@ When setting up, you can configure:
 - **Add UV data** - Includes UV index forecasts (default: No)
 - **Add tides data** - Includes tide information for coastal locations (default: No)
 - **Add wind data** - Includes additional wind forecast data (default: No)
+- **Add swell data** - Includes additional swell forecast data (default: No)
 
 These options match the [WillyWeather API configuration screen](https://www.willyweather.com.au/api/docs/weather.html) settings, allowing you to select only the data types your location requires.
 
@@ -70,6 +72,7 @@ A single weather entity provides:
 - Humidity, pressure, and wind speed/direction
 - Cloud coverage and dew point
 - Daily forecasts (7 days available)
+- Hourly forecasts (3 days available)
 
 Access forecasts using the `weather.get_forecasts` service:
 ```yaml
