@@ -2,6 +2,10 @@
 
 A custom Home Assistant integration providing comprehensive weather data from WillyWeather Australia.
 
+This differs from the BoM integration by providing separate binary sensors for warnings as well as data that is unavailable such as tide and swell information.
+
+While the WillyWeather API requires a credit card on file, this integration will likely not exceed the 5000 free requests per day.
+
 ## Features
 
 - **Weather Entity**: Real-time weather conditions with full daily and hourly forecast support
