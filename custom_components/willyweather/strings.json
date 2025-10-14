@@ -3,10 +3,10 @@
     "step": {
       "user": {
         "title": "WillyWeather Setup - Station Selection",
-        "description": "Step 1 of 2: Enter your WillyWeather API key.\n\nGet your free API key from: {api_url}\n\nStation ID is optional - leave blank to automatically find the closest station to your Home Assistant location.",
+        "description": "Step 1 of 2: Enter your WillyWeather API key.\n\n**Get your API key:**\nVisit https://www.willyweather.com.au/api/register.html to register and obtain your free API key.\n\n**Station ID:**\nLeaving the Station ID blank will automatically set it to the closest WillyWeather station to your Home Assistant Home Zone location. You can also manually enter a specific station ID if preferred.",
         "data": {
           "api_key": "WillyWeather API Key",
-          "station_id": "Station ID (optional - leave blank for auto-detection)"
+          "station_id": "Station ID (optional)"
         }
       },
       "options": {
