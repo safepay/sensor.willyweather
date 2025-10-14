@@ -15,9 +15,9 @@ from homeassistant.helpers import config_validation as cv
 from .const import (
     CONF_INCLUDE_OBSERVATIONAL,
     CONF_INCLUDE_WARNINGS,
+    CONF_INCLUDE_WIND,
     CONF_INCLUDE_UV,
     CONF_INCLUDE_TIDES,
-    CONF_INCLUDE_WIND,
     CONF_INCLUDE_SWELL,
     CONF_STATION_ID,
     CONF_STATION_NAME,
@@ -117,9 +117,9 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 options={
                     CONF_INCLUDE_OBSERVATIONAL: user_input.get(CONF_INCLUDE_OBSERVATIONAL, True),
                     CONF_INCLUDE_WARNINGS: user_input.get(CONF_INCLUDE_WARNINGS, False),
+                    CONF_INCLUDE_WIND: user_input.get(CONF_INCLUDE_WIND, False),
                     CONF_INCLUDE_UV: user_input.get(CONF_INCLUDE_UV, False),
                     CONF_INCLUDE_TIDES: user_input.get(CONF_INCLUDE_TIDES, False),
-                    CONF_INCLUDE_WIND: user_input.get(CONF_INCLUDE_WIND, False),
                     CONF_INCLUDE_SWELL: user_input.get(CONF_INCLUDE_SWELL, False),
                 },
             )
@@ -128,9 +128,9 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             {
                 vol.Required(CONF_INCLUDE_OBSERVATIONAL, default=True): cv.boolean,
                 vol.Required(CONF_INCLUDE_WARNINGS, default=False): cv.boolean,
+                vol.Optional(CONF_INCLUDE_WIND, default=False): cv.boolean,
                 vol.Optional(CONF_INCLUDE_UV, default=False): cv.boolean,
                 vol.Optional(CONF_INCLUDE_TIDES, default=False): cv.boolean,
-                vol.Optional(CONF_INCLUDE_WIND, default=False): cv.boolean,
                 vol.Optional(CONF_INCLUDE_SWELL, default=False): cv.boolean,
             }
         )
@@ -181,16 +181,16 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
                         ),
                     ): cv.boolean,
                     vol.Optional(
+                        CONF_INCLUDE_WIND,
+                        default=self.config_entry.options.get(CONF_INCLUDE_WIND, False),
+                    ): cv.boolean,
+                    vol.Optional(
                         CONF_INCLUDE_UV,
                         default=self.config_entry.options.get(CONF_INCLUDE_UV, False),
                     ): cv.boolean,
                     vol.Optional(
                         CONF_INCLUDE_TIDES,
                         default=self.config_entry.options.get(CONF_INCLUDE_TIDES, False),
-                    ): cv.boolean,
-                    vol.Optional(
-                        CONF_INCLUDE_WIND,
-                        default=self.config_entry.options.get(CONF_INCLUDE_WIND, False),
                     ): cv.boolean,
                     vol.Optional(
                         CONF_INCLUDE_SWELL,
