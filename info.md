@@ -13,7 +13,7 @@ While the WillyWeather API requires a credit card on file, this integration will
 - **Sun/Moon Data**: Sunrise, sunset, moonrise, moonset, and moon phase information
 - **Tide Information**: High and low tide times and heights (Coastal locations. Also available in daily forecast data)
 - **Swell Information**: Times, heights and periods (Coastal locations. Also available in hourly forecast data)
-- **Severe Weather Warnings**: Binary sensors for active storm, flood, fire, heat, and wind warnings
+- **Severe Weather Warnings**: Binary sensors for active storm, flood, fire, heat, wind, frost warnings and more
 - **Automatic Station Detection**: Automatically finds the closest WillyWeather station based on your Home Assistant location
 - **Configurable Data**: Enable/disable optional sensors through the UI
 - **Forecast Data**: Daily (7 days) and hourly (3 days)
