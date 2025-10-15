@@ -42,14 +42,20 @@
   "options": {
     "step": {
       "init": {
-        "title": "WillyWeather Options",
+        "title": "WillyWeather Sensor Options",
         "description": "Configure which sensors are available.\n\nChanging these options will reload the integration.",
         "data": {
           "include_observational": "Include observational sensors (temperature, humidity, wind, pressure, etc.)",
           "include_wind": "Include wind forecast data",
           "include_uv": "Include UV index sensors",
           "include_tides": "Include tide information (Note: Not all areas have tidal information)",
-          "include_swell": "Include swell data (Note: Not all areas have swell information)",
+          "include_swell": "Include swell data (Note: Not all areas have swell information)"
+        }
+      },
+      "warnings": {
+        "title": "WillyWeather Warning Options",
+        "description": "Configure weather warning sensors.\n\nChanging these options will reload the integration.",
+        "data": {
           "include_warnings": "Include weather warning sensors"
         }
       }
