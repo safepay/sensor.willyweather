@@ -200,7 +200,20 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
                     continue
 
                 try:
-                    dt = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+                    # Parse the datetime from WillyWeather
+                    dt = dt_util.parse_datetime(date_string)
+                    if not dt:
+                        continue
+                    
+                    # If no timezone, assume local timezone
+                    if dt.tzinfo is None:
+                        tz = dt_util.get_time_zone(self.hass.config.time_zone)
+                        if tz:
+                            try:
+                                dt = tz.localize(dt)
+                            except AttributeError:
+                                dt = dt.replace(tzinfo=tz)
+                    
                 except ValueError:
                     continue
 
@@ -310,7 +323,8 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
         except (KeyError, IndexError, TypeError, ValueError) as err:
             _LOGGER.error("Error parsing daily forecast data: %s", err)
             return None
-    
+
+
     @callback
     def _async_forecast_hourly(self) -> list[Forecast] | None:
         """Return hourly forecast for next 3 days."""
@@ -342,7 +356,20 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
                         continue
 
                     try:
-                        dt = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
+                        # Parse the datetime from WillyWeather
+                        dt = dt_util.parse_datetime(date_string)
+                        if not dt:
+                            continue
+                        
+                        # If no timezone, assume local timezone
+                        if dt.tzinfo is None:
+                            tz = dt_util.get_time_zone(self.hass.config.time_zone)
+                            if tz:
+                                try:
+                                    dt = tz.localize(dt)
+                                except AttributeError:
+                                    dt = dt.replace(tzinfo=tz)
+                        
                     except ValueError:
                         continue
 
