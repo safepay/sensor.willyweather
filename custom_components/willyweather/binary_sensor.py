@@ -123,6 +123,7 @@ class WillyWeatherWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
                 "tsunami_warning": "tsunami",
                 "fog_warning": "fog",
             }
+
             target_classification = classification_map.get(self._sensor_type)
             if not target_classification:
                 return False
@@ -136,8 +137,18 @@ class WillyWeatherWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
                     if expire_time_str:
                         try:
                             expire_time = dt_util.parse_datetime(expire_time_str)
-                            if expire_time and expire_time > dt_util.utcnow():
-                                return True
+                            if expire_time:
+                                # Handle timezone
+                                if expire_time.tzinfo is None:
+                                    tz = dt_util.get_time_zone(self.coordinator.hass.config.time_zone)
+                                    if tz:
+                                        try:
+                                            expire_time = tz.localize(expire_time)
+                                        except AttributeError:
+                                            expire_time = expire_time.replace(tzinfo=tz)
+                                
+                                if expire_time > dt_util.now():
+                                    return True
                         except (ValueError, TypeError):
                             pass
 
@@ -146,3 +157,103 @@ class WillyWeatherWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
         except (KeyError, TypeError) as err:
             _LOGGER.debug("Error getting warning value for %s: %s", self._sensor_type, err)
             return None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional state attributes."""
+        if not self.coordinator.data:
+            return {}
+
+        warning_data = self.coordinator.data.get("warnings", {})
+        if not warning_data:
+            return {}
+
+        try:
+            warnings_list = warning_data.get("warnings", [])
+            if not warnings_list:
+                return {}
+
+            # Map sensor types to warning classifications
+            classification_map = {
+                "storm_warning": "storm",
+                "flood_warning": "flood",
+                "fire_warning": "fire",
+                "heat_warning": "heat",
+                "wind_warning": "strong-wind",
+                "severe_weather_warning": "storm",
+                "strong_wind_warning": "strong-wind",
+                "thunderstorm_warning": "storm",
+                "frost_warning": "frost",
+                "rain_warning": "cold-rain",
+                "snow_warning": "snow",
+                "hail_warning": "storm",
+                "cyclone_warning": "hurricane",
+                "tsunami_warning": "tsunami",
+                "fog_warning": "fog",
+            }
+
+            target_classification = classification_map.get(self._sensor_type)
+            if not target_classification:
+                return {}
+
+            # Collect all active warnings for this classification
+            active_warnings = []
+            for warning in warnings_list:
+                warning_type = warning.get("warningType", {})
+                if warning_type.get("classification") == target_classification:
+                    # Check expiry
+                    expire_time_str = warning.get("expireDateTime")
+                    if expire_time_str:
+                        try:
+                            expire_time = dt_util.parse_datetime(expire_time_str)
+                            if expire_time:
+                                # Handle timezone
+                                if expire_time.tzinfo is None:
+                                    tz = dt_util.get_time_zone(self.coordinator.hass.config.time_zone)
+                                    if tz:
+                                        try:
+                                            expire_time = tz.localize(expire_time)
+                                        except AttributeError:
+                                            expire_time = expire_time.replace(tzinfo=tz)
+                                
+                                if expire_time > dt_util.now():
+                                    # Get severity levels
+                                    severity_levels = warning_type.get("warningSeverityLevels", [])
+                                    severity = None
+                                    if severity_levels:
+                                        # Get the highest severity level (assuming last is highest)
+                                        severity = severity_levels[-1].get("code")
+                                    
+                                    active_warnings.append({
+                                        "code": warning.get("code"),
+                                        "name": warning.get("name"),
+                                        "issue_time": warning.get("issueDateTime"),
+                                        "expire_time": expire_time_str,
+                                        "severity": severity,
+                                        "warning_type": warning_type.get("name"),
+                                    })
+                        except (ValueError, TypeError):
+                            pass
+
+            if not active_warnings:
+                return {}
+
+            # If multiple warnings, return the highest severity
+            severity_order = {"yellow": 1, "amber": 2, "red": 3}
+            highest_severity = "yellow"
+            
+            for warn in active_warnings:
+                warn_severity = warn.get("severity")
+                if warn_severity:
+                    if severity_order.get(warn_severity, 0) > severity_order.get(highest_severity, 0):
+                        highest_severity = warn_severity
+
+            return {
+                "severity": highest_severity,
+                "warning_count": len(active_warnings),
+                "warnings": active_warnings,
+            }
+
+        except (KeyError, TypeError) as err:
+            _LOGGER.debug("Error getting warning attributes for %s: %s", self._sensor_type, err)
+            return {}
