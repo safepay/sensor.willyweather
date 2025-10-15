@@ -208,7 +208,9 @@ class WillyWeatherSunMoonSensor(CoordinatorEntity, SensorEntity):
         self._attr_name = sensor_info["name"]
         self._attr_unique_id = f"{station_id}_{sensor_type}"
         self._attr_native_unit_of_measurement = sensor_info.get("unit")
-        self._attr_icon = sensor_info["icon"]
+        # Don't set icon here for moon_phase - we'll do it dynamically
+        if sensor_type != "moon_phase":
+            self._attr_icon = sensor_info["icon"]
         self._attr_device_class = sensor_info.get("device_class")
 
         self._attr_device_info = DeviceInfo(
@@ -218,6 +220,36 @@ class WillyWeatherSunMoonSensor(CoordinatorEntity, SensorEntity):
             name=f"{station_name} Sensors",
             via_device=(DOMAIN, station_id),
         )
+
+    @staticmethod
+    def _get_moon_phase_icon(phase: str) -> str:
+        """Get the appropriate moon phase icon."""
+        phase_lower = phase.lower() if phase else ""
+        
+        # Map WillyWeather phase names to Material Design Icons
+        phase_map = {
+            "new moon": "mdi:moon-new",
+            "waxing crescent": "mdi:moon-waxing-crescent",
+            "first quarter": "mdi:moon-first-quarter",
+            "waxing gibbous": "mdi:moon-waxing-gibbous",
+            "full moon": "mdi:moon-full",
+            "waning gibbous": "mdi:moon-waning-gibbous",
+            "last quarter": "mdi:moon-last-quarter",
+            "third quarter": "mdi:moon-last-quarter",  # Alternative name
+            "waning crescent": "mdi:moon-waning-crescent",
+        }
+        
+        return phase_map.get(phase_lower, "mdi:moon-full")
+
+    @property
+    def icon(self) -> str | None:
+        """Return the icon for the sensor."""
+        if self._sensor_type == "moon_phase":
+            phase = self.native_value
+            if phase:
+                return self._get_moon_phase_icon(phase)
+            return "mdi:moon-full"
+        return self._attr_icon
 
     @property
     def native_value(self) -> Any:
@@ -310,7 +342,6 @@ class WillyWeatherSunMoonSensor(CoordinatorEntity, SensorEntity):
             return None
 
         return None
-
 
 class WillyWeatherTideSensor(CoordinatorEntity, SensorEntity):
     """Implementation of a WillyWeather tide sensor."""
