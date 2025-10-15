@@ -322,7 +322,7 @@ WARNING_BINARY_SENSOR_TYPES: Final = {
     },
     "severe_weather_warning": {
         "name": "Severe Weather Warning",
-        "icon": "mdi:mdi:weather-lightning-rainy",
+        "icon": "mdi:weather-lightning-rainy",
         "device_class": BinarySensorDeviceClass.SAFETY,
     },
     "strong_wind_warning": {
