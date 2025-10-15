@@ -42,7 +42,7 @@
   "options": {
     "step": {
       "init": {
-        "title": "WillyWeather Sensor Options",
+        "title": "WillyWeather Options",
         "description": "Configure which sensors are available.\n\nChanging these options will reload the integration.",
         "data": {
           "include_observational": "Include observational sensors (temperature, humidity, wind, pressure, etc.)",

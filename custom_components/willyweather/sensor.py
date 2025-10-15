@@ -243,16 +243,22 @@ class WillyWeatherSunMoonSensor(CoordinatorEntity, SensorEntity):
                     else:  # sunset
                         time_val = entry.get("setDateTime")
                     if time_val:
+                        _LOGGER.debug("Raw %s time from API: %s", self._sensor_type, time_val)
+                        # Parse the datetime - WillyWeather returns "YYYY-MM-DD HH:MM:SS"
                         dt = dt_util.parse_datetime(time_val)
-                        if dt and dt.tzinfo is None:
-                            # Assume UTC and convert to local timezone
-                            dt = dt.replace(tzinfo=dt_util.UTC)
-                            tz = self.coordinator.hass.config.time_zone
-                            if tz:
-                                local_tz = dt_util.get_time_zone(tz)
-                                if local_tz:
-                                    dt = dt.astimezone(local_tz)
-                        return dt
+                        if dt:
+                            _LOGGER.debug("Parsed datetime (before tz): %s (tzinfo: %s)", dt, dt.tzinfo)
+                            # If no timezone, assume it's in the Home Assistant timezone
+                            if dt.tzinfo is None:
+                                tz = dt_util.get_time_zone(self.coordinator.hass.config.time_zone)
+                                if tz:
+                                    # Use localize for pytz timezones, replace for others
+                                    try:
+                                        dt = tz.localize(dt)
+                                    except AttributeError:
+                                        dt = dt.replace(tzinfo=tz)
+                            _LOGGER.debug("Final %s datetime: %s", self._sensor_type, dt)
+                            return dt
             
             # Handle moon phases
             elif self._sensor_type in ["moonrise", "moonset", "moon_phase"]:
@@ -273,21 +279,21 @@ class WillyWeatherSunMoonSensor(CoordinatorEntity, SensorEntity):
                     
                     if time_val:
                         dt = dt_util.parse_datetime(time_val)
-                        if dt and dt.tzinfo is None:
-                            dt = dt.replace(tzinfo=dt_util.UTC)
-                            tz = self.coordinator.hass.config.time_zone
-                            if tz:
-                                local_tz = dt_util.get_time_zone(tz)
-                                if local_tz:
-                                    dt = dt.astimezone(local_tz)
-                        return dt
+                        if dt:
+                            if dt.tzinfo is None:
+                                tz = dt_util.get_time_zone(self.coordinator.hass.config.time_zone)
+                                if tz:
+                                    try:
+                                        dt = tz.localize(dt)
+                                    except AttributeError:
+                                        dt = dt.replace(tzinfo=tz)
+                            return dt
 
         except (KeyError, IndexError, TypeError) as err:
             _LOGGER.debug("Error getting sun/moon value for %s: %s", self._sensor_type, err)
             return None
 
         return None
-
 
 class WillyWeatherTideSensor(CoordinatorEntity, SensorEntity):
     """Implementation of a WillyWeather tide sensor."""
@@ -366,12 +372,18 @@ class WillyWeatherTideSensor(CoordinatorEntity, SensorEntity):
                     if entry.get("type") == "high":
                         tide_time = entry.get("dateTime")
                         if tide_time:
+                            _LOGGER.debug("Raw high tide time from API: %s", tide_time)
                             dt = dt_util.parse_datetime(tide_time)
                             if dt:
+                                _LOGGER.debug("Parsed tide datetime (before tz): %s (tzinfo: %s)", dt, dt.tzinfo)
                                 if dt.tzinfo is None:
                                     tz = dt_util.get_time_zone(self.coordinator.hass.config.time_zone)
                                     if tz:
-                                        dt = tz.localize(dt)
+                                        try:
+                                            dt = tz.localize(dt)
+                                        except AttributeError:
+                                            dt = dt.replace(tzinfo=tz)
+                                _LOGGER.debug("Final high tide datetime: %s", dt)
                                 return dt
                         break
                         
@@ -385,7 +397,10 @@ class WillyWeatherTideSensor(CoordinatorEntity, SensorEntity):
                                 if dt.tzinfo is None:
                                     tz = dt_util.get_time_zone(self.coordinator.hass.config.time_zone)
                                     if tz:
-                                        dt = tz.localize(dt)
+                                        try:
+                                            dt = tz.localize(dt)
+                                        except AttributeError:
+                                            dt = dt.replace(tzinfo=tz)
                                 return dt
                         break
                         

@@ -111,7 +111,7 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             {
                 vol.Required(CONF_INCLUDE_OBSERVATIONAL, default=True): cv.boolean,
                 vol.Optional(CONF_INCLUDE_WIND, default=True): cv.boolean,
-                vol.Optional(CONF_INCLUDE_UV, default=False): cv.boolean,
+                vol.Optional(CONF_INCLUDE_UV, default=True): cv.boolean,
                 vol.Optional(CONF_INCLUDE_TIDES, default=False): cv.boolean,
                 vol.Optional(CONF_INCLUDE_SWELL, default=False): cv.boolean,
             }
@@ -160,6 +160,14 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             description_placeholders={"station_name": self._station_name},
         )
 
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> config_entries.OptionsFlow:
+        """Get the options flow for this handler."""
+        return WillyWeatherOptionsFlow(config_entry)
+
 class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
     """Handle options flow for WillyWeather."""
 
@@ -170,9 +178,10 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Manage the options."""
+        """Manage the options for sensors."""
         if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
+            self._sensor_options = user_input
+            return await self.async_step_warnings()
 
         return self.async_show_form(
             step_id="init",
@@ -184,19 +193,13 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
                             CONF_INCLUDE_OBSERVATIONAL, True
                         ),
                     ): cv.boolean,
-                    vol.Required(
-                        CONF_INCLUDE_WARNINGS,
-                        default=self.config_entry.options.get(
-                            CONF_INCLUDE_WARNINGS, False
-                        ),
-                    ): cv.boolean,
                     vol.Optional(
                         CONF_INCLUDE_WIND,
-                        default=self.config_entry.options.get(CONF_INCLUDE_WIND, False),
+                        default=self.config_entry.options.get(CONF_INCLUDE_WIND, True),
                     ): cv.boolean,
                     vol.Optional(
                         CONF_INCLUDE_UV,
-                        default=self.config_entry.options.get(CONF_INCLUDE_UV, False),
+                        default=self.config_entry.options.get(CONF_INCLUDE_UV, True),
                     ): cv.boolean,
                     vol.Optional(
                         CONF_INCLUDE_TIDES,
@@ -205,6 +208,32 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
                     vol.Optional(
                         CONF_INCLUDE_SWELL,
                         default=self.config_entry.options.get(CONF_INCLUDE_SWELL, False),
+                    ): cv.boolean,
+                }
+            ),
+        )
+
+    async def async_step_warnings(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Manage the warning options."""
+        if user_input is not None:
+            # Merge sensor options with warning options
+            return self.async_create_entry(
+                title="",
+                data={
+                    **self._sensor_options,
+                    CONF_INCLUDE_WARNINGS: user_input.get(CONF_INCLUDE_WARNINGS, True),
+                },
+            )
+
+        return self.async_show_form(
+            step_id="warnings",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_INCLUDE_WARNINGS,
+                        default=self.config_entry.options.get(CONF_INCLUDE_WARNINGS, True),
                     ): cv.boolean,
                 }
             ),
