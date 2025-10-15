@@ -11,8 +11,8 @@ This differs from the BoM integration by providing separate binary sensors for w
 - **Weather Entity**: Real-time weather conditions with full daily forecast support
 - **Observational Sensors**: Current weather measurements including temperature, humidity, pressure, wind, rainfall, and more
 - **Sun/Moon Data**: Sunrise, sunset, moonrise, moonset, and moon phase information
-- **Tide Information**: High and low tide times and heights (coastal locations)
-- **Swell Information**: Times, heights and periods (coastal locations)
+- **Tide Information**: High and low tide times and heights (Coastal locations. Also available in daily forecast data)
+- **Swell Information**: Times, heights and periods (Coastal locations. Also available in hourly forecast data)
 - **Severe Weather Warnings**: Binary sensors for active storm, flood, fire, heat, and wind warnings
 - **Automatic Station Detection**: Automatically finds the closest WillyWeather station based on your Home Assistant location
 - **Configurable Data**: Enable/disable optional sensors through the UI
