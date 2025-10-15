@@ -4,6 +4,7 @@ from __future__ import annotations
 from datetime import datetime
 import logging
 from typing import TYPE_CHECKING, Any
+from homeassistant.util import dt as dt_util
 
 from homeassistant.components.weather import (
     Forecast,
@@ -219,15 +220,39 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
                         if uv_index is not None:
                             forecast_dict["uv_index"] = uv_index
 
-                # Add sunrise/sunset
+                # Add sunrise/sunset with timezone handling
                 if idx < len(sunrisesunset_days):
                     sun_day = sunrisesunset_days[idx]
                     if sun_day.get("entries"):
                         sun_entry = sun_day["entries"][0]
+                        
+                        # Handle sunrise
                         if sun_entry.get("riseDateTime"):
-                            forecast_dict["sunrise"] = sun_entry.get("riseDateTime")
+                            sunrise_str = sun_entry.get("riseDateTime")
+                            sunrise_dt = dt_util.parse_datetime(sunrise_str)
+                            if sunrise_dt:
+                                if sunrise_dt.tzinfo is None:
+                                    tz = dt_util.get_time_zone(self.hass.config.time_zone)
+                                    if tz:
+                                        try:
+                                            sunrise_dt = tz.localize(sunrise_dt)
+                                        except AttributeError:
+                                            sunrise_dt = sunrise_dt.replace(tzinfo=tz)
+                                forecast_dict["sunrise"] = sunrise_dt.isoformat()
+                        
+                        # Handle sunset
                         if sun_entry.get("setDateTime"):
-                            forecast_dict["sunset"] = sun_entry.get("setDateTime")
+                            sunset_str = sun_entry.get("setDateTime")
+                            sunset_dt = dt_util.parse_datetime(sunset_str)
+                            if sunset_dt:
+                                if sunset_dt.tzinfo is None:
+                                    tz = dt_util.get_time_zone(self.hass.config.time_zone)
+                                    if tz:
+                                        try:
+                                            sunset_dt = tz.localize(sunset_dt)
+                                        except AttributeError:
+                                            sunset_dt = sunset_dt.replace(tzinfo=tz)
+                                forecast_dict["sunset"] = sunset_dt.isoformat()
 
                 # Add moon phase
                 if idx < len(moonphases_days):
@@ -237,18 +262,30 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
                         if moon_entry.get("phase"):
                             forecast_dict["moon_phase"] = moon_entry.get("phase")
 
-                # Add tides if enabled
+                # Add tides if enabled with timezone handling
                 if tides_enabled and idx < len(tides_days):
                     tides_day = tides_days[idx]
                     if tides_day.get("entries"):
                         entries = tides_day["entries"]
                         for tide_entry in entries:
-                            if tide_entry.get("type") == "high":
-                                forecast_dict["high_tide_time"] = tide_entry.get("dateTime")
-                                forecast_dict["high_tide_height"] = tide_entry.get("height")
-                            elif tide_entry.get("type") == "low":
-                                forecast_dict["low_tide_time"] = tide_entry.get("dateTime")
-                                forecast_dict["low_tide_height"] = tide_entry.get("height")
+                            tide_time_str = tide_entry.get("dateTime")
+                            if tide_time_str:
+                                tide_dt = dt_util.parse_datetime(tide_time_str)
+                                if tide_dt:
+                                    if tide_dt.tzinfo is None:
+                                        tz = dt_util.get_time_zone(self.hass.config.time_zone)
+                                        if tz:
+                                            try:
+                                                tide_dt = tz.localize(tide_dt)
+                                            except AttributeError:
+                                                tide_dt = tide_dt.replace(tzinfo=tz)
+                                    
+                                    if tide_entry.get("type") == "high":
+                                        forecast_dict["high_tide_time"] = tide_dt.isoformat()
+                                        forecast_dict["high_tide_height"] = tide_entry.get("height")
+                                    elif tide_entry.get("type") == "low":
+                                        forecast_dict["low_tide_time"] = tide_dt.isoformat()
+                                        forecast_dict["low_tide_height"] = tide_entry.get("height")
 
                 # Add rainfall data
                 if idx < len(rainfall_days):
@@ -273,7 +310,7 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
         except (KeyError, IndexError, TypeError, ValueError) as err:
             _LOGGER.error("Error parsing daily forecast data: %s", err)
             return None
-
+    
     @callback
     def _async_forecast_hourly(self) -> list[Forecast] | None:
         """Return hourly forecast for next 3 days."""
