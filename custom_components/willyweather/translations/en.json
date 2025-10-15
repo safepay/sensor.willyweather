@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "WillyWeather Setup - Station Selection",
-        "description": "Step 1 of 2: Enter your WillyWeather API key.\n\n**Get your API key:**\nVisit https://www.willyweather.com.au/api/register.html to register and obtain your free API key.\n\n**Station ID:**\nLeaving the Station ID blank will automatically set it to the closest WillyWeather station to your Home Assistant Home Zone location. You can also manually enter a specific station ID if preferred.",
+        "description": "Step 1 of 3: Enter your WillyWeather API key.\n\n**Get your API key:**\nVisit https://www.willyweather.com.au/api/register.html to register and obtain your free API key.\n\n**Station ID:**\nLeaving the Station ID blank will automatically set it to the closest WillyWeather station to your Home Assistant Home Zone location. You can also manually enter a specific station ID if preferred.",
         "data": {
           "api_key": "WillyWeather API Key",
           "station_id": "Station ID (optional)"
@@ -11,7 +11,7 @@
       },
       "options": {
         "title": "WillyWeather Setup - Sensor Configuration",
-        "description": "Step 2 of 2: Configure optional sensors for {station_name}\n\nObservational sensors (current weather) are enabled by default.\n\n**Optional Sensors:**",
+        "description": "Step 2 of 3: Configure optional sensors for {station_name}\n\nObservational sensors (current weather) are enabled by default.\n\n**Optional Sensors:**",
         "data": {
           "include_observational": "Include observational sensors (temperature, humidity, wind, pressure, etc.)",
           "include_wind": "Include wind forecast data",
@@ -42,14 +42,14 @@
   "options": {
     "step": {
       "init": {
-        "title": "WillyWeather Sensor Options",
+        "title": "WillyWeather Options",
         "description": "Configure which sensors are available.\n\nChanging these options will reload the integration.",
         "data": {
           "include_observational": "Include observational sensors (temperature, humidity, wind, pressure, etc.)",
           "include_wind": "Include wind forecast data",
           "include_uv": "Include UV index sensors",
           "include_tides": "Include tide information (Note: Not all areas have tidal information)",
-          "include_swell": "Include swell data (coastal locations only, Note: Not all areas have swell information)",
+          "include_swell": "Include swell data (Note: Not all areas have swell information)",
           "include_warnings": "Include severe weather warning sensors"
         }
       }
