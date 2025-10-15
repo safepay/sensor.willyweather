@@ -254,12 +254,12 @@ TIDES_SENSOR_TYPES: Final = {
     },
     "next_high_tide_height": {
         "name": "Next High Tide Height",
-        "unit": "ft",
+        "unit": "m",
         "icon": "mdi:waves-arrow-up",
     },
     "next_low_tide_height": {
         "name": "Next Low Tide Height",
-        "unit": "ft",
+        "unit": "m",
         "icon": "mdi:waves",
     },
 }
@@ -318,6 +318,56 @@ WARNING_BINARY_SENSOR_TYPES: Final = {
     "wind_warning": {
         "name": "Wind Warning",
         "icon": "mdi:weather-windy-variant",
+        "device_class": BinarySensorDeviceClass.SAFETY,
+    },
+    "severe_weather_warning": {
+        "name": "Severe Weather Warning",
+        "icon": "mdi:mdi:weather-lightning-rainy",
+        "device_class": BinarySensorDeviceClass.SAFETY,
+    },
+    "strong_wind_warning": {
+        "name": "Strong Wind Warning",
+        "icon": "mdi:wind-power",
+        "device_class": BinarySensorDeviceClass.SAFETY,
+    },
+    "thunderstorm_warning": {
+        "name": "Thunderstorm Warning",
+        "icon": "mdi:weather-lightning",
+        "device_class": BinarySensorDeviceClass.SAFETY,
+    },
+    "frost_warning": {
+        "name": "Frost Warning",
+        "icon": "mdi:snowflake-alert",
+        "device_class": BinarySensorDeviceClass.SAFETY,
+    },
+    "rain_warning": {
+        "name": "Rain Warning",
+        "icon": "mdi:water-alert",
+        "device_class": BinarySensorDeviceClass.SAFETY,
+    },
+    "snow_warning": {
+        "name": "Snow Warning",
+        "icon": "mdi:snowflake-alert",
+        "device_class": BinarySensorDeviceClass.SAFETY,
+    },
+    "hail_warning": {
+        "name": "Hail Warning",
+        "icon": "mdi:weather-hail",
+        "device_class": BinarySensorDeviceClass.SAFETY,
+    },
+    "cyclone_warning": {
+        "name": "Cyclone Warning",
+        "icon": "mdi:weather-hurricane",
+        "device_class": BinarySensorDeviceClass.SAFETY,
+    },
+    "tsunami_warning": {
+        "name": "Tsunami Warning",
+        "icon": "mdi:waves-arrow-up",
+        "device_class": BinarySensorDeviceClass.SAFETY,
+    },
+    "fog_warning": {
+        "name": "Fog Warning",
+        "icon": "mdi:weather-fog",
         "device_class": BinarySensorDeviceClass.SAFETY,
     },
 }

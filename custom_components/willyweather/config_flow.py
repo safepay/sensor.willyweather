@@ -102,7 +102,31 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_options(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Handle options step."""
+        """Handle sensor options step."""
+        if user_input is not None:
+            self._sensor_options = user_input
+            return await self.async_step_warnings()
+
+        data_schema = vol.Schema(
+            {
+                vol.Required(CONF_INCLUDE_OBSERVATIONAL, default=True): cv.boolean,
+                vol.Optional(CONF_INCLUDE_WIND, default=True): cv.boolean,
+                vol.Optional(CONF_INCLUDE_UV, default=False): cv.boolean,
+                vol.Optional(CONF_INCLUDE_TIDES, default=False): cv.boolean,
+                vol.Optional(CONF_INCLUDE_SWELL, default=False): cv.boolean,
+            }
+        )
+
+        return self.async_show_form(
+            step_id="options",
+            data_schema=data_schema,
+            description_placeholders={"station_name": self._station_name},
+        )
+
+    async def async_step_warnings(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle warning options step."""
         if user_input is not None:
             await self.async_set_unique_id(f"{DOMAIN}_{self._station_id}")
             self._abort_if_unique_id_configured()
@@ -115,40 +139,26 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_STATION_NAME: self._station_name,
                 },
                 options={
-                    CONF_INCLUDE_OBSERVATIONAL: user_input.get(CONF_INCLUDE_OBSERVATIONAL, True),
-                    CONF_INCLUDE_WARNINGS: user_input.get(CONF_INCLUDE_WARNINGS, False),
-                    CONF_INCLUDE_WIND: user_input.get(CONF_INCLUDE_WIND, False),
-                    CONF_INCLUDE_UV: user_input.get(CONF_INCLUDE_UV, False),
-                    CONF_INCLUDE_TIDES: user_input.get(CONF_INCLUDE_TIDES, False),
-                    CONF_INCLUDE_SWELL: user_input.get(CONF_INCLUDE_SWELL, False),
+                    CONF_INCLUDE_OBSERVATIONAL: self._sensor_options.get(CONF_INCLUDE_OBSERVATIONAL, True),
+                    CONF_INCLUDE_WIND: self._sensor_options.get(CONF_INCLUDE_WIND, True),
+                    CONF_INCLUDE_UV: self._sensor_options.get(CONF_INCLUDE_UV, True),
+                    CONF_INCLUDE_TIDES: self._sensor_options.get(CONF_INCLUDE_TIDES, False),
+                    CONF_INCLUDE_SWELL: self._sensor_options.get(CONF_INCLUDE_SWELL, False),
+                    CONF_INCLUDE_WARNINGS: user_input.get(CONF_INCLUDE_WARNINGS, True),
                 },
             )
 
         data_schema = vol.Schema(
             {
-                vol.Required(CONF_INCLUDE_OBSERVATIONAL, default=True): cv.boolean,
-                vol.Required(CONF_INCLUDE_WARNINGS, default=False): cv.boolean,
-                vol.Optional(CONF_INCLUDE_WIND, default=False): cv.boolean,
-                vol.Optional(CONF_INCLUDE_UV, default=False): cv.boolean,
-                vol.Optional(CONF_INCLUDE_TIDES, default=False): cv.boolean,
-                vol.Optional(CONF_INCLUDE_SWELL, default=False): cv.boolean,
+                vol.Required(CONF_INCLUDE_WARNINGS, default=True): cv.boolean,
             }
         )
 
         return self.async_show_form(
-            step_id="options",
+            step_id="warnings",
             data_schema=data_schema,
             description_placeholders={"station_name": self._station_name},
         )
-    
-    @staticmethod
-    @callback
-    def async_get_options_flow(
-        config_entry: config_entries.ConfigEntry,
-    ) -> WillyWeatherOptionsFlow:
-        """Get the options flow for this handler."""
-        return WillyWeatherOptionsFlow(config_entry)
-
 
 class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
     """Handle options flow for WillyWeather."""

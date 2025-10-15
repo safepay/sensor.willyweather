@@ -214,11 +214,14 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                         raise UpdateFailed(f"HTTP error {response.status}")
                     
                     data = await response.json()
-                    return {
-                        "location": data.get("location", {}),
-                        "forecasts": data.get("forecasts", {}),
-                    }
+                    location = data.get("location", {})
                     
+                    return {
+                        "location": location,
+                        "forecasts": data.get("forecasts", {}),
+                        "timezone": location.get("timezone"),  # Add this
+                    }
+                                    
         except asyncio.TimeoutError as err:
             _LOGGER.error("Timeout fetching forecast data")
             raise UpdateFailed("Request timeout") from err

@@ -343,25 +343,18 @@ class WillyWeatherTideSensor(CoordinatorEntity, SensorEntity):
             
             tides_data = forecasts_dict.get("tides")
             
-            _LOGGER.debug("Tides data structure: %s", 
-                         type(tides_data) if tides_data else "None")
-            
             if not tides_data:
                 _LOGGER.debug("No tides data in forecasts")
                 return None
             
             days = tides_data.get("days", [])
-            _LOGGER.debug("Tides days count: %d", len(days))
             
             if not days:
                 _LOGGER.debug("No days in tides data")
                 return None
             
             day_data = days[0]
-            _LOGGER.debug("First day tides data keys: %s", day_data.keys() if isinstance(day_data, dict) else type(day_data))
-            
             entries = day_data.get("entries", [])
-            _LOGGER.debug("Tides entries count: %d", len(entries))
             
             if not entries:
                 _LOGGER.debug("No entries in first tides day")
@@ -370,56 +363,42 @@ class WillyWeatherTideSensor(CoordinatorEntity, SensorEntity):
             # Find next high or low tide
             if self._sensor_type == "next_high_tide":
                 for entry in entries:
-                    entry_type = entry.get("type")
-                    _LOGGER.debug("Tide entry type: %s", entry_type)
-                    if entry_type == "high":
+                    if entry.get("type") == "high":
                         tide_time = entry.get("dateTime")
-                        _LOGGER.debug("Found high tide time: %s", tide_time)
                         if tide_time:
                             dt = dt_util.parse_datetime(tide_time)
-                            if dt and dt.tzinfo is None:
-                                dt = dt.replace(tzinfo=dt_util.UTC)
-                                tz = self.coordinator.hass.config.time_zone
-                                if tz:
-                                    local_tz = dt_util.get_time_zone(tz)
-                                    if local_tz:
-                                        dt = dt.astimezone(local_tz)
-                            _LOGGER.debug("Returning high tide: %s", dt)
-                            return dt
+                            if dt:
+                                if dt.tzinfo is None:
+                                    tz = dt_util.get_time_zone(self.coordinator.hass.config.time_zone)
+                                    if tz:
+                                        dt = tz.localize(dt)
+                                return dt
                         break
-                _LOGGER.debug("No high tide found in entries")
-                
+                        
             elif self._sensor_type == "next_low_tide":
                 for entry in entries:
                     if entry.get("type") == "low":
                         tide_time = entry.get("dateTime")
-                        _LOGGER.debug("Found low tide time: %s", tide_time)
                         if tide_time:
                             dt = dt_util.parse_datetime(tide_time)
-                            if dt and dt.tzinfo is None:
-                                dt = dt.replace(tzinfo=dt_util.UTC)
-                                tz = self.coordinator.hass.config.time_zone
-                                if tz:
-                                    local_tz = dt_util.get_time_zone(tz)
-                                    if local_tz:
-                                        dt = dt.astimezone(local_tz)
-                            _LOGGER.debug("Returning low tide: %s", dt)
-                            return dt
+                            if dt:
+                                if dt.tzinfo is None:
+                                    tz = dt_util.get_time_zone(self.coordinator.hass.config.time_zone)
+                                    if tz:
+                                        dt = tz.localize(dt)
+                                return dt
                         break
-                _LOGGER.debug("No low tide found in entries")
-                
+                        
             elif self._sensor_type == "next_high_tide_height":
                 for entry in entries:
                     if entry.get("type") == "high":
                         height = entry.get("height")
-                        _LOGGER.debug("High tide height: %s", height)
                         return height
                         
             elif self._sensor_type == "next_low_tide_height":
                 for entry in entries:
                     if entry.get("type") == "low":
                         height = entry.get("height")
-                        _LOGGER.debug("Low tide height: %s", height)
                         return height
 
         except (KeyError, IndexError, TypeError) as err:
@@ -601,25 +580,60 @@ class WillyWeatherSwellSensor(CoordinatorEntity, SensorEntity):
 
         try:
             forecasts = self.coordinator.data.get("forecast", {}).get("forecasts", {})
-            swell_days = forecasts.get("swell", {}).get("days", [])
             
-            if not swell_days or not swell_days[0].get("entries"):
-                return None
+            # Handle sunrise/sunset
+            if self._sensor_type in ["sunrise", "sunset"]:
+                sunrisesunset_data = forecasts.get("sunrisesunset", {})
+                if not sunrisesunset_data:
+                    _LOGGER.debug("No sunrisesunset data available")
+                    return None
+                    
+                days = sunrisesunset_data.get("days", [])
+                if days and days[0].get("entries"):
+                    entry = days[0]["entries"][0]
+                    if self._sensor_type == "sunrise":
+                        time_val = entry.get("riseDateTime")
+                    else:  # sunset
+                        time_val = entry.get("setDateTime")
+                    if time_val:
+                        # WillyWeather returns times in local timezone already
+                        dt = dt_util.parse_datetime(time_val)
+                        if dt:
+                            # If no timezone info, assume it's in the location's local time
+                            if dt.tzinfo is None:
+                                tz = dt_util.get_time_zone(self.coordinator.hass.config.time_zone)
+                                if tz:
+                                    dt = tz.localize(dt)
+                            return dt
             
-            # Get the first swell entry (most current)
-            entry = swell_days[0]["entries"][0]
-            
-            if self._sensor_type == "swell_height":
-                return entry.get("height")
-            elif self._sensor_type == "swell_period":
-                return entry.get("period")
-            elif self._sensor_type == "swell_direction":
-                return entry.get("direction")
-            elif self._sensor_type == "swell_direction_text":
-                return entry.get("directionText")
+            # Handle moon phases
+            elif self._sensor_type in ["moonrise", "moonset", "moon_phase"]:
+                moonphases_data = forecasts.get("moonphases", {})
+                if not moonphases_data:
+                    _LOGGER.debug("No moonphases data available")
+                    return None
+                    
+                days = moonphases_data.get("days", [])
+                if days and days[0].get("entries"):
+                    entry = days[0]["entries"][0]
+                    if self._sensor_type == "moonrise":
+                        time_val = entry.get("riseDateTime")
+                    elif self._sensor_type == "moonset":
+                        time_val = entry.get("setDateTime")
+                    else:  # moon_phase
+                        return entry.get("phase")
+                    
+                    if time_val:
+                        dt = dt_util.parse_datetime(time_val)
+                        if dt:
+                            if dt.tzinfo is None:
+                                tz = dt_util.get_time_zone(self.coordinator.hass.config.time_zone)
+                                if tz:
+                                    dt = tz.localize(dt)
+                            return dt
 
         except (KeyError, IndexError, TypeError) as err:
-            _LOGGER.debug("Error getting swell value for %s: %s", self._sensor_type, err)
+            _LOGGER.debug("Error getting sun/moon value for %s: %s", self._sensor_type, err)
             return None
 
         return None

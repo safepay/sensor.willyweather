@@ -112,8 +112,17 @@ class WillyWeatherWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
                 "fire_warning": "fire",
                 "heat_warning": "heat",
                 "wind_warning": "strong-wind",
+                "severe_weather_warning": "storm",
+                "strong_wind_warning": "strong-wind",
+                "thunderstorm_warning": "storm",
+                "frost_warning": "frost",
+                "rain_warning": "cold-rain",
+                "snow_warning": "snow",
+                "hail_warning": "storm",
+                "cyclone_warning": "hurricane",
+                "tsunami_warning": "tsunami",
+                "fog_warning": "fog",
             }
-
             target_classification = classification_map.get(self._sensor_type)
             if not target_classification:
                 return False
