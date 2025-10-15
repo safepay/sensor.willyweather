@@ -1,7 +1,7 @@
 {
   "domain": "willyweather",
   "name": "WillyWeather",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "documentation": "https://github.com/safepay/sensor.willyweather",
   "issue_tracker": "https://github.com/safepay/sensor.willyweather/issues",
   "dependencies": [],
@@ -11,3 +11,4 @@
   "iot_class": "cloud_polling"
 
 }
+
