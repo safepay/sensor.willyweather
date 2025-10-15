@@ -24,7 +24,7 @@
         "title": "WillyWeather Setup - Warning Configuration",
         "description": "Step 3 of 3: Configure weather warnings for {station_name}\n\nWarnings will alert you to dangerous weather conditions.",
         "data": {
-          "include_warnings": "Include weather warning sensors"
+          "include_warnings": "Include weather warning binary sensors"
         }
       }
     },
@@ -56,7 +56,7 @@
         "title": "WillyWeather Warning Options",
         "description": "Configure weather warning sensors.\n\nChanging these options will reload the integration.",
         "data": {
-          "include_warnings": "Include weather warning sensors"
+          "include_warnings": "Include weather warning binary sensors"
         }
       }
     }
