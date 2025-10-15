@@ -22,9 +22,9 @@
       },
       "warnings": {
         "title": "WillyWeather Setup - Warning Configuration",
-        "description": "Step 3 of 3: Configure severe weather warnings for {station_name}\n\nWarnings will alert you to dangerous weather conditions.",
+        "description": "Step 3 of 3: Configure weather warnings for {station_name}\n\nWarnings will alert you to dangerous weather conditions.",
         "data": {
-          "include_warnings": "Include severe weather warning sensors"
+          "include_warnings": "Include weather warning sensors"
         }
       }
     },
@@ -50,7 +50,7 @@
           "include_uv": "Include UV index sensors",
           "include_tides": "Include tide information (Note: Not all areas have tidal information)",
           "include_swell": "Include swell data (Note: Not all areas have swell information)",
-          "include_warnings": "Include severe weather warning sensors"
+          "include_warnings": "Include weather warning sensors"
         }
       }
     }
