@@ -239,8 +239,8 @@ class WillyWeatherWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
                 return {}
 
             # If multiple warnings, return the highest severity
-            severity_order = {"yellow": 1, "amber": 2, "red": 3}
-            highest_severity = "yellow"
+            severity_order = {"red": 1, "amber": 2, "yellow": 3}
+            highest_severity = "red"
             
             for warn in active_warnings:
                 warn_severity = warn.get("severity")
@@ -256,4 +256,5 @@ class WillyWeatherWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
 
         except (KeyError, TypeError) as err:
             _LOGGER.debug("Error getting warning attributes for %s: %s", self._sensor_type, err)
+
             return {}
