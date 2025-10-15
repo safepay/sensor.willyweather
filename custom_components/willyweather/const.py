@@ -320,9 +320,9 @@ WARNING_BINARY_SENSOR_TYPES: Final = {
         "icon": "mdi:weather-windy-variant",
         "device_class": BinarySensorDeviceClass.SAFETY,
     },
-    "severe_weather_warning": {
-        "name": "Severe Weather Warning",
-        "icon": "mdi:weather-lightning-rainy",
+    "weather_warning": {
+        "name": "Weather Warning",
+        "icon": "mdi:weather-alert",
         "device_class": BinarySensorDeviceClass.SAFETY,
     },
     "strong_wind_warning": {
@@ -367,7 +367,7 @@ WARNING_BINARY_SENSOR_TYPES: Final = {
     },
     "fog_warning": {
         "name": "Fog Warning",
-        "icon": "mdi:weather-fog",
+        "icon": "mdi:fog",
         "device_class": BinarySensorDeviceClass.SAFETY,
     },
 }
