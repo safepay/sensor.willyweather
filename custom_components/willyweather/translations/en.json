@@ -1,1 +1,58 @@
-
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "WillyWeather Setup - Station Selection",
+        "description": "Step 1 of 2: Enter your WillyWeather API key.\n\n**Get your API key:**\nVisit https://www.willyweather.com.au/api/register.html to register and obtain your free API key.\n\n**Station ID:**\nLeaving the Station ID blank will automatically set it to the closest WillyWeather station to your Home Assistant Home Zone location. You can also manually enter a specific station ID if preferred.",
+        "data": {
+          "api_key": "WillyWeather API Key",
+          "station_id": "Station ID (optional)"
+        }
+      },
+      "options": {
+        "title": "WillyWeather Setup - Sensor Configuration",
+        "description": "Step 2 of 2: Configure optional sensors for {station_name}\n\nObservational sensors (current weather) are enabled by default.\n\n**Optional Sensors:**",
+        "data": {
+          "include_observational": "Include observational sensors (temperature, humidity, wind, pressure, etc.)",
+          "include_wind": "Include wind forecast data",
+          "include_uv": "Include UV index sensors",
+          "include_tides": "Include tide information (Note: Not all areas have tidal information)",
+          "include_swell": "Include swell data (coastal locations only, Note: Not all areas have swell information)"
+        }
+      },
+      "warnings": {
+        "title": "WillyWeather Setup - Warning Configuration",
+        "description": "Step 3 of 3: Configure severe weather warnings for {station_name}\n\nWarnings will alert you to dangerous weather conditions.",
+        "data": {
+          "include_warnings": "Include severe weather warning sensors"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to WillyWeather API. Please check your API key and try again.",
+      "no_station_found": "Could not find any WillyWeather station near your location. Try specifying a station ID manually.",
+      "search_failed": "Error searching for station. Check your internet connection and API key.",
+      "invalid_station_or_key": "Invalid station ID or API key. Please verify both are correct.",
+      "api_error": "Error communicating with WillyWeather API. Please try again later."
+    },
+    "abort": {
+      "already_configured": "This WillyWeather station is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "WillyWeather Sensor Options",
+        "description": "Configure which sensors are available.\n\nChanging these options will reload the integration.",
+        "data": {
+          "include_observational": "Include observational sensors (temperature, humidity, wind, pressure, etc.)",
+          "include_wind": "Include wind forecast data",
+          "include_uv": "Include UV index sensors",
+          "include_tides": "Include tide information (Note: Not all areas have tidal information)",
+          "include_swell": "Include swell data (coastal locations only, Note: Not all areas have swell information)",
+          "include_warnings": "Include severe weather warning sensors"
+        }
+      }
+    }
+  }
+}
