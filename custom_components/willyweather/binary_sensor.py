@@ -161,23 +161,32 @@ class WillyWeatherWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return additional state attributes."""
+        # Default attributes structure - always present
+        default_attributes = {
+            "severity": None,
+            "warning_count": 0,
+            "code": None,
+            "name": None,
+            "warnings": [],
+        }
+        
         if not self.coordinator.data:
             _LOGGER.debug("No coordinator data for %s", self._sensor_type)
-            return {}
+            return default_attributes
 
         warning_data = self.coordinator.data.get("warnings", {})
         _LOGGER.debug("Warning data for %s: %s", self._sensor_type, warning_data)
         
         if not warning_data:
             _LOGGER.debug("No warning data dict for %s", self._sensor_type)
-            return {}
+            return default_attributes
 
         try:
             warnings_list = warning_data.get("warnings", [])
             _LOGGER.debug("Warnings list for %s: %s warnings found", self._sensor_type, len(warnings_list))
             
             if not warnings_list:
-                return {}
+                return default_attributes
 
             # Map sensor types to warning classifications
             classification_map = {
@@ -186,7 +195,7 @@ class WillyWeatherWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
                 "fire_warning": "fire",
                 "heat_warning": "heat",
                 "wind_warning": "strong-wind",
-                "weather_warning": "storm",  # Changed from severe_weather_warning
+                "weather_warning": "storm",
                 "strong_wind_warning": "strong-wind",
                 "thunderstorm_warning": "storm",
                 "frost_warning": "frost",
@@ -202,7 +211,7 @@ class WillyWeatherWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
             _LOGGER.debug("Looking for classification: %s for sensor %s", target_classification, self._sensor_type)
             
             if not target_classification:
-                return {}
+                return default_attributes
 
             # Collect all active warnings for this classification
             active_warnings = []
@@ -265,27 +274,37 @@ class WillyWeatherWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
             _LOGGER.debug("Found %s active warnings for %s", len(active_warnings), self._sensor_type)
 
             if not active_warnings:
-                return {}
+                return default_attributes
 
-            # If multiple warnings, return the highest severity (red > amber > yellow)
-            severity_order = {"yellow": 1, "amber": 2, "red": 3}
-            highest_severity = "yellow"
-            
+            # If multiple warnings, return the highest severity (red > amber > yellow > None)
+            severity_order = {None: 0, "yellow": 1, "amber": 2, "red": 3}
+            highest_severity = None
+            highest_severity_warning = None
+
             for warn in active_warnings:
                 warn_severity = warn.get("severity")
-                if warn_severity:
-                    if severity_order.get(warn_severity, 0) > severity_order.get(highest_severity, 0):
-                        highest_severity = warn_severity
+                current_order = severity_order.get(warn_severity, 0)
+                highest_order = severity_order.get(highest_severity, 0)
+                
+                if current_order > highest_order:
+                    highest_severity = warn_severity
+                    highest_severity_warning = warn
+
+            # If we found warnings but no severity was set, use the first warning
+            if highest_severity_warning is None and active_warnings:
+                highest_severity_warning = active_warnings[0]
+                highest_severity = active_warnings[0].get("severity")
 
             attributes = {
                 "severity": highest_severity,
                 "warning_count": len(active_warnings),
+                "code": highest_severity_warning.get("code") if highest_severity_warning else None,
+                "name": highest_severity_warning.get("name") if highest_severity_warning else None,
                 "warnings": active_warnings,
-            }
-            
+            }            
             _LOGGER.debug("Returning attributes for %s: %s", self._sensor_type, attributes)
             return attributes
 
         except (KeyError, TypeError) as err:
             _LOGGER.error("Error getting warning attributes for %s: %s", self._sensor_type, err, exc_info=True)
-            return {}
+            return default_attributes

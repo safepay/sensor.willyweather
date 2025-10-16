@@ -322,7 +322,7 @@ WARNING_BINARY_SENSOR_TYPES: Final = {
     },
     "weather_warning": {
         "name": "Weather Warning",
-        "icon": "mdi:weather-alert",
+        "icon": "mdi:alert-circle",
         "device_class": BinarySensorDeviceClass.SAFETY,
     },
     "strong_wind_warning": {

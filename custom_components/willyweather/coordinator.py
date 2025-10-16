@@ -219,9 +219,9 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                     return {
                         "location": location,
                         "forecasts": data.get("forecasts", {}),
-                        "timezone": location.get("timezone"),  # Add this
+                        "timezone": location.get("timezone"),
                     }
-                                    
+                    
         except asyncio.TimeoutError as err:
             _LOGGER.error("Timeout fetching forecast data")
             raise UpdateFailed("Request timeout") from err

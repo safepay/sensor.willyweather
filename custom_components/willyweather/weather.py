@@ -324,7 +324,6 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
             _LOGGER.error("Error parsing daily forecast data: %s", err)
             return None
 
-
     @callback
     def _async_forecast_hourly(self) -> list[Forecast] | None:
         """Return hourly forecast for next 3 days."""
@@ -334,13 +333,24 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
         try:
             forecasts = self.coordinator.data.get("forecast", {}).get("forecasts", {})
             
-            temperature_days = forecasts.get("temperature", {}).get("days", [])[:3]
-            wind_days = forecasts.get("wind", {}).get("days", [])[:3]
-            rainfall_days = forecasts.get("rainfall", {}).get("days", [])[:3]
+            # Get all available days
+            temperature_data = forecasts.get("temperature", {})
+            precis_data = forecasts.get("precis", {})  # Changed from weather to precis
+            wind_data = forecasts.get("wind", {})
+            rainfall_data = forecasts.get("rainfall", {})
+            
+            temperature_days = temperature_data.get("days", [])
+            precis_days = precis_data.get("days", [])  # Changed from weather_days
+            wind_days = wind_data.get("days", [])
+            rainfall_days = rainfall_data.get("days", [])
+            
             uv_enabled = self._entry.options.get(CONF_INCLUDE_UV, False)
-            uv_days = forecasts.get("uv", {}).get("days", [])[:3] if uv_enabled else []
+            uv_days = forecasts.get("uv", {}).get("days", []) if uv_enabled else []
             swell_enabled = self._entry.options.get(CONF_INCLUDE_SWELL, False)
-            swell_days = forecasts.get("swell", {}).get("days", [])[:3] if swell_enabled else []
+            swell_days = forecasts.get("swell", {}).get("days", []) if swell_enabled else []
+
+            _LOGGER.debug("Hourly forecast - temp days: %d, precis days: %d", 
+                        len(temperature_days), len(precis_days))
 
             forecast_data = []
             
@@ -377,6 +387,47 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
                         "datetime": dt.isoformat(),
                         "temperature": entry.get("temperature"),
                     }
+
+                    # Add weather condition for icons from precis data
+                    condition_found = False
+                    if day_idx < len(precis_days):
+                        precis_day = precis_days[day_idx]
+                        if precis_day.get("entries"):
+                            # Find the closest precis entry for this time
+                            closest_precis = None
+                            closest_diff = None
+                            
+                            for precis_entry in precis_day["entries"]:
+                                precis_time_str = precis_entry.get("dateTime")
+                                if precis_time_str:
+                                    precis_time = dt_util.parse_datetime(precis_time_str)
+                                    if precis_time:
+                                        # Calculate time difference
+                                        if precis_time.tzinfo is None:
+                                            tz = dt_util.get_time_zone(self.hass.config.time_zone)
+                                            if tz:
+                                                try:
+                                                    precis_time = tz.localize(precis_time)
+                                                except AttributeError:
+                                                    precis_time = precis_time.replace(tzinfo=tz)
+                                        
+                                        time_diff = abs((dt - precis_time).total_seconds())
+                                        
+                                        # Use precis if it's within 3 hours and is the closest
+                                        if time_diff <= 10800:  # 3 hours in seconds
+                                            if closest_diff is None or time_diff < closest_diff:
+                                                closest_diff = time_diff
+                                                closest_precis = precis_entry
+                            
+                            if closest_precis:
+                                precis_code = closest_precis.get("precisCode")
+                                if precis_code:
+                                    forecast_dict["condition"] = CONDITION_MAP.get(precis_code, "unknown")
+                                    condition_found = True
+                                    _LOGGER.debug("Found condition for %s: %s (from precis)", date_string, precis_code)
+                    
+                    if not condition_found:
+                        _LOGGER.debug("No condition found for %s in day %d", date_string, day_idx)
 
                     # Add wind data
                     if day_idx < len(wind_days):
@@ -421,6 +472,7 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
 
                     forecast_data.append(forecast_dict)
 
+            _LOGGER.debug("Generated %d hourly forecast entries", len(forecast_data))
             return forecast_data if forecast_data else None
 
         except (KeyError, IndexError, TypeError, ValueError) as err:
