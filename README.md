@@ -21,7 +21,7 @@ This differs from the BoM integration by providing separate binary sensors for w
 
 ## Installation
 
-### HACS (Recommended)
+### HACS (Recommended, but not yet available!)
 1. Add this repository as a custom repository in HACS
 2. Search for "WillyWeather" in HACS
 3. Click **Install**
