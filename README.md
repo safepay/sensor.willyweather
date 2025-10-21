@@ -14,7 +14,7 @@ This differs from the BoM integration by providing separate binary sensors for w
 - **UV Index**: Current UV levels with alert categories
 - **Swell Data**: Wave height, period, and direction (coastal locations)
 - **Wind Forecasts**: Detailed wind speed and direction forecasts
-- **Weather Warnings**: Binary sensors for active weather warnings with severity indicators
+- **Weather Warnings**: Binary sensors for active weather warnings
 - **Automatic Station Detection**: Automatically finds the closest WillyWeather station based on your Home Assistant location
 - **Configurable Data**: Enable/disable optional sensors through the UI
 - **Forecast Data**: Daily (7 days) and hourly (3 days) with comprehensive data points
