@@ -232,40 +232,44 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
     async def _fetch_warning_data(self) -> dict[str, Any]:
         """Fetch warning data for location."""
         url = f"{API_BASE_URL}/{self.api_key}/locations/{self.station_id}/warnings.json"
-        params = {
-            "area": "location",
-        }
-
-        _LOGGER.debug("Fetching warning data")
+        
+        _LOGGER.debug("Fetching warning data from: %s", url)
 
         try:
             async with async_timeout.timeout(API_TIMEOUT):
-                async with self._session.get(url, params=params) as response:
+                async with self._session.get(url) as response:
                     if response.status == 401:
                         _LOGGER.error("API key is invalid (401 Unauthorized)")
-                        return {}
+                        return {"warnings": []}
                     elif response.status == 403:
                         _LOGGER.error("API key does not have access (403 Forbidden)")
-                        return {}
+                        return {"warnings": []}
                     elif response.status == 404:
                         _LOGGER.debug("No warnings available for this location")
-                        return {}
+                        return {"warnings": []}
                     elif response.status != 200:
                         _LOGGER.debug(
                             "Warning data not available: HTTP %s",
                             response.status,
                         )
-                        return {}
+                        return {"warnings": []}
                     
                     data = await response.json()
-                    return {"warnings": data if isinstance(data, list) else []}
+                    _LOGGER.debug("Received warning data: %s", data)
+                    
+                    # API returns an array directly, not wrapped in an object
+                    if isinstance(data, list):
+                        return {"warnings": data}
+                    else:
+                        _LOGGER.warning("Unexpected warning data format: %s", type(data))
+                        return {"warnings": []}
                     
         except asyncio.TimeoutError:
             _LOGGER.debug("Timeout fetching warning data")
-            return {}
+            return {"warnings": []}
         except aiohttp.ClientError as err:
             _LOGGER.debug("Network error fetching warning data: %s", err)
-            return {}
+            return {"warnings": []}
 
     async def async_shutdown(self) -> None:
         """Close the aiohttp session."""
