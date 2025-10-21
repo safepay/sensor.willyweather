@@ -315,24 +315,9 @@ WARNING_BINARY_SENSOR_TYPES: Final = {
         "icon": "mdi:thermometer-alert",
         "device_class": BinarySensorDeviceClass.SAFETY,
     },
-    "wind_warning": {
-        "name": "Wind Warning",
-        "icon": "mdi:weather-windy-variant",
-        "device_class": BinarySensorDeviceClass.SAFETY,
-    },
-    "weather_warning": {
-        "name": "Weather Warning",
-        "icon": "mdi:alert-circle",
-        "device_class": BinarySensorDeviceClass.SAFETY,
-    },
     "strong_wind_warning": {
         "name": "Strong Wind Warning",
         "icon": "mdi:wind-power",
-        "device_class": BinarySensorDeviceClass.SAFETY,
-    },
-    "thunderstorm_warning": {
-        "name": "Thunderstorm Warning",
-        "icon": "mdi:weather-lightning",
         "device_class": BinarySensorDeviceClass.SAFETY,
     },
     "frost_warning": {
@@ -348,11 +333,6 @@ WARNING_BINARY_SENSOR_TYPES: Final = {
     "snow_warning": {
         "name": "Snow Warning",
         "icon": "mdi:snowflake-alert",
-        "device_class": BinarySensorDeviceClass.SAFETY,
-    },
-    "hail_warning": {
-        "name": "Hail Warning",
-        "icon": "mdi:weather-hail",
         "device_class": BinarySensorDeviceClass.SAFETY,
     },
     "cyclone_warning": {
