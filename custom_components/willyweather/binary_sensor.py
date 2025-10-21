@@ -1,6 +1,7 @@
 """Support for WillyWeather binary sensors."""
 from __future__ import annotations
 
+from datetime import timezone
 import logging
 from typing import TYPE_CHECKING, Any
 
@@ -112,7 +113,7 @@ class WillyWeatherWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
                 "fire_warning": "fire",
                 "heat_warning": "heat",
                 "wind_warning": "strong-wind",
-                "weather_warning": "storm",  # Changed from severe_weather_warning
+                "weather_warning": "storm",
                 "strong_wind_warning": "strong-wind",
                 "thunderstorm_warning": "storm",
                 "frost_warning": "frost",
@@ -138,14 +139,9 @@ class WillyWeatherWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
                         try:
                             expire_time = dt_util.parse_datetime(expire_time_str)
                             if expire_time:
-                                # Handle timezone
+                                # API returns UTC time - ensure it's marked as UTC
                                 if expire_time.tzinfo is None:
-                                    tz = dt_util.get_time_zone(self.coordinator.hass.config.time_zone)
-                                    if tz:
-                                        try:
-                                            expire_time = tz.localize(expire_time)
-                                        except AttributeError:
-                                            expire_time = expire_time.replace(tzinfo=tz)
+                                    expire_time = expire_time.replace(tzinfo=timezone.utc)
                                 
                                 if expire_time > dt_util.now():
                                     return True
@@ -163,7 +159,6 @@ class WillyWeatherWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
         """Return additional state attributes."""
         # Default attributes structure - always present
         default_attributes = {
-            "severity": None,
             "warning_count": 0,
             "code": None,
             "name": None,
@@ -227,44 +222,22 @@ class WillyWeatherWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
                         try:
                             expire_time = dt_util.parse_datetime(expire_time_str)
                             if expire_time:
-                                # Handle timezone
+                                # API returns UTC time - ensure it's marked as UTC
                                 if expire_time.tzinfo is None:
-                                    tz = dt_util.get_time_zone(self.coordinator.hass.config.time_zone)
-                                    if tz:
-                                        try:
-                                            expire_time = tz.localize(expire_time)
-                                        except AttributeError:
-                                            expire_time = expire_time.replace(tzinfo=tz)
+                                    expire_time = expire_time.replace(tzinfo=timezone.utc)
                                 
                                 now = dt_util.now()
                                 _LOGGER.debug("Warning expires at %s, now is %s, active: %s", 
                                             expire_time, now, expire_time > now)
                                 
                                 if expire_time > now:
-                                    # Get severity levels
-                                    severity_levels = warning_type.get("warningSeverityLevels", [])
-                                    severity = None
-                                    if severity_levels:
-                                        # Get the highest severity level (red is highest)
-                                        # Find red first, then amber, then yellow
-                                        for level in severity_levels:
-                                            level_code = level.get("code")
-                                            if level_code == "red":
-                                                severity = "red"
-                                                break
-                                            elif level_code == "amber" and severity != "red":
-                                                severity = "amber"
-                                            elif level_code == "yellow" and not severity:
-                                                severity = "yellow"
-                                    
-                                    _LOGGER.debug("Adding active warning with severity: %s", severity)
+                                    _LOGGER.debug("Adding active warning: %s", warning.get("name"))
                                     
                                     active_warnings.append({
                                         "code": warning.get("code"),
                                         "name": warning.get("name"),
                                         "issue_time": warning.get("issueDateTime"),
                                         "expire_time": expire_time_str,
-                                        "severity": severity,
                                         "warning_type": warning_type.get("name"),
                                     })
                         except (ValueError, TypeError) as err:
@@ -276,32 +249,16 @@ class WillyWeatherWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
             if not active_warnings:
                 return default_attributes
 
-            # If multiple warnings, return the highest severity (red > amber > yellow > None)
-            severity_order = {None: 0, "yellow": 1, "amber": 2, "red": 3}
-            highest_severity = None
-            highest_severity_warning = None
-
-            for warn in active_warnings:
-                warn_severity = warn.get("severity")
-                current_order = severity_order.get(warn_severity, 0)
-                highest_order = severity_order.get(highest_severity, 0)
-                
-                if current_order > highest_order:
-                    highest_severity = warn_severity
-                    highest_severity_warning = warn
-
-            # If we found warnings but no severity was set, use the first warning
-            if highest_severity_warning is None and active_warnings:
-                highest_severity_warning = active_warnings[0]
-                highest_severity = active_warnings[0].get("severity")
+            # Return info about the first warning (or most recent)
+            first_warning = active_warnings[0]
 
             attributes = {
-                "severity": highest_severity,
                 "warning_count": len(active_warnings),
-                "code": highest_severity_warning.get("code") if highest_severity_warning else None,
-                "name": highest_severity_warning.get("name") if highest_severity_warning else None,
+                "code": first_warning.get("code"),
+                "name": first_warning.get("name"),
                 "warnings": active_warnings,
-            }            
+            }
+            
             _LOGGER.debug("Returning attributes for %s: %s", self._sensor_type, attributes)
             return attributes
 
