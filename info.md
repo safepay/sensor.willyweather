@@ -12,7 +12,6 @@ This differs from the BoM integration by providing separate binary sensors for w
 - **Tide Information**: High and low tide times and heights (Coastal locations. Also available in daily forecast data)
 - **Swell Information**: Times, heights and periods (Coastal locations. Also available in hourly forecast data)
 - **Weather Warnings**: Binary sensors for active storm, flood, fire, heat, wind, frost warnings and more
-- **Warning Severity**: Binary sensors have an attribute for warning severity - yellow, amber, red
 - **Automatic Station Detection**: Automatically finds the closest WillyWeather station based on your Home Assistant location
 - **Configurable Data**: Enable/disable optional sensors through the UI
 - **Forecast Data**: Daily (7 days) and hourly (3 days)
