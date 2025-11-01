@@ -91,6 +91,14 @@ SENSOR_TYPES: Final = {
         "state_class": SensorStateClass.MEASUREMENT,
         "path": ["temperature", "apparentTemperature"],
     },
+    "delta_t": {
+        "name": "Delta-T",
+        "unit": "°C",
+        "icon": "mdi:thermometer",
+        "device_class": SensorDeviceClass.TEMPERATURE,
+        "state_class": SensorStateClass.MEASUREMENT,
+        "path": ["delta-t", "temperature"],
+    },
     "humidity": {
         "name": "Humidity",
         "unit": PERCENTAGE,
