@@ -95,9 +95,10 @@ When observational sensors are enabled, the following sensors are created:
 #### Temperature & Humidity
 - **Temperature** - Current air temperature in °C
 - **Apparent Temperature** - "Feels like" temperature in °C
+- **Delta-T** - Delta-T temperature in °C (difference between air temperature and wet bulb temperature, used in agricultural spraying and fire danger calculations)
 - **Humidity** - Relative humidity percentage
 - **Dew Point** - Dew point temperature in °C
-
+ 
 #### Pressure & Cloud
 - **Pressure** - Atmospheric pressure in hPa
 - **Cloud Cover** - Cloud coverage in oktas (0-8)
