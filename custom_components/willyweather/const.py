@@ -93,7 +93,7 @@ SENSOR_TYPES: Final = {
     },
     "delta_t": {
         "name": "Delta-T",
-        "unit": "°C",
+        "unit": UnitOfTemperature.CELSIUS,
         "icon": "mdi:thermometer",
         "device_class": SensorDeviceClass.TEMPERATURE,
         "state_class": SensorStateClass.MEASUREMENT,
