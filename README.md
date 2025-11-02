@@ -66,6 +66,34 @@ When setting up, you can configure:
 
 These options match the [WillyWeather API configuration screen](https://www.willyweather.com.au/api/docs/weather.html) settings, allowing you to select only the data types your location requires.
 
+### Update Interval Configuration
+
+Control how frequently the integration fetches data from the WillyWeather API to manage API usage:
+
+- **Day update interval** - Update frequency during daytime hours (default: 10 minutes, range: 5-60 minutes)
+- **Night update interval** - Update frequency during nighttime hours (default: 30 minutes, range: 10-120 minutes)
+- **Night start hour** - Hour when night mode begins (default: 21 / 9 PM, range: 0-23)
+- **Night end hour** - Hour when day mode begins (default: 7 / 7 AM, range: 0-23)
+
+#### API Usage Management
+
+Each update cycle makes 2-3 API calls depending on your configuration:
+- 2 calls (observational + forecast) when warnings are disabled
+- 3 calls (observational + forecast + warnings) when warnings are enabled
+
+**Example monthly API usage with defaults (10 min day / 30 min night / warnings enabled):**
+- Day (16 hours): 3 calls × 6 updates/hour × 16 hours × 30 days = 8,640 calls
+- Night (8 hours): 3 calls × 2 updates/hour × 8 hours × 30 days = 1,440 calls
+- **Total: ~10,080 calls/month**
+
+**Usage optimization tips:**
+- Increase night interval to 60-120 minutes while sleeping
+- Reduce day interval if you don't need frequent updates
+- Disable warnings if not needed (saves 1 API call per update)
+- Adjust intervals based on your API plan limits
+
+The integration automatically switches between day and night intervals based on your configured hours. You can adjust these settings at any time through **Settings** → **Devices & Services** → **WillyWeather** → **Configure**.
+
 ## Entities
 
 ### Weather Entity
