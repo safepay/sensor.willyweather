@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "WillyWeather Setup - Station Selection",
-        "description": "Step 1 of 3: Enter your WillyWeather API key.\n\n**Get your API key:**\nVisit https://www.willyweather.com.au/api/register.html to register and obtain your free API key.\n\n**Station ID:**\nLeaving the Station ID blank will automatically set it to the closest WillyWeather station to your Home Assistant Home Zone location. You can also manually enter a specific station ID if preferred.",
+        "description": "Step 1 of 4: Enter your WillyWeather API key.\n\n**Get your API key:**\nVisit https://www.willyweather.com.au/api/register.html to register and obtain your free API key.\n\n**Station ID:**\nLeaving the Station ID blank will automatically set it to the closest WillyWeather station to your Home Assistant Home Zone location. You can also manually enter a specific station ID if preferred.",
         "data": {
           "api_key": "WillyWeather API Key",
           "station_id": "Station ID (optional)"
@@ -11,7 +11,7 @@
       },
       "options": {
         "title": "WillyWeather Setup - Sensor Configuration",
-        "description": "Step 2 of 3: Configure optional sensors for {station_name}\n\nObservational sensors (current weather) are enabled by default.\n\n**Optional Sensors:**",
+        "description": "Step 2 of 4: Configure optional sensors for {station_name}\n\nObservational sensors (current weather) are enabled by default.\n\n**Optional Sensors:**",
         "data": {
           "include_observational": "Include observational sensors (temperature, humidity, wind, pressure, etc.)",
           "include_wind": "Include wind forecast data",
@@ -22,9 +22,19 @@
       },
       "warnings": {
         "title": "WillyWeather Setup - Warning Configuration",
-        "description": "Step 3 of 3: Configure weather warnings for {station_name}\n\nWarnings will alert you to dangerous weather conditions.",
+        "description": "Step 3 of 4: Configure weather warnings for {station_name}\n\nWarnings will alert you to dangerous weather conditions.",
         "data": {
           "include_warnings": "Include weather warning binary sensors"
+        }
+      },
+      "update_intervals": {
+        "title": "WillyWeather Setup - Update Intervals",
+        "description": "Step 4 of 4: Configure update intervals for {station_name}\n\nAdjust how often data is fetched to manage API costs. Each update makes 2-3 API calls.\n\n**Cost reference:** AUD $0.20 per 1000 requests",
+        "data": {
+          "update_interval_day": "Day update interval (minutes, 5-60)",
+          "update_interval_night": "Night update interval (minutes, 10-120)",
+          "night_start_hour": "Night start hour (0-23, e.g., 21 for 9 PM)",
+          "night_end_hour": "Night end hour (0-23, e.g., 7 for 7 AM)"
         }
       }
     },
@@ -57,6 +67,16 @@
         "description": "Configure weather warning sensors.\n\nChanging these options will reload the integration.",
         "data": {
           "include_warnings": "Include weather warning binary sensors"
+        }
+      },
+      "update_intervals": {
+        "title": "WillyWeather Update Intervals",
+        "description": "Configure update intervals to manage API costs.\n\nEach update makes 2-3 API calls. Changing these options will reload the integration.",
+        "data": {
+          "update_interval_day": "Day update interval (minutes, 5-60)",
+          "update_interval_night": "Night update interval (minutes, 10-120)",
+          "night_start_hour": "Night start hour (0-23, e.g., 21 for 9 PM)",
+          "night_end_hour": "Night end hour (0-23, e.g., 7 for 7 AM)"
         }
       }
     }
