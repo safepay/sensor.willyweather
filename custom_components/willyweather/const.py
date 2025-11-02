@@ -38,7 +38,19 @@ API_BASE_URL: Final = "https://api.willyweather.com.au/v2"
 API_TIMEOUT: Final = 10
 
 # Update intervals
-UPDATE_INTERVAL_OBSERVATION: Final = 10  # minutes
+UPDATE_INTERVAL_OBSERVATION: Final = 10  # minutes (keep existing, used as default)
+
+# Day/Night update interval configuration
+CONF_UPDATE_INTERVAL_DAY: Final = "update_interval_day"
+CONF_UPDATE_INTERVAL_NIGHT: Final = "update_interval_night"
+CONF_NIGHT_START_HOUR: Final = "night_start_hour"
+CONF_NIGHT_END_HOUR: Final = "night_end_hour"
+
+# Default values
+DEFAULT_UPDATE_INTERVAL_DAY: Final = 10  # minutes
+DEFAULT_UPDATE_INTERVAL_NIGHT: Final = 30  # minutes
+DEFAULT_NIGHT_START_HOUR: Final = 21  # 9 PM (21:00)
+DEFAULT_NIGHT_END_HOUR: Final = 7  # 7 AM
 
 # Condition mapping
 CONDITION_MAP: Final = {
@@ -93,7 +105,7 @@ SENSOR_TYPES: Final = {
     },
     "delta_t": {
         "name": "Delta-T",
-        "unit": UnitOfTemperature.CELSIUS,
+        "unit": "°C",
         "icon": "mdi:thermometer",
         "device_class": SensorDeviceClass.TEMPERATURE,
         "state_class": SensorStateClass.MEASUREMENT,

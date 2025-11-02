@@ -24,6 +24,14 @@ from .const import (
     CONF_INCLUDE_WIND,
     CONF_INCLUDE_SWELL,
     CONF_INCLUDE_WARNINGS,
+    CONF_UPDATE_INTERVAL_DAY,
+    CONF_UPDATE_INTERVAL_NIGHT,
+    CONF_NIGHT_START_HOUR,
+    CONF_NIGHT_END_HOUR,
+    DEFAULT_UPDATE_INTERVAL_DAY,
+    DEFAULT_UPDATE_INTERVAL_NIGHT,
+    DEFAULT_NIGHT_START_HOUR,
+    DEFAULT_NIGHT_END_HOUR,
     DOMAIN,
     UPDATE_INTERVAL_OBSERVATION,
 )
@@ -54,11 +62,43 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name=f"{DOMAIN}_{self.station_id}",
-            update_interval=timedelta(minutes=UPDATE_INTERVAL_OBSERVATION),
+            update_interval=self._get_update_interval(),
         )
+
+    def _get_update_interval(self) -> timedelta:
+        """Get update interval based on time of day."""
+        # Get configuration values
+        interval_day = self.entry.options.get(CONF_UPDATE_INTERVAL_DAY, DEFAULT_UPDATE_INTERVAL_DAY)
+        interval_night = self.entry.options.get(CONF_UPDATE_INTERVAL_NIGHT, DEFAULT_UPDATE_INTERVAL_NIGHT)
+        night_start = self.entry.options.get(CONF_NIGHT_START_HOUR, DEFAULT_NIGHT_START_HOUR)
+        night_end = self.entry.options.get(CONF_NIGHT_END_HOUR, DEFAULT_NIGHT_END_HOUR)
+        
+        now = dt_util.now()
+        current_hour = now.hour
+        
+        # Check if we're in night time
+        if night_start > night_end:  # Night crosses midnight (e.g., 21:00 to 07:00)
+            is_night = current_hour >= night_start or current_hour < night_end
+        else:  # Night doesn't cross midnight (e.g., 01:00 to 06:00)
+            is_night = night_start <= current_hour < night_end
+        
+        interval = interval_night if is_night else interval_day
+        _LOGGER.debug(
+            "Update interval: %s minutes (night mode: %s, current hour: %s)",
+            interval,
+            is_night,
+            current_hour,
+        )
+        return timedelta(minutes=interval)
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data from API."""
+        # Dynamically adjust update interval based on time of day
+        new_interval = self._get_update_interval()
+        if new_interval != self.update_interval:
+            _LOGGER.info("Adjusting update interval to %s", new_interval)
+            self.update_interval = new_interval
+        
         _LOGGER.debug("Updating WillyWeather data for station %s", self.station_id)
         
         try:
