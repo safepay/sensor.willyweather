@@ -51,7 +51,12 @@ You need a WillyWeather API key to use this integration:
 4. Tick single location, weather (observation and forecasts) and warnings
 5. Swell and tide sections are optional if your station does not support those features
 
+### Full API Configuration Example
 ![WillyWeather API Config](https://github.com/safepay/sensor.willyweather/blob/master/willyweather_api_config.png?raw=true)
+
+### Minimal API Configuration Example
+(For areas without tide and swell information)
+![WillyWeather API Config](https://github.com/safepay/sensor.willyweather/blob/master/willyweather_api_config_minimal.png?raw=true)
 
 ### Available Configuration Options
 
