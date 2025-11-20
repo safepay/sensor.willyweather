@@ -27,6 +27,11 @@ CONF_INCLUDE_OBSERVATIONAL: Final = "include_observational"
 CONF_INCLUDE_WARNINGS: Final = "include_warnings"
 CONF_ADDITIONAL_FORECAST: Final = "additional_forecast"
 
+# Forecast sensor configuration
+CONF_INCLUDE_FORECAST_SENSORS: Final = "include_forecast_sensors"
+CONF_FORECAST_DAYS: Final = "forecast_days"
+CONF_FORECAST_MONITORED: Final = "forecast_monitored"
+
 # Additional forecast options (checkboxes)
 CONF_INCLUDE_UV: Final = "include_uv"
 CONF_INCLUDE_TIDES: Final = "include_tides"
@@ -377,5 +382,86 @@ WARNING_BINARY_SENSOR_TYPES: Final = {
         "name": "Fog Warning",
         "icon": "mdi:fog",
         "device_class": BinarySensorDeviceClass.SAFETY,
+    },
+}
+
+# Forecast sensor types (for multi-day forecast sensors)
+FORECAST_SENSOR_TYPES: Final = {
+    "temp_max": {
+        "name": "Max Temperature",
+        "unit": UnitOfTemperature.CELSIUS,
+        "icon": "mdi:thermometer-high",
+        "device_class": SensorDeviceClass.TEMPERATURE,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "temp_min": {
+        "name": "Min Temperature",
+        "unit": UnitOfTemperature.CELSIUS,
+        "icon": "mdi:thermometer-low",
+        "device_class": SensorDeviceClass.TEMPERATURE,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "precis": {
+        "name": "Short Forecast",
+        "unit": None,
+        "icon": "mdi:text",
+        "device_class": None,
+        "state_class": None,
+    },
+    "rain_amount_min": {
+        "name": "Rain Amount Min",
+        "unit": UnitOfPrecipitationDepth.MILLIMETERS,
+        "icon": "mdi:weather-rainy",
+        "device_class": SensorDeviceClass.PRECIPITATION,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "rain_amount_max": {
+        "name": "Rain Amount Max",
+        "unit": UnitOfPrecipitationDepth.MILLIMETERS,
+        "icon": "mdi:weather-rainy",
+        "device_class": SensorDeviceClass.PRECIPITATION,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "rain_amount_range": {
+        "name": "Rain Amount Range",
+        "unit": None,
+        "icon": "mdi:weather-rainy",
+        "device_class": None,
+        "state_class": None,
+    },
+    "rain_probability": {
+        "name": "Rain Probability",
+        "unit": PERCENTAGE,
+        "icon": "mdi:water-percent",
+        "device_class": None,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "uv_index": {
+        "name": "UV Max Index",
+        "unit": None,
+        "icon": "mdi:weather-sunny",
+        "device_class": None,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "uv_alert": {
+        "name": "UV Alert",
+        "unit": None,
+        "icon": "mdi:weather-sunny-alert",
+        "device_class": None,
+        "state_class": None,
+    },
+    "sunrise": {
+        "name": "Sunrise",
+        "unit": None,
+        "icon": "mdi:weather-sunset-up",
+        "device_class": SensorDeviceClass.TIMESTAMP,
+        "state_class": None,
+    },
+    "sunset": {
+        "name": "Sunset",
+        "unit": None,
+        "icon": "mdi:weather-sunset-down",
+        "device_class": SensorDeviceClass.TIMESTAMP,
+        "state_class": None,
     },
 }

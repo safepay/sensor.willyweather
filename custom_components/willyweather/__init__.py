@@ -82,12 +82,16 @@ async def async_cleanup_disabled_entities(hass: HomeAssistant, entry: ConfigEntr
     
     # Import sensor type definitions
     from .const import (
+        CONF_FORECAST_DAYS,
+        CONF_FORECAST_MONITORED,
+        CONF_INCLUDE_FORECAST_SENSORS,
         CONF_INCLUDE_OBSERVATIONAL,
         CONF_INCLUDE_SWELL,
         CONF_INCLUDE_TIDES,
         CONF_INCLUDE_UV,
         CONF_INCLUDE_WARNINGS,
         CONF_INCLUDE_WIND,
+        FORECAST_SENSOR_TYPES,
         SENSOR_TYPES,
         SWELL_SENSOR_TYPES,
         SUNMOON_SENSOR_TYPES,
@@ -131,7 +135,15 @@ async def async_cleanup_disabled_entities(hass: HomeAssistant, entry: ConfigEntr
     if not entry.options.get(CONF_INCLUDE_WARNINGS, True):
         for sensor_type in WARNING_BINARY_SENSOR_TYPES:
             entities_to_remove.append(f"{station_id}_{sensor_type}")
-    
+
+    # Check forecast sensors
+    if not entry.options.get(CONF_INCLUDE_FORECAST_SENSORS, False):
+        # Remove all forecast sensors if disabled
+        forecast_days = entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4, 5, 6])
+        for day in forecast_days:
+            for sensor_type in FORECAST_SENSOR_TYPES:
+                entities_to_remove.append(f"{station_id}_forecast_{sensor_type}_day_{day}")
+
     # Remove the entities
     for entity in entities:
         if entity.unique_id in entities_to_remove:

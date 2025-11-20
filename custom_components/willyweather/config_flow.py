@@ -13,6 +13,9 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv
 
 from .const import (
+    CONF_FORECAST_DAYS,
+    CONF_FORECAST_MONITORED,
+    CONF_INCLUDE_FORECAST_SENSORS,
     CONF_INCLUDE_OBSERVATIONAL,
     CONF_INCLUDE_WARNINGS,
     CONF_INCLUDE_WIND,
@@ -34,6 +37,7 @@ from .const import (
     DEFAULT_NIGHT_START_HOUR,
     DEFAULT_NIGHT_END_HOUR,
     DOMAIN,
+    FORECAST_SENSOR_TYPES,
 )
 from .coordinator import async_get_station_id, async_get_station_name
 
@@ -138,7 +142,7 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_warnings(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Handle warning options step."""
+        """Handle optional features (warnings and forecast sensors)."""
         if user_input is not None:
             self._warning_options = user_input
             return await self.async_step_update_intervals()
@@ -146,6 +150,7 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         data_schema = vol.Schema(
             {
                 vol.Required(CONF_INCLUDE_WARNINGS, default=True): cv.boolean,
+                vol.Required(CONF_INCLUDE_FORECAST_SENSORS, default=False): cv.boolean,
             }
         )
 
@@ -177,6 +182,9 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_INCLUDE_TIDES: self._sensor_options.get(CONF_INCLUDE_TIDES, False),
                     CONF_INCLUDE_SWELL: self._sensor_options.get(CONF_INCLUDE_SWELL, False),
                     CONF_INCLUDE_WARNINGS: self._warning_options.get(CONF_INCLUDE_WARNINGS, True),
+                    CONF_INCLUDE_FORECAST_SENSORS: self._warning_options.get(CONF_INCLUDE_FORECAST_SENSORS, False),
+                    CONF_FORECAST_DAYS: [0, 1, 2, 3, 4, 5, 6],  # Default to all 7 days
+                    CONF_FORECAST_MONITORED: list(FORECAST_SENSOR_TYPES.keys()),  # Default to all sensor types
                     CONF_UPDATE_INTERVAL_DAY: user_input.get(CONF_UPDATE_INTERVAL_DAY, DEFAULT_UPDATE_INTERVAL_DAY),
                     CONF_UPDATE_INTERVAL_NIGHT: user_input.get(CONF_UPDATE_INTERVAL_NIGHT, DEFAULT_UPDATE_INTERVAL_NIGHT),
                     CONF_FORECAST_UPDATE_INTERVAL_DAY: user_input.get(CONF_FORECAST_UPDATE_INTERVAL_DAY, DEFAULT_FORECAST_UPDATE_INTERVAL_DAY),
@@ -271,7 +279,7 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
     async def async_step_warnings(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Manage the warning options."""
+        """Manage optional features (warnings and forecast sensors)."""
         if user_input is not None:
             self._warning_options = user_input
             return await self.async_step_update_intervals()
@@ -283,6 +291,10 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
                     vol.Required(
                         CONF_INCLUDE_WARNINGS,
                         default=self.config_entry.options.get(CONF_INCLUDE_WARNINGS, True),
+                    ): cv.boolean,
+                    vol.Required(
+                        CONF_INCLUDE_FORECAST_SENSORS,
+                        default=self.config_entry.options.get(CONF_INCLUDE_FORECAST_SENSORS, False),
                     ): cv.boolean,
                 }
             ),
@@ -299,6 +311,9 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
                 data={
                     **self._sensor_options,
                     **self._warning_options,
+                    # Preserve existing forecast sensor config
+                    CONF_FORECAST_DAYS: self.config_entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4, 5, 6]),
+                    CONF_FORECAST_MONITORED: self.config_entry.options.get(CONF_FORECAST_MONITORED, list(FORECAST_SENSOR_TYPES.keys())),
                     CONF_UPDATE_INTERVAL_DAY: user_input.get(
                         CONF_UPDATE_INTERVAL_DAY, DEFAULT_UPDATE_INTERVAL_DAY
                     ),
