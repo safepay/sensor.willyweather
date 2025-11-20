@@ -151,6 +151,7 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                 forecast_types = [
                     "weather",
                     "precis",
+                    "region-precis",
                     "sunrisesunset",
                     "moonphases",
                     "rainfall",
@@ -194,6 +195,7 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                     forecast_types = [
                         "weather",
                         "precis",
+                        "region-precis",
                         "sunrisesunset",
                         "moonphases",
                         "rainfall",

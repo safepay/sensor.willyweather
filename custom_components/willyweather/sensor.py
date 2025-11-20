@@ -903,6 +903,42 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
                     len(precis_data)
                 )
 
+        elif self._sensor_type == "icon":
+            # Icon uses precis data to get the precisCode
+            precis_data = forecasts.get("precis", {}).get("days", [])
+            if self._forecast_day < len(precis_data):
+                day_data = precis_data[self._forecast_day]
+                _LOGGER.debug(
+                    "Icon (precis) data for day %s: %s",
+                    self._forecast_day,
+                    day_data
+                )
+                return day_data
+            else:
+                _LOGGER.warning(
+                    "No icon (precis) data for day %s (available days: %s)",
+                    self._forecast_day,
+                    len(precis_data)
+                )
+
+        elif self._sensor_type == "extended_text":
+            # Extended text uses region-precis data
+            region_precis_data = forecasts.get("region-precis", {}).get("days", [])
+            if self._forecast_day < len(region_precis_data):
+                day_data = region_precis_data[self._forecast_day]
+                _LOGGER.debug(
+                    "Region precis data for day %s: %s",
+                    self._forecast_day,
+                    day_data
+                )
+                return day_data
+            else:
+                _LOGGER.warning(
+                    "No region precis data for day %s (available days: %s)",
+                    self._forecast_day,
+                    len(region_precis_data)
+                )
+
         elif self._sensor_type in ["uv_index", "uv_alert"]:
             uv_data = forecasts.get("uv", {}).get("days", [])
             if self._forecast_day < len(uv_data):
@@ -1042,6 +1078,48 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
                     list(entries[0].keys()) if entries else "No entries"
                 )
             return value
+
+        elif self._sensor_type == "icon":
+            # Map precisCode to Home Assistant condition/icon
+            from .const import CONDITION_MAP
+            entries = day_data.get("entries", [])
+            if entries:
+                precis_code = entries[0].get("precisCode")
+                if precis_code:
+                    # Return the mapped condition which Home Assistant will use for icon
+                    condition = CONDITION_MAP.get(precis_code, "unknown")
+                    _LOGGER.debug(
+                        "icon: Mapped precisCode '%s' to condition '%s'",
+                        precis_code,
+                        condition
+                    )
+                    return condition
+                else:
+                    _LOGGER.warning(
+                        "icon: 'precisCode' not found in entry. Available keys: %s",
+                        list(entries[0].keys())
+                    )
+            else:
+                _LOGGER.warning("icon: No entries found in day_data. Keys: %s", list(day_data.keys()))
+            return None
+
+        elif self._sensor_type == "extended_text":
+            # Get extended text from region-precis
+            entries = day_data.get("entries", [])
+            if entries:
+                value = entries[0].get("précis")  # Note: API uses French accent
+                if not value:
+                    value = entries[0].get("precis")  # Fallback without accent
+                if value:
+                    return value
+                else:
+                    _LOGGER.warning(
+                        "extended_text: 'précis' or 'precis' not found in entry. Available keys: %s",
+                        list(entries[0].keys())
+                    )
+            else:
+                _LOGGER.warning("extended_text: No entries found in day_data. Keys: %s", list(day_data.keys()))
+            return None
 
         elif self._sensor_type == "uv_index":
             entries = day_data.get("entries", [])
