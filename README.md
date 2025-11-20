@@ -86,8 +86,8 @@ Controls how often current weather conditions are fetched:
 
 Controls how often forecast data is fetched:
 
-- **Forecast day update interval** - Forecast update frequency during daytime hours (default: 60 minutes, range: 30-240 minutes)
-- **Forecast night update interval** - Forecast update frequency during nighttime hours (default: 120 minutes, range: 60-480 minutes)
+- **Forecast day update interval** - Forecast update frequency during daytime hours (default: 30 minutes, range: 30-240 minutes)
+- **Forecast night update interval** - Forecast update frequency during nighttime hours (default: 60 minutes, range: 60-480 minutes)
 
 #### Day/Night Schedule
 
@@ -110,30 +110,30 @@ With separate intervals, API calls per update cycle:
 - **During observational-only updates**: 1-2 calls (observational + optional warnings)
 - **During forecast updates**: 2-3 calls (observational + forecast + optional warnings)
 
-**Example monthly API usage with defaults (10/30 min obs, 60/120 min forecast, warnings enabled):**
+**Example monthly API usage with defaults (10/30 min obs, 30/60 min forecast, warnings enabled):**
 
 Observational updates (always):
 - Day (16 hours): 1 call × 6 updates/hour × 16 hours × 30 days = 2,880 calls
 - Night (8 hours): 1 call × 2 updates/hour × 8 hours × 30 days = 480 calls
 
 Forecast updates (separate schedule):
-- Day (16 hours): 1 call × 1 update/hour × 16 hours × 30 days = 480 calls
-- Night (8 hours): 1 call × 0.5 updates/hour × 8 hours × 30 days = 120 calls
+- Day (16 hours): 1 call × 2 updates/hour × 16 hours × 30 days = 960 calls
+- Night (8 hours): 1 call × 1 update/hour × 8 hours × 30 days = 240 calls
 
 Warnings (if enabled, fetched with observational):
 - Day: 2,880 calls
 - Night: 480 calls
 
-**Total with defaults: ~7,320 calls/month** (vs. ~10,080 with old single interval)
-**API call reduction: ~27% savings!**
+**Total with defaults: ~7,920 calls/month** (vs. ~10,080 with old single interval)
+**API call reduction: ~21% savings!**
 
 **Usage optimization tips:**
-- Set forecast intervals to 60-120 minutes (forecasts don't change that often)
+- Default 30-minute forecast interval balances freshness with API efficiency
 - Keep observational intervals shorter (5-10 minutes) for real-time current conditions
-- Increase night intervals significantly while sleeping
+- Increase night intervals significantly while sleeping (e.g., forecast to 120-240 minutes)
 - Disable warnings if not needed (saves 1 API call per observational update)
-- For maximum savings, set forecast night interval to 240+ minutes
-- Adjust intervals based on your API plan limits
+- For maximum savings during night, set forecast night interval to 120-240+ minutes
+- Adjust intervals based on your API plan limits and weather monitoring needs
 
 The integration automatically switches between day and night intervals based on your configured hours. You can adjust these settings at any time through **Settings** → **Devices & Services** → **WillyWeather** → **Configure**.
 

@@ -57,8 +57,8 @@ DEFAULT_NIGHT_START_HOUR: Final = 21  # 9 PM (21:00)
 DEFAULT_NIGHT_END_HOUR: Final = 7  # 7 AM
 
 # Default values for forecast data
-DEFAULT_FORECAST_UPDATE_INTERVAL_DAY: Final = 60  # minutes
-DEFAULT_FORECAST_UPDATE_INTERVAL_NIGHT: Final = 120  # minutes
+DEFAULT_FORECAST_UPDATE_INTERVAL_DAY: Final = 30  # minutes
+DEFAULT_FORECAST_UPDATE_INTERVAL_NIGHT: Final = 60  # minutes
 
 # Condition mapping
 CONDITION_MAP: Final = {
