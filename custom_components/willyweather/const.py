@@ -40,17 +40,25 @@ API_TIMEOUT: Final = 10
 # Update intervals
 UPDATE_INTERVAL_OBSERVATION: Final = 10  # minutes (keep existing, used as default)
 
-# Day/Night update interval configuration
+# Day/Night update interval configuration for observational data
 CONF_UPDATE_INTERVAL_DAY: Final = "update_interval_day"
 CONF_UPDATE_INTERVAL_NIGHT: Final = "update_interval_night"
 CONF_NIGHT_START_HOUR: Final = "night_start_hour"
 CONF_NIGHT_END_HOUR: Final = "night_end_hour"
 
-# Default values
+# Day/Night update interval configuration for forecast data
+CONF_FORECAST_UPDATE_INTERVAL_DAY: Final = "forecast_update_interval_day"
+CONF_FORECAST_UPDATE_INTERVAL_NIGHT: Final = "forecast_update_interval_night"
+
+# Default values for observational data
 DEFAULT_UPDATE_INTERVAL_DAY: Final = 10  # minutes
 DEFAULT_UPDATE_INTERVAL_NIGHT: Final = 30  # minutes
 DEFAULT_NIGHT_START_HOUR: Final = 21  # 9 PM (21:00)
 DEFAULT_NIGHT_END_HOUR: Final = 7  # 7 AM
+
+# Default values for forecast data
+DEFAULT_FORECAST_UPDATE_INTERVAL_DAY: Final = 60  # minutes
+DEFAULT_FORECAST_UPDATE_INTERVAL_NIGHT: Final = 120  # minutes
 
 # Condition mapping
 CONDITION_MAP: Final = {

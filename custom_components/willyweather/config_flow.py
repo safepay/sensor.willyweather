@@ -23,10 +23,14 @@ from .const import (
     CONF_STATION_NAME,
     CONF_UPDATE_INTERVAL_DAY,
     CONF_UPDATE_INTERVAL_NIGHT,
+    CONF_FORECAST_UPDATE_INTERVAL_DAY,
+    CONF_FORECAST_UPDATE_INTERVAL_NIGHT,
     CONF_NIGHT_START_HOUR,
     CONF_NIGHT_END_HOUR,
     DEFAULT_UPDATE_INTERVAL_DAY,
     DEFAULT_UPDATE_INTERVAL_NIGHT,
+    DEFAULT_FORECAST_UPDATE_INTERVAL_DAY,
+    DEFAULT_FORECAST_UPDATE_INTERVAL_NIGHT,
     DEFAULT_NIGHT_START_HOUR,
     DEFAULT_NIGHT_END_HOUR,
     DOMAIN,
@@ -175,6 +179,8 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_INCLUDE_WARNINGS: self._warning_options.get(CONF_INCLUDE_WARNINGS, True),
                     CONF_UPDATE_INTERVAL_DAY: user_input.get(CONF_UPDATE_INTERVAL_DAY, DEFAULT_UPDATE_INTERVAL_DAY),
                     CONF_UPDATE_INTERVAL_NIGHT: user_input.get(CONF_UPDATE_INTERVAL_NIGHT, DEFAULT_UPDATE_INTERVAL_NIGHT),
+                    CONF_FORECAST_UPDATE_INTERVAL_DAY: user_input.get(CONF_FORECAST_UPDATE_INTERVAL_DAY, DEFAULT_FORECAST_UPDATE_INTERVAL_DAY),
+                    CONF_FORECAST_UPDATE_INTERVAL_NIGHT: user_input.get(CONF_FORECAST_UPDATE_INTERVAL_NIGHT, DEFAULT_FORECAST_UPDATE_INTERVAL_NIGHT),
                     CONF_NIGHT_START_HOUR: user_input.get(CONF_NIGHT_START_HOUR, DEFAULT_NIGHT_START_HOUR),
                     CONF_NIGHT_END_HOUR: user_input.get(CONF_NIGHT_END_HOUR, DEFAULT_NIGHT_END_HOUR),
                 },
@@ -187,6 +193,12 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 ),
                 vol.Required(CONF_UPDATE_INTERVAL_NIGHT, default=DEFAULT_UPDATE_INTERVAL_NIGHT): vol.All(
                     vol.Coerce(int), vol.Range(min=10, max=120)
+                ),
+                vol.Required(CONF_FORECAST_UPDATE_INTERVAL_DAY, default=DEFAULT_FORECAST_UPDATE_INTERVAL_DAY): vol.All(
+                    vol.Coerce(int), vol.Range(min=30, max=240)
+                ),
+                vol.Required(CONF_FORECAST_UPDATE_INTERVAL_NIGHT, default=DEFAULT_FORECAST_UPDATE_INTERVAL_NIGHT): vol.All(
+                    vol.Coerce(int), vol.Range(min=60, max=480)
                 ),
                 vol.Required(CONF_NIGHT_START_HOUR, default=DEFAULT_NIGHT_START_HOUR): vol.All(
                     vol.Coerce(int), vol.Range(min=0, max=23)
@@ -293,6 +305,12 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
                     CONF_UPDATE_INTERVAL_NIGHT: user_input.get(
                         CONF_UPDATE_INTERVAL_NIGHT, DEFAULT_UPDATE_INTERVAL_NIGHT
                     ),
+                    CONF_FORECAST_UPDATE_INTERVAL_DAY: user_input.get(
+                        CONF_FORECAST_UPDATE_INTERVAL_DAY, DEFAULT_FORECAST_UPDATE_INTERVAL_DAY
+                    ),
+                    CONF_FORECAST_UPDATE_INTERVAL_NIGHT: user_input.get(
+                        CONF_FORECAST_UPDATE_INTERVAL_NIGHT, DEFAULT_FORECAST_UPDATE_INTERVAL_NIGHT
+                    ),
                     CONF_NIGHT_START_HOUR: user_input.get(
                         CONF_NIGHT_START_HOUR, DEFAULT_NIGHT_START_HOUR
                     ),
@@ -318,6 +336,18 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
                             CONF_UPDATE_INTERVAL_NIGHT, DEFAULT_UPDATE_INTERVAL_NIGHT
                         ),
                     ): vol.All(vol.Coerce(int), vol.Range(min=10, max=120)),
+                    vol.Required(
+                        CONF_FORECAST_UPDATE_INTERVAL_DAY,
+                        default=self.config_entry.options.get(
+                            CONF_FORECAST_UPDATE_INTERVAL_DAY, DEFAULT_FORECAST_UPDATE_INTERVAL_DAY
+                        ),
+                    ): vol.All(vol.Coerce(int), vol.Range(min=30, max=240)),
+                    vol.Required(
+                        CONF_FORECAST_UPDATE_INTERVAL_NIGHT,
+                        default=self.config_entry.options.get(
+                            CONF_FORECAST_UPDATE_INTERVAL_NIGHT, DEFAULT_FORECAST_UPDATE_INTERVAL_NIGHT
+                        ),
+                    ): vol.All(vol.Coerce(int), vol.Range(min=60, max=480)),
                     vol.Required(
                         CONF_NIGHT_START_HOUR,
                         default=self.config_entry.options.get(

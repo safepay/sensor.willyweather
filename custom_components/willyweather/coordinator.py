@@ -26,10 +26,14 @@ from .const import (
     CONF_INCLUDE_WARNINGS,
     CONF_UPDATE_INTERVAL_DAY,
     CONF_UPDATE_INTERVAL_NIGHT,
+    CONF_FORECAST_UPDATE_INTERVAL_DAY,
+    CONF_FORECAST_UPDATE_INTERVAL_NIGHT,
     CONF_NIGHT_START_HOUR,
     CONF_NIGHT_END_HOUR,
     DEFAULT_UPDATE_INTERVAL_DAY,
     DEFAULT_UPDATE_INTERVAL_NIGHT,
+    DEFAULT_FORECAST_UPDATE_INTERVAL_DAY,
+    DEFAULT_FORECAST_UPDATE_INTERVAL_NIGHT,
     DEFAULT_NIGHT_START_HOUR,
     DEFAULT_NIGHT_END_HOUR,
     DOMAIN,
@@ -52,6 +56,7 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
         self.api_key = entry.data[CONF_API_KEY]
         self.station_id = entry.data[CONF_STATION_ID]
         self._session = aiohttp.ClientSession()
+        self._last_forecast_fetch: dt_util.dt.datetime | None = None
 
         _LOGGER.debug(
             "Initializing WillyWeather coordinator for station %s",
@@ -66,25 +71,51 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
         )
 
     def _get_update_interval(self) -> timedelta:
-        """Get update interval based on time of day."""
+        """Get observational update interval based on time of day."""
         # Get configuration values
         interval_day = self.entry.options.get(CONF_UPDATE_INTERVAL_DAY, DEFAULT_UPDATE_INTERVAL_DAY)
         interval_night = self.entry.options.get(CONF_UPDATE_INTERVAL_NIGHT, DEFAULT_UPDATE_INTERVAL_NIGHT)
         night_start = self.entry.options.get(CONF_NIGHT_START_HOUR, DEFAULT_NIGHT_START_HOUR)
         night_end = self.entry.options.get(CONF_NIGHT_END_HOUR, DEFAULT_NIGHT_END_HOUR)
-        
+
         now = dt_util.now()
         current_hour = now.hour
-        
+
         # Check if we're in night time
         if night_start > night_end:  # Night crosses midnight (e.g., 21:00 to 07:00)
             is_night = current_hour >= night_start or current_hour < night_end
         else:  # Night doesn't cross midnight (e.g., 01:00 to 06:00)
             is_night = night_start <= current_hour < night_end
-        
+
         interval = interval_night if is_night else interval_day
         _LOGGER.debug(
-            "Update interval: %s minutes (night mode: %s, current hour: %s)",
+            "Observational update interval: %s minutes (night mode: %s, current hour: %s)",
+            interval,
+            is_night,
+            current_hour,
+        )
+        return timedelta(minutes=interval)
+
+    def _get_forecast_update_interval(self) -> timedelta:
+        """Get forecast update interval based on time of day."""
+        # Get configuration values
+        interval_day = self.entry.options.get(CONF_FORECAST_UPDATE_INTERVAL_DAY, DEFAULT_FORECAST_UPDATE_INTERVAL_DAY)
+        interval_night = self.entry.options.get(CONF_FORECAST_UPDATE_INTERVAL_NIGHT, DEFAULT_FORECAST_UPDATE_INTERVAL_NIGHT)
+        night_start = self.entry.options.get(CONF_NIGHT_START_HOUR, DEFAULT_NIGHT_START_HOUR)
+        night_end = self.entry.options.get(CONF_NIGHT_END_HOUR, DEFAULT_NIGHT_END_HOUR)
+
+        now = dt_util.now()
+        current_hour = now.hour
+
+        # Check if we're in night time
+        if night_start > night_end:  # Night crosses midnight (e.g., 21:00 to 07:00)
+            is_night = current_hour >= night_start or current_hour < night_end
+        else:  # Night doesn't cross midnight (e.g., 01:00 to 06:00)
+            is_night = night_start <= current_hour < night_end
+
+        interval = interval_night if is_night else interval_day
+        _LOGGER.debug(
+            "Forecast update interval: %s minutes (night mode: %s, current hour: %s)",
             interval,
             is_night,
             current_hour,
@@ -96,50 +127,94 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
         # Dynamically adjust update interval based on time of day
         new_interval = self._get_update_interval()
         if new_interval != self.update_interval:
-            _LOGGER.info("Adjusting update interval to %s", new_interval)
+            _LOGGER.info("Adjusting observational update interval to %s", new_interval)
             self.update_interval = new_interval
-        
+
         _LOGGER.debug("Updating WillyWeather data for station %s", self.station_id)
-        
+
         try:
-            # Build forecast parameters based on enabled options
-            forecast_types = [
-                "weather",
-                "precis", 
-                "sunrisesunset",
-                "moonphases",
-                "rainfall",
-                "temperature",
-                "wind",
-            ]
-            
-            include_tides = self.entry.options.get(CONF_INCLUDE_TIDES, False)
-            include_uv = self.entry.options.get(CONF_INCLUDE_UV, False)
-            include_swell = self.entry.options.get(CONF_INCLUDE_SWELL, False)
-            
-            _LOGGER.debug("Options - Tides: %s, UV: %s, Swell: %s", 
-                         include_tides, include_uv, include_swell)
-            
-            if include_tides:
-                forecast_types.append("tides")
-                _LOGGER.debug("Added tides to forecast types")
-            if include_uv:
-                forecast_types.append("uv")
-            if include_swell:
-                forecast_types.append("swell")
-                _LOGGER.debug("Added swell to forecast types")
-            
-            _LOGGER.debug("Final forecast types: %s", forecast_types)
-            
-            # Fetch observational and forecast data
+            # Always fetch observational data
             observational_data = await self._fetch_observational_data()
-            forecast_data = await self._fetch_forecast_data(forecast_types)
-            
-            # Log what we got back
-            if forecast_data and "forecasts" in forecast_data:
-                available_forecasts = list(forecast_data["forecasts"].keys())
-                _LOGGER.debug("Available forecasts in response: %s", available_forecasts)
-            
+
+            # Determine if we need to fetch forecast data
+            now = dt_util.utcnow()
+            forecast_interval = self._get_forecast_update_interval()
+            should_fetch_forecast = (
+                self._last_forecast_fetch is None
+                or (now - self._last_forecast_fetch) >= forecast_interval
+            )
+
+            forecast_data = None
+            if should_fetch_forecast:
+                _LOGGER.info("Fetching forecast data (interval elapsed)")
+                # Build forecast parameters based on enabled options
+                forecast_types = [
+                    "weather",
+                    "precis",
+                    "sunrisesunset",
+                    "moonphases",
+                    "rainfall",
+                    "temperature",
+                    "wind",
+                ]
+
+                include_tides = self.entry.options.get(CONF_INCLUDE_TIDES, False)
+                include_uv = self.entry.options.get(CONF_INCLUDE_UV, False)
+                include_swell = self.entry.options.get(CONF_INCLUDE_SWELL, False)
+
+                _LOGGER.debug("Options - Tides: %s, UV: %s, Swell: %s",
+                             include_tides, include_uv, include_swell)
+
+                if include_tides:
+                    forecast_types.append("tides")
+                    _LOGGER.debug("Added tides to forecast types")
+                if include_uv:
+                    forecast_types.append("uv")
+                if include_swell:
+                    forecast_types.append("swell")
+                    _LOGGER.debug("Added swell to forecast types")
+
+                _LOGGER.debug("Final forecast types: %s", forecast_types)
+
+                forecast_data = await self._fetch_forecast_data(forecast_types)
+                self._last_forecast_fetch = now
+
+                # Log what we got back
+                if forecast_data and "forecasts" in forecast_data:
+                    available_forecasts = list(forecast_data["forecasts"].keys())
+                    _LOGGER.debug("Available forecasts in response: %s", available_forecasts)
+            else:
+                # Reuse previous forecast data
+                _LOGGER.debug("Skipping forecast fetch (using cached data)")
+                if self.data and "forecast" in self.data:
+                    forecast_data = self.data["forecast"]
+                else:
+                    # First run and no cached data, fetch it anyway
+                    _LOGGER.info("No cached forecast data, fetching now")
+                    forecast_types = [
+                        "weather",
+                        "precis",
+                        "sunrisesunset",
+                        "moonphases",
+                        "rainfall",
+                        "temperature",
+                        "wind",
+                    ]
+
+                    include_tides = self.entry.options.get(CONF_INCLUDE_TIDES, False)
+                    include_uv = self.entry.options.get(CONF_INCLUDE_UV, False)
+                    include_swell = self.entry.options.get(CONF_INCLUDE_SWELL, False)
+
+                    if include_tides:
+                        forecast_types.append("tides")
+                    if include_uv:
+                        forecast_types.append("uv")
+                    if include_swell:
+                        forecast_types.append("swell")
+
+                    forecast_data = await self._fetch_forecast_data(forecast_types)
+                    self._last_forecast_fetch = now
+
             # Fetch warning data if enabled
             warning_data = None
             if self.entry.options.get(CONF_INCLUDE_WARNINGS, False):
