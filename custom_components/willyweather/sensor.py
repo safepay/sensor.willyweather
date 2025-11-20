@@ -777,7 +777,7 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
         self._attr_unique_id = f"{station_id}_forecast_{sensor_type}_day_{forecast_day}"
 
         sensor_config = FORECAST_SENSOR_TYPES[sensor_type]
-        day_label = "Today" if forecast_day == 0 else f"Day {forecast_day}"
+        day_label = f"{forecast_day}"
 
         self._attr_name = f"{sensor_config['name']} {day_label}"
         self._attr_native_unit_of_measurement = sensor_config.get("unit")
@@ -855,94 +855,251 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
         if self._sensor_type in ["temp_max", "temp_min"]:
             temp_data = forecasts.get("temperature", {}).get("days", [])
             if self._forecast_day < len(temp_data):
-                return temp_data[self._forecast_day]
+                day_data = temp_data[self._forecast_day]
+                _LOGGER.debug(
+                    "Temperature data for day %s: %s",
+                    self._forecast_day,
+                    day_data
+                )
+                return day_data
+            else:
+                _LOGGER.warning(
+                    "No temperature data for day %s (available days: %s)",
+                    self._forecast_day,
+                    len(temp_data)
+                )
 
         elif self._sensor_type in ["rain_amount_min", "rain_amount_max", "rain_amount_range", "rain_probability"]:
             rainfall_data = forecasts.get("rainfall", {}).get("days", [])
             if self._forecast_day < len(rainfall_data):
-                return rainfall_data[self._forecast_day]
+                day_data = rainfall_data[self._forecast_day]
+                _LOGGER.debug(
+                    "Rainfall data for day %s: %s",
+                    self._forecast_day,
+                    day_data
+                )
+                return day_data
+            else:
+                _LOGGER.warning(
+                    "No rainfall data for day %s (available days: %s)",
+                    self._forecast_day,
+                    len(rainfall_data)
+                )
 
         elif self._sensor_type == "precis":
             precis_data = forecasts.get("precis", {}).get("days", [])
             if self._forecast_day < len(precis_data):
-                return precis_data[self._forecast_day]
+                day_data = precis_data[self._forecast_day]
+                _LOGGER.debug(
+                    "Precis data for day %s: %s",
+                    self._forecast_day,
+                    day_data
+                )
+                return day_data
+            else:
+                _LOGGER.warning(
+                    "No precis data for day %s (available days: %s)",
+                    self._forecast_day,
+                    len(precis_data)
+                )
 
         elif self._sensor_type in ["uv_index", "uv_alert"]:
             uv_data = forecasts.get("uv", {}).get("days", [])
             if self._forecast_day < len(uv_data):
-                return uv_data[self._forecast_day]
+                day_data = uv_data[self._forecast_day]
+                _LOGGER.debug(
+                    "UV data for day %s: %s",
+                    self._forecast_day,
+                    day_data
+                )
+                return day_data
+            else:
+                _LOGGER.warning(
+                    "No UV data for day %s (available days: %s)",
+                    self._forecast_day,
+                    len(uv_data)
+                )
 
         elif self._sensor_type in ["sunrise", "sunset"]:
             sunrisesunset_data = forecasts.get("sunrisesunset", {}).get("days", [])
             if self._forecast_day < len(sunrisesunset_data):
-                return sunrisesunset_data[self._forecast_day]
+                day_data = sunrisesunset_data[self._forecast_day]
+                _LOGGER.debug(
+                    "Sunrise/sunset data for day %s: %s",
+                    self._forecast_day,
+                    day_data
+                )
+                return day_data
+            else:
+                _LOGGER.warning(
+                    "No sunrise/sunset data for day %s (available days: %s)",
+                    self._forecast_day,
+                    len(sunrisesunset_data)
+                )
 
         return None
 
     def _extract_value(self, day_data: dict) -> Any:
         """Extract the specific value for this sensor type."""
         if not day_data:
+            _LOGGER.debug(
+                "No day_data available for sensor %s (day %s)",
+                self._sensor_type,
+                self._forecast_day
+            )
             return None
 
         # Handle different sensor types
         if self._sensor_type == "temp_max":
             entries = day_data.get("entries", [])
             if entries:
-                return entries[0].get("max")
+                value = entries[0].get("max")
+                if value is None:
+                    _LOGGER.warning(
+                        "temp_max: 'max' not found in entry. Available keys: %s",
+                        list(entries[0].keys())
+                    )
+                return value
+            _LOGGER.warning("temp_max: No entries found in day_data. Keys: %s", list(day_data.keys()))
 
         elif self._sensor_type == "temp_min":
             entries = day_data.get("entries", [])
             if entries:
-                return entries[0].get("min")
+                value = entries[0].get("min")
+                if value is None:
+                    _LOGGER.warning(
+                        "temp_min: 'min' not found in entry. Available keys: %s",
+                        list(entries[0].keys())
+                    )
+                return value
+            _LOGGER.warning("temp_min: No entries found in day_data. Keys: %s", list(day_data.keys()))
 
         elif self._sensor_type == "rain_amount_min":
             entries = day_data.get("entries", [])
             if entries:
-                return entries[0].get("startRange")
+                value = entries[0].get("startRange")
+                if value is None:
+                    _LOGGER.warning(
+                        "rain_amount_min: 'startRange' not found in entry. Available keys: %s",
+                        list(entries[0].keys())
+                    )
+                return value
+            _LOGGER.warning("rain_amount_min: No entries found in day_data. Keys: %s", list(day_data.keys()))
 
         elif self._sensor_type == "rain_amount_max":
             entries = day_data.get("entries", [])
             if entries:
-                return entries[0].get("endRange")
+                value = entries[0].get("endRange")
+                if value is None:
+                    _LOGGER.warning(
+                        "rain_amount_max: 'endRange' not found in entry. Available keys: %s",
+                        list(entries[0].keys())
+                    )
+                return value
+            _LOGGER.warning("rain_amount_max: No entries found in day_data. Keys: %s", list(day_data.keys()))
 
         elif self._sensor_type == "rain_amount_range":
             entries = day_data.get("entries", [])
             if entries:
-                start = entries[0].get("startRange", 0)
-                end = entries[0].get("endRange", 0)
+                start = entries[0].get("startRange")
+                end = entries[0].get("endRange")
+                if start is None or end is None:
+                    _LOGGER.warning(
+                        "rain_amount_range: 'startRange' or 'endRange' not found. Available keys: %s",
+                        list(entries[0].keys())
+                    )
+                    return None
                 if start == end:
                     return f"{start} mm"
                 return f"{start}-{end} mm"
+            _LOGGER.warning("rain_amount_range: No entries found in day_data. Keys: %s", list(day_data.keys()))
 
         elif self._sensor_type == "rain_probability":
             entries = day_data.get("entries", [])
             if entries:
-                return entries[0].get("probability")
+                value = entries[0].get("probability")
+                if value is None:
+                    _LOGGER.warning(
+                        "rain_probability: 'probability' not found in entry. Available keys: %s",
+                        list(entries[0].keys())
+                    )
+                return value
+            _LOGGER.warning("rain_probability: No entries found in day_data. Keys: %s", list(day_data.keys()))
 
         elif self._sensor_type == "precis":
-            return day_data.get("precis")
+            # Try to get precis from entries first, then fallback to direct key
+            entries = day_data.get("entries", [])
+            if entries:
+                value = entries[0].get("precis")
+                if value:
+                    return value
+            # Fallback to direct key
+            value = day_data.get("precis")
+            if value is None:
+                _LOGGER.warning(
+                    "precis: 'precis' not found in day_data or entries. Day_data keys: %s, Entry keys: %s",
+                    list(day_data.keys()),
+                    list(entries[0].keys()) if entries else "No entries"
+                )
+            return value
 
         elif self._sensor_type == "uv_index":
             entries = day_data.get("entries", [])
             if entries:
-                return entries[0].get("index")
+                value = entries[0].get("index")
+                if value is None:
+                    _LOGGER.warning(
+                        "uv_index: 'index' not found in entry. Available keys: %s",
+                        list(entries[0].keys())
+                    )
+                return value
+            _LOGGER.warning("uv_index: No entries found in day_data. Keys: %s", list(day_data.keys()))
 
         elif self._sensor_type == "uv_alert":
             entries = day_data.get("entries", [])
             if entries:
-                return entries[0].get("alert", {}).get("title")
+                alert = entries[0].get("alert")
+                if alert:
+                    value = alert.get("title")
+                    if value is None:
+                        _LOGGER.warning(
+                            "uv_alert: 'title' not found in alert. Alert keys: %s",
+                            list(alert.keys())
+                        )
+                    return value
+                else:
+                    _LOGGER.debug(
+                        "uv_alert: No 'alert' in entry. Available keys: %s",
+                        list(entries[0].keys())
+                    )
+            else:
+                _LOGGER.warning("uv_alert: No entries found in day_data. Keys: %s", list(day_data.keys()))
 
         elif self._sensor_type == "sunrise":
             entries = day_data.get("entries", [])
             if entries and "firstLightDateTime" in entries[0]:
                 timestamp = entries[0]["firstLightDateTime"]
                 return self._parse_timestamp(timestamp)
+            if entries:
+                _LOGGER.warning(
+                    "sunrise: 'firstLightDateTime' not found in entry. Available keys: %s",
+                    list(entries[0].keys())
+                )
+            else:
+                _LOGGER.warning("sunrise: No entries found in day_data. Keys: %s", list(day_data.keys()))
 
         elif self._sensor_type == "sunset":
             entries = day_data.get("entries", [])
             if entries and "lastLightDateTime" in entries[0]:
                 timestamp = entries[0]["lastLightDateTime"]
                 return self._parse_timestamp(timestamp)
+            if entries:
+                _LOGGER.warning(
+                    "sunset: 'lastLightDateTime' not found in entry. Available keys: %s",
+                    list(entries[0].keys())
+                )
+            else:
+                _LOGGER.warning("sunset: No entries found in day_data. Keys: %s", list(day_data.keys()))
 
         return None
 
