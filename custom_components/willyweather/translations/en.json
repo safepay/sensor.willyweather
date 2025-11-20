@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "WillyWeather Setup - Station Selection",
-        "description": "Step 1 of 5: Enter your WillyWeather API key.\n\n**Get your API key:**\nVisit https://www.willyweather.com.au/api/register.html to register and obtain your free API key.\n\n**Station ID:**\nLeaving the Station ID blank will automatically set it to the closest WillyWeather station to your Home Assistant Home Zone location. You can also manually enter a specific station ID if preferred.",
+        "description": "Step 1 of 4: Enter your WillyWeather API key.\n\n**Get your API key:**\nVisit https://www.willyweather.com.au/api/register.html to register and obtain your free API key.\n\n**Station ID:**\nLeaving the Station ID blank will automatically set it to the closest WillyWeather station to your Home Assistant Home Zone location. You can also manually enter a specific station ID if preferred.",
         "data": {
           "api_key": "WillyWeather API Key",
           "station_id": "Station ID (optional)"
@@ -11,7 +11,7 @@
       },
       "options": {
         "title": "WillyWeather Setup - Sensor Configuration",
-        "description": "Step 2 of 5: Configure optional sensors for {station_name}\n\nObservational sensors (current weather) are enabled by default.\n\n**Optional Sensors:**",
+        "description": "Step 2 of 4: Configure optional sensors for {station_name}\n\nObservational sensors (current weather) are enabled by default.\n\n**Optional Sensors:**",
         "data": {
           "include_observational": "Include observational sensors (temperature, humidity, wind, pressure, etc.)",
           "include_wind": "Include wind forecast data",
@@ -21,22 +21,16 @@
         }
       },
       "warnings": {
-        "title": "WillyWeather Setup - Warning Configuration",
-        "description": "Step 3 of 5: Configure weather warnings for {station_name}\n\nWarnings will alert you to dangerous weather conditions.",
+        "title": "WillyWeather Setup - Optional Features",
+        "description": "Step 3 of 4: Configure optional features for {station_name}\n\n**Weather Warnings:**\nWarnings will alert you to dangerous weather conditions.\n\n**Forecast Sensors:**\nForecast sensors create individual sensors for each day (0-6) with temperature, rain, UV data, etc. Perfect for custom cards!\n- No additional API calls\n- Compatible with custom Lovelace cards\n- Easy automation triggers",
         "data": {
-          "include_warnings": "Include weather warning binary sensors"
-        }
-      },
-      "forecast_sensors": {
-        "title": "WillyWeather Setup - Forecast Sensors",
-        "description": "Step 4 of 5: Configure forecast sensors for {station_name}\n\nForecast sensors create individual sensors for each day (0-6) with temperature, rain, UV data, etc. Perfect for custom cards!\n\n**Benefits:**\n- No additional API calls\n- Compatible with custom Lovelace cards\n- Easy automation triggers",
-        "data": {
+          "include_warnings": "Include weather warning binary sensors",
           "include_forecast_sensors": "Include daily forecast sensors (creates sensors for each forecast day)"
         }
       },
       "update_intervals": {
         "title": "WillyWeather Setup - Update Intervals",
-        "description": "Step 5 of 5: Configure update intervals for {station_name}\n\nSeparate intervals for observational (current conditions) and forecast data reduce API usage.\n\n**Default setup:**\n- Observational: 10/30 min (day/night)\n- Forecast: 30/60 min (day/night)\n- Total: ~7,920 API calls/month",
+        "description": "Step 4 of 4: Configure update intervals for {station_name}\n\nSeparate intervals for observational (current conditions) and forecast data reduce API usage.\n\n**Default setup:**\n- Observational: 10/30 min (day/night)\n- Forecast: 30/60 min (day/night)\n- Total: ~7,920 API calls/month",
         "data": {
           "update_interval_day": "Observational day interval (minutes, 5-60)",
           "update_interval_night": "Observational night interval (minutes, 10-120)",
@@ -72,16 +66,10 @@
         }
       },
       "warnings": {
-        "title": "WillyWeather Warning Options",
-        "description": "Configure weather warning sensors.\n\nChanging these options will reload the integration.",
+        "title": "WillyWeather Optional Features",
+        "description": "Configure optional features.\n\n**Weather Warnings:**\nWarnings will alert you to dangerous weather conditions.\n\n**Forecast Sensors:**\nForecast sensors create individual sensors for each day with temperature, rain, UV, etc. No additional API calls required.\n\nChanging these options will reload the integration.",
         "data": {
-          "include_warnings": "Include weather warning binary sensors"
-        }
-      },
-      "forecast_sensors": {
-        "title": "WillyWeather Forecast Sensor Options",
-        "description": "Configure daily forecast sensors.\n\nForecast sensors create individual sensors for each day with temperature, rain, UV, etc. No additional API calls required.\n\nChanging these options will reload the integration.",
-        "data": {
+          "include_warnings": "Include weather warning binary sensors",
           "include_forecast_sensors": "Include daily forecast sensors"
         }
       },

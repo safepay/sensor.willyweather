@@ -142,39 +142,20 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_warnings(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Handle warning options step."""
+        """Handle optional features (warnings and forecast sensors)."""
         if user_input is not None:
             self._warning_options = user_input
-            return await self.async_step_forecast_sensors()
-
-        data_schema = vol.Schema(
-            {
-                vol.Required(CONF_INCLUDE_WARNINGS, default=True): cv.boolean,
-            }
-        )
-
-        return self.async_show_form(
-            step_id="warnings",
-            data_schema=data_schema,
-            description_placeholders={"station_name": self._station_name},
-        )
-
-    async def async_step_forecast_sensors(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
-        """Handle forecast sensor options step."""
-        if user_input is not None:
-            self._forecast_sensor_options = user_input
             return await self.async_step_update_intervals()
 
         data_schema = vol.Schema(
             {
+                vol.Required(CONF_INCLUDE_WARNINGS, default=True): cv.boolean,
                 vol.Required(CONF_INCLUDE_FORECAST_SENSORS, default=False): cv.boolean,
             }
         )
 
         return self.async_show_form(
-            step_id="forecast_sensors",
+            step_id="warnings",
             data_schema=data_schema,
             description_placeholders={"station_name": self._station_name},
         )
@@ -201,7 +182,7 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_INCLUDE_TIDES: self._sensor_options.get(CONF_INCLUDE_TIDES, False),
                     CONF_INCLUDE_SWELL: self._sensor_options.get(CONF_INCLUDE_SWELL, False),
                     CONF_INCLUDE_WARNINGS: self._warning_options.get(CONF_INCLUDE_WARNINGS, True),
-                    CONF_INCLUDE_FORECAST_SENSORS: self._forecast_sensor_options.get(CONF_INCLUDE_FORECAST_SENSORS, False),
+                    CONF_INCLUDE_FORECAST_SENSORS: self._warning_options.get(CONF_INCLUDE_FORECAST_SENSORS, False),
                     CONF_FORECAST_DAYS: [0, 1, 2, 3, 4, 5, 6],  # Default to all 7 days
                     CONF_FORECAST_MONITORED: list(FORECAST_SENSOR_TYPES.keys()),  # Default to all sensor types
                     CONF_UPDATE_INTERVAL_DAY: user_input.get(CONF_UPDATE_INTERVAL_DAY, DEFAULT_UPDATE_INTERVAL_DAY),
@@ -298,10 +279,10 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
     async def async_step_warnings(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Manage the warning options."""
+        """Manage optional features (warnings and forecast sensors)."""
         if user_input is not None:
             self._warning_options = user_input
-            return await self.async_step_forecast_sensors()
+            return await self.async_step_update_intervals()
 
         return self.async_show_form(
             step_id="warnings",
@@ -311,22 +292,6 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
                         CONF_INCLUDE_WARNINGS,
                         default=self.config_entry.options.get(CONF_INCLUDE_WARNINGS, True),
                     ): cv.boolean,
-                }
-            ),
-        )
-
-    async def async_step_forecast_sensors(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
-        """Manage the forecast sensor options."""
-        if user_input is not None:
-            self._forecast_sensor_options = user_input
-            return await self.async_step_update_intervals()
-
-        return self.async_show_form(
-            step_id="forecast_sensors",
-            data_schema=vol.Schema(
-                {
                     vol.Required(
                         CONF_INCLUDE_FORECAST_SENSORS,
                         default=self.config_entry.options.get(CONF_INCLUDE_FORECAST_SENSORS, False),
@@ -346,8 +311,7 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
                 data={
                     **self._sensor_options,
                     **self._warning_options,
-                    **self._forecast_sensor_options,
-                    # Preserve existing forecast sensor config if not in forecast_sensor_options
+                    # Preserve existing forecast sensor config
                     CONF_FORECAST_DAYS: self.config_entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4, 5, 6]),
                     CONF_FORECAST_MONITORED: self.config_entry.options.get(CONF_FORECAST_MONITORED, list(FORECAST_SENSOR_TYPES.keys())),
                     CONF_UPDATE_INTERVAL_DAY: user_input.get(
