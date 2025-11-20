@@ -15,6 +15,9 @@ from homeassistant.util import dt as dt_util
 
 from .const import (
     ATTRIBUTION,
+    CONF_FORECAST_DAYS,
+    CONF_FORECAST_MONITORED,
+    CONF_INCLUDE_FORECAST_SENSORS,
     CONF_INCLUDE_OBSERVATIONAL,
     CONF_INCLUDE_UV,
     CONF_INCLUDE_TIDES,
@@ -23,6 +26,7 @@ from .const import (
     CONF_STATION_ID,
     CONF_STATION_NAME,
     DOMAIN,
+    FORECAST_SENSOR_TYPES,
     MANUFACTURER,
     SENSOR_TYPES,
     SUNMOON_SENSOR_TYPES,
@@ -123,6 +127,34 @@ async def async_setup_entry(
                     sensor_type,
                 )
             )
+
+    # Add forecast sensors if enabled
+    if entry.options.get(CONF_INCLUDE_FORECAST_SENSORS, False):
+        forecast_days = entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4, 5, 6])
+        monitored_conditions = entry.options.get(
+            CONF_FORECAST_MONITORED,
+            list(FORECAST_SENSOR_TYPES.keys())
+        )
+
+        _LOGGER.debug(
+            "Setting up forecast sensors for days %s with conditions %s",
+            forecast_days,
+            monitored_conditions,
+        )
+
+        for day in forecast_days:
+            for condition in monitored_conditions:
+                if condition in FORECAST_SENSOR_TYPES:
+                    entities.append(
+                        WillyWeatherForecastSensor(
+                            coordinator,
+                            entry,
+                            station_id,
+                            station_name,
+                            condition,
+                            day,
+                        )
+                    )
 
     async_add_entities(entities)
 
@@ -718,3 +750,208 @@ class WillyWeatherSwellSensor(CoordinatorEntity, SensorEntity):
             return None
 
         return None
+
+
+class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
+    """Representation of a WillyWeather forecast sensor."""
+
+    _attr_attribution = ATTRIBUTION
+    _attr_has_entity_name = True
+
+    def __init__(
+        self,
+        coordinator: WillyWeatherDataUpdateCoordinator,
+        entry: ConfigEntry,
+        station_id: str,
+        station_name: str,
+        sensor_type: str,
+        forecast_day: int,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._entry = entry
+        self._station_id = station_id
+        self._station_name = station_name
+        self._sensor_type = sensor_type
+        self._forecast_day = forecast_day
+        self._attr_unique_id = f"{station_id}_forecast_{sensor_type}_day_{forecast_day}"
+
+        sensor_config = FORECAST_SENSOR_TYPES[sensor_type]
+        day_label = "Today" if forecast_day == 0 else f"Day {forecast_day}"
+
+        self._attr_name = f"{sensor_config['name']} {day_label}"
+        self._attr_native_unit_of_measurement = sensor_config.get("unit")
+        self._attr_device_class = sensor_config.get("device_class")
+        self._attr_state_class = sensor_config.get("state_class")
+        self._attr_icon = sensor_config.get("icon")
+
+        # Link to forecast sensors device
+        self._attr_device_info = DeviceInfo(
+            entry_type=DeviceEntryType.SERVICE,
+            identifiers={(DOMAIN, f"{station_id}_forecast_sensors")},
+            name=f"{station_name} Forecast Sensors",
+            manufacturer=MANUFACTURER,
+            via_device=(DOMAIN, station_id),
+        )
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        if not self.coordinator.last_update_success:
+            return False
+
+        forecast_data = self.coordinator.data.get("forecast", {})
+        if not forecast_data:
+            return False
+
+        # Check if we have forecast data for this day
+        forecasts = forecast_data.get("forecasts", {})
+        return self._get_forecast_data(forecasts) is not None
+
+    @property
+    def native_value(self) -> Any:
+        """Return the state of the sensor."""
+        forecast_data = self.coordinator.data.get("forecast", {})
+        if not forecast_data:
+            return None
+
+        forecasts = forecast_data.get("forecasts", {})
+        day_data = self._get_forecast_data(forecasts)
+
+        if not day_data:
+            return None
+
+        return self._extract_value(day_data)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional attributes."""
+        forecast_data = self.coordinator.data.get("forecast", {})
+        if not forecast_data:
+            return {}
+
+        forecasts = forecast_data.get("forecasts", {})
+        day_data = self._get_forecast_data(forecasts)
+
+        if not day_data:
+            return {}
+
+        attributes = {
+            "forecast_day": self._forecast_day,
+            "date": day_data.get("dateTime"),
+        }
+
+        # Add precis code for weather condition
+        if self._sensor_type == "precis" and "precisCode" in day_data:
+            attributes["precis_code"] = day_data["precisCode"]
+
+        return attributes
+
+    def _get_forecast_data(self, forecasts: dict) -> dict | None:
+        """Get forecast data for the specific day."""
+        # WillyWeather forecast structure varies by type
+        # We need to look in the right place for each sensor type
+
+        if self._sensor_type in ["temp_max", "temp_min"]:
+            temp_data = forecasts.get("temperature", {}).get("days", [])
+            if self._forecast_day < len(temp_data):
+                return temp_data[self._forecast_day]
+
+        elif self._sensor_type in ["rain_amount_min", "rain_amount_max", "rain_amount_range", "rain_probability"]:
+            rainfall_data = forecasts.get("rainfall", {}).get("days", [])
+            if self._forecast_day < len(rainfall_data):
+                return rainfall_data[self._forecast_day]
+
+        elif self._sensor_type == "precis":
+            precis_data = forecasts.get("precis", {}).get("days", [])
+            if self._forecast_day < len(precis_data):
+                return precis_data[self._forecast_day]
+
+        elif self._sensor_type in ["uv_index", "uv_alert"]:
+            uv_data = forecasts.get("uv", {}).get("days", [])
+            if self._forecast_day < len(uv_data):
+                return uv_data[self._forecast_day]
+
+        elif self._sensor_type in ["sunrise", "sunset"]:
+            sunrisesunset_data = forecasts.get("sunrisesunset", {}).get("days", [])
+            if self._forecast_day < len(sunrisesunset_data):
+                return sunrisesunset_data[self._forecast_day]
+
+        return None
+
+    def _extract_value(self, day_data: dict) -> Any:
+        """Extract the specific value for this sensor type."""
+        if not day_data:
+            return None
+
+        # Handle different sensor types
+        if self._sensor_type == "temp_max":
+            entries = day_data.get("entries", [])
+            if entries:
+                return entries[0].get("max")
+
+        elif self._sensor_type == "temp_min":
+            entries = day_data.get("entries", [])
+            if entries:
+                return entries[0].get("min")
+
+        elif self._sensor_type == "rain_amount_min":
+            entries = day_data.get("entries", [])
+            if entries:
+                return entries[0].get("startRange")
+
+        elif self._sensor_type == "rain_amount_max":
+            entries = day_data.get("entries", [])
+            if entries:
+                return entries[0].get("endRange")
+
+        elif self._sensor_type == "rain_amount_range":
+            entries = day_data.get("entries", [])
+            if entries:
+                start = entries[0].get("startRange", 0)
+                end = entries[0].get("endRange", 0)
+                if start == end:
+                    return f"{start} mm"
+                return f"{start}-{end} mm"
+
+        elif self._sensor_type == "rain_probability":
+            entries = day_data.get("entries", [])
+            if entries:
+                return entries[0].get("probability")
+
+        elif self._sensor_type == "precis":
+            return day_data.get("precis")
+
+        elif self._sensor_type == "uv_index":
+            entries = day_data.get("entries", [])
+            if entries:
+                return entries[0].get("index")
+
+        elif self._sensor_type == "uv_alert":
+            entries = day_data.get("entries", [])
+            if entries:
+                return entries[0].get("alert", {}).get("title")
+
+        elif self._sensor_type == "sunrise":
+            entries = day_data.get("entries", [])
+            if entries and "firstLightDateTime" in entries[0]:
+                timestamp = entries[0]["firstLightDateTime"]
+                return self._parse_timestamp(timestamp)
+
+        elif self._sensor_type == "sunset":
+            entries = day_data.get("entries", [])
+            if entries and "lastLightDateTime" in entries[0]:
+                timestamp = entries[0]["lastLightDateTime"]
+                return self._parse_timestamp(timestamp)
+
+        return None
+
+    def _parse_timestamp(self, timestamp: str) -> datetime | None:
+        """Parse WillyWeather timestamp to datetime object."""
+        try:
+            # WillyWeather timestamps are in ISO format
+            dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+            return dt_util.as_utc(dt)
+        except (ValueError, AttributeError):
+            _LOGGER.warning("Failed to parse timestamp: %s", timestamp)
+            return None

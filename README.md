@@ -9,6 +9,7 @@ This differs from the BoM integration by providing separate binary sensors for w
 
 - **Weather Entity**: Real-time weather conditions with full daily and hourly forecast support
 - **Observational Sensors**: Current weather measurements including temperature, humidity, pressure, wind, rainfall, and more
+- **Forecast Sensors**: Individual sensors for each forecast day (temperature, rain, UV, etc.) - perfect for custom cards!
 - **Sun/Moon Data**: Sunrise, sunset, moonrise, moonset, and moon phase information with dynamic moon phase icons
 - **Tide Information**: Next high and low tide times and heights (coastal locations)
 - **UV Index**: Current UV levels with alert categories
@@ -18,6 +19,7 @@ This differs from the BoM integration by providing separate binary sensors for w
 - **Automatic Station Detection**: Automatically finds the closest WillyWeather station based on your Home Assistant location
 - **Configurable Data**: Enable/disable optional sensors through the UI
 - **Forecast Data**: Daily (7 days) and hourly (3 days) with comprehensive data points
+- **Separate Update Intervals**: Configure different update frequencies for observational vs forecast data to reduce API usage
 
 ## Installation
 
@@ -68,8 +70,35 @@ When setting up, you can configure:
 - **Include tide information** - Includes tide times and heights for coastal locations (default: No)
 - **Include swell data** - Includes wave height, period, and direction for coastal locations (default: No)
 - **Include warning sensors** - Enables binary sensors for weather warnings (default: Yes)
+- **Include forecast sensors** - Enables individual sensors for each forecast day (default: No)
 
 These options match the [WillyWeather API configuration screen](https://www.willyweather.com.au/api/docs/weather.html) settings, allowing you to select only the data types your location requires.
+
+### Forecast Sensors
+
+When enabled, the integration creates individual sensors for each forecast day (0-6), similar to the BOM Australia integration. These sensors are perfect for building custom forecast cards and automations.
+
+**Available forecast sensor types:**
+- Max Temperature / Min Temperature
+- Rain Amount (Min/Max/Range)
+- Rain Probability
+- Short Forecast (precis text)
+- UV Index / UV Alert
+- Sunrise / Sunset times
+
+**Benefits:**
+- No additional API calls (uses existing forecast data)
+- Compatible with custom Lovelace cards that expect individual day sensors
+- Easy to use in automations (e.g., "if tomorrow's max temp > 30°C")
+- Each sensor updates automatically with the forecast data
+
+**Example sensors created:**
+- `sensor.willyweather_max_temperature_today`
+- `sensor.willyweather_max_temperature_day_1`
+- `sensor.willyweather_rain_probability_day_2`
+- `sensor.willyweather_uv_index_day_3`
+
+All forecast sensors are grouped under a separate "Forecast Sensors" device for easy organization.
 
 ### Update Interval Configuration
 
