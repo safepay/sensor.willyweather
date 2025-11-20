@@ -93,10 +93,10 @@ When enabled, the integration creates individual sensors for each forecast day (
 - Each sensor updates automatically with the forecast data
 
 **Example sensors created:**
-- `sensor.willyweather_max_temperature_today`
-- `sensor.willyweather_max_temperature_day_1`
-- `sensor.willyweather_rain_probability_day_2`
-- `sensor.willyweather_uv_index_day_3`
+- `sensor.willyweather_max_temperature_0`
+- `sensor.willyweather_max_temperature_1`
+- `sensor.willyweather_rain_probability_2`
+- `sensor.willyweather_uv_index_3`
 
 All forecast sensors are grouped under a separate "Forecast Sensors" device for easy organization.
 
