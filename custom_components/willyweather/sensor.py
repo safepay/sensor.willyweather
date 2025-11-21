@@ -922,21 +922,21 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
                 )
 
         elif self._sensor_type == "extended_text":
-            # Extended text uses region-precis data
-            region_precis_data = forecasts.get("region-precis", {}).get("days", [])
-            if self._forecast_day < len(region_precis_data):
-                day_data = region_precis_data[self._forecast_day]
+            # Extended text uses precis data
+            precis_data = forecasts.get("precis", {}).get("days", [])
+            if self._forecast_day < len(precis_data):
+                day_data = precis_data[self._forecast_day]
                 _LOGGER.debug(
-                    "Region precis data for day %s: %s",
+                    "Precis data for day %s: %s",
                     self._forecast_day,
                     day_data
                 )
                 return day_data
             else:
                 _LOGGER.warning(
-                    "No region precis data for day %s (available days: %s)",
+                    "No precis data for day %s (available days: %s)",
                     self._forecast_day,
-                    len(region_precis_data)
+                    len(precis_data)
                 )
 
         elif self._sensor_type in ["uv_index", "uv_alert"]:
@@ -1104,7 +1104,7 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
             return None
 
         elif self._sensor_type == "extended_text":
-            # Get extended text from region-precis
+            # Get extended text from precis forecast
             entries = day_data.get("entries", [])
             if entries:
                 value = entries[0].get("précis")  # Note: API uses French accent
