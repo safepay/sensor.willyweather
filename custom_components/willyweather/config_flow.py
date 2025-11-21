@@ -146,10 +146,7 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle forecast data options step."""
         if user_input is not None:
             self._forecast_options = user_input
-            # If forecast sensors enabled, go to forecast sensor selection
-            if user_input.get(CONF_INCLUDE_FORECAST_SENSORS, False):
-                return await self.async_step_forecast_sensors()
-            # Otherwise go to warnings
+            # Always go to warnings next
             return await self.async_step_warnings()
 
         data_schema = vol.Schema(
@@ -171,6 +168,10 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle warning sensor options step."""
         if user_input is not None:
             self._warning_options = user_input
+            # If forecast sensors enabled, go to forecast sensor selection
+            if self._forecast_options.get(CONF_INCLUDE_FORECAST_SENSORS, False):
+                return await self.async_step_forecast_sensors()
+            # Otherwise go to update intervals
             return await self.async_step_update_intervals()
 
         data_schema = vol.Schema(
@@ -204,7 +205,7 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle forecast sensor selection step."""
         if user_input is not None:
             self._forecast_sensor_options = user_input
-            return await self.async_step_warnings()
+            return await self.async_step_update_intervals()
 
         data_schema = vol.Schema(
             {
@@ -377,10 +378,7 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
         """Manage forecast data options."""
         if user_input is not None:
             self._forecast_options = user_input
-            # If forecast sensors enabled, go to forecast sensor selection
-            if user_input.get(CONF_INCLUDE_FORECAST_SENSORS, False):
-                return await self.async_step_forecast_sensors()
-            # Otherwise go to warnings
+            # Always go to warnings next
             return await self.async_step_warnings()
 
         return self.async_show_form(
@@ -405,6 +403,10 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
         """Manage warning sensor options."""
         if user_input is not None:
             self._warning_options = user_input
+            # If forecast sensors enabled, go to forecast sensor selection
+            if self._forecast_options.get(CONF_INCLUDE_FORECAST_SENSORS, False):
+                return await self.async_step_forecast_sensors()
+            # Otherwise go to update intervals
             return await self.async_step_update_intervals()
 
         return self.async_show_form(
@@ -438,7 +440,7 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
         """Handle forecast sensor selection step."""
         if user_input is not None:
             self._forecast_sensor_options = user_input
-            return await self.async_step_warnings()
+            return await self.async_step_update_intervals()
 
         # Convert stored list of days to max days count for the dropdown
         stored_days = self.config_entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4, 5, 6])
