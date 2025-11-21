@@ -304,15 +304,10 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
             "units": "distance:km,temperature:c,amount:mm,speed:km/h,pressure:hpa,tideHeight:m,swellHeight:m",
         }
 
-        headers = {
-            "Content-Type": "application/json",
-            "x-payload": '{"regionPrecis": true, "days": 7}',
-        }
-
         _LOGGER.info("Retrying forecast fetch with core types only: %s", forecast_types)
 
         async with async_timeout.timeout(API_TIMEOUT):
-            async with self._session.get(url, params=params, headers=headers) as response:
+            async with self._session.get(url, params=params) as response:
                 if response.status != 200:
                     response_text = await response.text()
                     _LOGGER.error("Core forecast types also failed: HTTP %s - %s", response.status, response_text[:500])
@@ -349,17 +344,11 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
             "units": "distance:km,temperature:c,amount:mm,speed:km/h,pressure:hpa,tideHeight:m,swellHeight:m",
         }
 
-        # Add x-payload header to request region-precis data
-        headers = {
-            "Content-Type": "application/json",
-            "x-payload": '{"regionPrecis": true, "days": 7}',
-        }
-
         _LOGGER.debug("Fetching forecast data with types: %s", forecast_types)
 
         try:
             async with async_timeout.timeout(API_TIMEOUT):
-                async with self._session.get(url, params=params, headers=headers) as response:
+                async with self._session.get(url, params=params) as response:
                     response_text = await response.text()
 
                     if response.status == 401:
