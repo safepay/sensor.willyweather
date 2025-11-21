@@ -32,6 +32,9 @@ CONF_INCLUDE_FORECAST_SENSORS: Final = "include_forecast_sensors"
 CONF_FORECAST_DAYS: Final = "forecast_days"
 CONF_FORECAST_MONITORED: Final = "forecast_monitored"
 
+# Warning sensor configuration
+CONF_WARNING_MONITORED: Final = "warning_monitored"
+
 # Additional forecast options (checkboxes)
 CONF_INCLUDE_UV: Final = "include_uv"
 CONF_INCLUDE_TIDES: Final = "include_tides"

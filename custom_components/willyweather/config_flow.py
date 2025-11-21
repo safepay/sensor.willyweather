@@ -10,7 +10,7 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_API_KEY
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
-from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import config_validation as cv, selector
 
 from .const import (
     CONF_FORECAST_DAYS,
@@ -30,6 +30,7 @@ from .const import (
     CONF_FORECAST_UPDATE_INTERVAL_NIGHT,
     CONF_NIGHT_START_HOUR,
     CONF_NIGHT_END_HOUR,
+    CONF_WARNING_MONITORED,
     DEFAULT_UPDATE_INTERVAL_DAY,
     DEFAULT_UPDATE_INTERVAL_NIGHT,
     DEFAULT_FORECAST_UPDATE_INTERVAL_DAY,
@@ -38,6 +39,7 @@ from .const import (
     DEFAULT_NIGHT_END_HOUR,
     DOMAIN,
     FORECAST_SENSOR_TYPES,
+    WARNING_BINARY_SENSOR_TYPES,
 )
 from .coordinator import async_get_station_id, async_get_station_name
 
@@ -145,17 +147,79 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle optional features (warnings and forecast sensors)."""
         if user_input is not None:
             self._warning_options = user_input
+            # If forecast sensors enabled, go to forecast sensor selection
+            if user_input.get(CONF_INCLUDE_FORECAST_SENSORS, False):
+                return await self.async_step_forecast_sensors()
+            # Otherwise go directly to update intervals
             return await self.async_step_update_intervals()
 
         data_schema = vol.Schema(
             {
                 vol.Required(CONF_INCLUDE_WARNINGS, default=True): cv.boolean,
+                vol.Optional(
+                    CONF_WARNING_MONITORED,
+                    default=list(WARNING_BINARY_SENSOR_TYPES.keys())
+                ): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=[
+                            selector.SelectOptionDict(value=k, label=v["name"])
+                            for k, v in WARNING_BINARY_SENSOR_TYPES.items()
+                        ],
+                        multiple=True,
+                        mode=selector.SelectSelectorMode.LIST,
+                    )
+                ),
                 vol.Required(CONF_INCLUDE_FORECAST_SENSORS, default=False): cv.boolean,
             }
         )
 
         return self.async_show_form(
             step_id="warnings",
+            data_schema=data_schema,
+            description_placeholders={"station_name": self._station_name},
+        )
+
+    async def async_step_forecast_sensors(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle forecast sensor selection step."""
+        if user_input is not None:
+            self._forecast_sensor_options = user_input
+            return await self.async_step_update_intervals()
+
+        data_schema = vol.Schema(
+            {
+                vol.Optional(
+                    CONF_FORECAST_MONITORED,
+                    default=list(FORECAST_SENSOR_TYPES.keys())
+                ): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=[
+                            selector.SelectOptionDict(value=k, label=v["name"])
+                            for k, v in FORECAST_SENSOR_TYPES.items()
+                        ],
+                        multiple=True,
+                        mode=selector.SelectSelectorMode.LIST,
+                    )
+                ),
+                vol.Optional(
+                    CONF_FORECAST_DAYS,
+                    default=[0, 1, 2, 3, 4, 5, 6]
+                ): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=[
+                            selector.SelectOptionDict(value=str(i), label=f"Day {i}")
+                            for i in range(7)
+                        ],
+                        multiple=True,
+                        mode=selector.SelectSelectorMode.LIST,
+                    )
+                ),
+            }
+        )
+
+        return self.async_show_form(
+            step_id="forecast_sensors",
             data_schema=data_schema,
             description_placeholders={"station_name": self._station_name},
         )
@@ -168,6 +232,41 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             await self.async_set_unique_id(f"{DOMAIN}_{self._station_id}")
             self._abort_if_unique_id_configured()
 
+            # Build options dict
+            options = {
+                CONF_INCLUDE_OBSERVATIONAL: self._sensor_options.get(CONF_INCLUDE_OBSERVATIONAL, True),
+                CONF_INCLUDE_WIND: self._sensor_options.get(CONF_INCLUDE_WIND, True),
+                CONF_INCLUDE_UV: self._sensor_options.get(CONF_INCLUDE_UV, True),
+                CONF_INCLUDE_TIDES: self._sensor_options.get(CONF_INCLUDE_TIDES, False),
+                CONF_INCLUDE_SWELL: self._sensor_options.get(CONF_INCLUDE_SWELL, False),
+                CONF_INCLUDE_WARNINGS: self._warning_options.get(CONF_INCLUDE_WARNINGS, True),
+                CONF_WARNING_MONITORED: self._warning_options.get(CONF_WARNING_MONITORED, list(WARNING_BINARY_SENSOR_TYPES.keys())),
+                CONF_INCLUDE_FORECAST_SENSORS: self._warning_options.get(CONF_INCLUDE_FORECAST_SENSORS, False),
+                CONF_UPDATE_INTERVAL_DAY: user_input.get(CONF_UPDATE_INTERVAL_DAY, DEFAULT_UPDATE_INTERVAL_DAY),
+                CONF_UPDATE_INTERVAL_NIGHT: user_input.get(CONF_UPDATE_INTERVAL_NIGHT, DEFAULT_UPDATE_INTERVAL_NIGHT),
+                CONF_FORECAST_UPDATE_INTERVAL_DAY: user_input.get(CONF_FORECAST_UPDATE_INTERVAL_DAY, DEFAULT_FORECAST_UPDATE_INTERVAL_DAY),
+                CONF_FORECAST_UPDATE_INTERVAL_NIGHT: user_input.get(CONF_FORECAST_UPDATE_INTERVAL_NIGHT, DEFAULT_FORECAST_UPDATE_INTERVAL_NIGHT),
+                CONF_NIGHT_START_HOUR: user_input.get(CONF_NIGHT_START_HOUR, DEFAULT_NIGHT_START_HOUR),
+                CONF_NIGHT_END_HOUR: user_input.get(CONF_NIGHT_END_HOUR, DEFAULT_NIGHT_END_HOUR),
+            }
+
+            # Add forecast sensor options if they were configured
+            if hasattr(self, '_forecast_sensor_options'):
+                # Convert day strings to integers
+                forecast_days = self._forecast_sensor_options.get(CONF_FORECAST_DAYS, [])
+                if isinstance(forecast_days, list) and forecast_days:
+                    options[CONF_FORECAST_DAYS] = [int(d) if isinstance(d, str) else d for d in forecast_days]
+                else:
+                    options[CONF_FORECAST_DAYS] = [0, 1, 2, 3, 4, 5, 6]
+
+                options[CONF_FORECAST_MONITORED] = self._forecast_sensor_options.get(
+                    CONF_FORECAST_MONITORED, list(FORECAST_SENSOR_TYPES.keys())
+                )
+            else:
+                # Defaults if forecast sensors step was skipped
+                options[CONF_FORECAST_DAYS] = [0, 1, 2, 3, 4, 5, 6]
+                options[CONF_FORECAST_MONITORED] = list(FORECAST_SENSOR_TYPES.keys())
+
             return self.async_create_entry(
                 title=self._station_name or f"Station {self._station_id}",
                 data={
@@ -175,44 +274,28 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_STATION_ID: self._station_id,
                     CONF_STATION_NAME: self._station_name,
                 },
-                options={
-                    CONF_INCLUDE_OBSERVATIONAL: self._sensor_options.get(CONF_INCLUDE_OBSERVATIONAL, True),
-                    CONF_INCLUDE_WIND: self._sensor_options.get(CONF_INCLUDE_WIND, True),
-                    CONF_INCLUDE_UV: self._sensor_options.get(CONF_INCLUDE_UV, True),
-                    CONF_INCLUDE_TIDES: self._sensor_options.get(CONF_INCLUDE_TIDES, False),
-                    CONF_INCLUDE_SWELL: self._sensor_options.get(CONF_INCLUDE_SWELL, False),
-                    CONF_INCLUDE_WARNINGS: self._warning_options.get(CONF_INCLUDE_WARNINGS, True),
-                    CONF_INCLUDE_FORECAST_SENSORS: self._warning_options.get(CONF_INCLUDE_FORECAST_SENSORS, False),
-                    CONF_FORECAST_DAYS: [0, 1, 2, 3, 4, 5, 6],  # Default to all 7 days
-                    CONF_FORECAST_MONITORED: list(FORECAST_SENSOR_TYPES.keys()),  # Default to all sensor types
-                    CONF_UPDATE_INTERVAL_DAY: user_input.get(CONF_UPDATE_INTERVAL_DAY, DEFAULT_UPDATE_INTERVAL_DAY),
-                    CONF_UPDATE_INTERVAL_NIGHT: user_input.get(CONF_UPDATE_INTERVAL_NIGHT, DEFAULT_UPDATE_INTERVAL_NIGHT),
-                    CONF_FORECAST_UPDATE_INTERVAL_DAY: user_input.get(CONF_FORECAST_UPDATE_INTERVAL_DAY, DEFAULT_FORECAST_UPDATE_INTERVAL_DAY),
-                    CONF_FORECAST_UPDATE_INTERVAL_NIGHT: user_input.get(CONF_FORECAST_UPDATE_INTERVAL_NIGHT, DEFAULT_FORECAST_UPDATE_INTERVAL_NIGHT),
-                    CONF_NIGHT_START_HOUR: user_input.get(CONF_NIGHT_START_HOUR, DEFAULT_NIGHT_START_HOUR),
-                    CONF_NIGHT_END_HOUR: user_input.get(CONF_NIGHT_END_HOUR, DEFAULT_NIGHT_END_HOUR),
-                },
+                options=options,
             )
 
         data_schema = vol.Schema(
             {
-                vol.Required(CONF_UPDATE_INTERVAL_DAY, default=DEFAULT_UPDATE_INTERVAL_DAY): vol.All(
-                    vol.Coerce(int), vol.Range(min=5, max=60)
+                vol.Required(CONF_UPDATE_INTERVAL_DAY, default=DEFAULT_UPDATE_INTERVAL_DAY): selector.NumberSelector(
+                    selector.NumberSelectorConfig(min=5, max=60, mode=selector.NumberSelectorMode.SLIDER, unit_of_measurement="minutes")
                 ),
-                vol.Required(CONF_UPDATE_INTERVAL_NIGHT, default=DEFAULT_UPDATE_INTERVAL_NIGHT): vol.All(
-                    vol.Coerce(int), vol.Range(min=10, max=120)
+                vol.Required(CONF_UPDATE_INTERVAL_NIGHT, default=DEFAULT_UPDATE_INTERVAL_NIGHT): selector.NumberSelector(
+                    selector.NumberSelectorConfig(min=10, max=120, mode=selector.NumberSelectorMode.SLIDER, unit_of_measurement="minutes")
                 ),
-                vol.Required(CONF_FORECAST_UPDATE_INTERVAL_DAY, default=DEFAULT_FORECAST_UPDATE_INTERVAL_DAY): vol.All(
-                    vol.Coerce(int), vol.Range(min=30, max=240)
+                vol.Required(CONF_FORECAST_UPDATE_INTERVAL_DAY, default=DEFAULT_FORECAST_UPDATE_INTERVAL_DAY): selector.NumberSelector(
+                    selector.NumberSelectorConfig(min=30, max=240, mode=selector.NumberSelectorMode.SLIDER, unit_of_measurement="minutes")
                 ),
-                vol.Required(CONF_FORECAST_UPDATE_INTERVAL_NIGHT, default=DEFAULT_FORECAST_UPDATE_INTERVAL_NIGHT): vol.All(
-                    vol.Coerce(int), vol.Range(min=60, max=480)
+                vol.Required(CONF_FORECAST_UPDATE_INTERVAL_NIGHT, default=DEFAULT_FORECAST_UPDATE_INTERVAL_NIGHT): selector.NumberSelector(
+                    selector.NumberSelectorConfig(min=60, max=480, mode=selector.NumberSelectorMode.SLIDER, unit_of_measurement="minutes")
                 ),
-                vol.Required(CONF_NIGHT_START_HOUR, default=DEFAULT_NIGHT_START_HOUR): vol.All(
-                    vol.Coerce(int), vol.Range(min=0, max=23)
+                vol.Required(CONF_NIGHT_START_HOUR, default=DEFAULT_NIGHT_START_HOUR): selector.NumberSelector(
+                    selector.NumberSelectorConfig(min=0, max=23, mode=selector.NumberSelectorMode.SLIDER, unit_of_measurement="hour")
                 ),
-                vol.Required(CONF_NIGHT_END_HOUR, default=DEFAULT_NIGHT_END_HOUR): vol.All(
-                    vol.Coerce(int), vol.Range(min=0, max=23)
+                vol.Required(CONF_NIGHT_END_HOUR, default=DEFAULT_NIGHT_END_HOUR): selector.NumberSelector(
+                    selector.NumberSelectorConfig(min=0, max=23, mode=selector.NumberSelectorMode.SLIDER, unit_of_measurement="hour")
                 ),
             }
         )
@@ -282,6 +365,10 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
         """Manage optional features (warnings and forecast sensors)."""
         if user_input is not None:
             self._warning_options = user_input
+            # If forecast sensors enabled, go to forecast sensor selection
+            if user_input.get(CONF_INCLUDE_FORECAST_SENSORS, False):
+                return await self.async_step_forecast_sensors()
+            # Otherwise go directly to update intervals
             return await self.async_step_update_intervals()
 
         return self.async_show_form(
@@ -292,6 +379,19 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
                         CONF_INCLUDE_WARNINGS,
                         default=self.config_entry.options.get(CONF_INCLUDE_WARNINGS, True),
                     ): cv.boolean,
+                    vol.Optional(
+                        CONF_WARNING_MONITORED,
+                        default=self.config_entry.options.get(CONF_WARNING_MONITORED, list(WARNING_BINARY_SENSOR_TYPES.keys()))
+                    ): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=[
+                                selector.SelectOptionDict(value=k, label=v["name"])
+                                for k, v in WARNING_BINARY_SENSOR_TYPES.items()
+                            ],
+                            multiple=True,
+                            mode=selector.SelectSelectorMode.LIST,
+                        )
+                    ),
                     vol.Required(
                         CONF_INCLUDE_FORECAST_SENSORS,
                         default=self.config_entry.options.get(CONF_INCLUDE_FORECAST_SENSORS, False),
@@ -300,39 +400,99 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
             ),
         )
 
+    async def async_step_forecast_sensors(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle forecast sensor selection step."""
+        if user_input is not None:
+            self._forecast_sensor_options = user_input
+            return await self.async_step_update_intervals()
+
+        data_schema = vol.Schema(
+            {
+                vol.Optional(
+                    CONF_FORECAST_MONITORED,
+                    default=self.config_entry.options.get(CONF_FORECAST_MONITORED, list(FORECAST_SENSOR_TYPES.keys()))
+                ): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=[
+                            selector.SelectOptionDict(value=k, label=v["name"])
+                            for k, v in FORECAST_SENSOR_TYPES.items()
+                        ],
+                        multiple=True,
+                        mode=selector.SelectSelectorMode.LIST,
+                    )
+                ),
+                vol.Optional(
+                    CONF_FORECAST_DAYS,
+                    default=self.config_entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4, 5, 6])
+                ): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=[
+                            selector.SelectOptionDict(value=str(i), label=f"Day {i}")
+                            for i in range(7)
+                        ],
+                        multiple=True,
+                        mode=selector.SelectSelectorMode.LIST,
+                    )
+                ),
+            }
+        )
+
+        return self.async_show_form(
+            step_id="forecast_sensors",
+            data_schema=data_schema,
+        )
+
     async def async_step_update_intervals(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Manage the update interval options."""
         if user_input is not None:
             # Merge all options together
+            options_data = {
+                **self._sensor_options,
+                **self._warning_options,
+                CONF_UPDATE_INTERVAL_DAY: user_input.get(
+                    CONF_UPDATE_INTERVAL_DAY, DEFAULT_UPDATE_INTERVAL_DAY
+                ),
+                CONF_UPDATE_INTERVAL_NIGHT: user_input.get(
+                    CONF_UPDATE_INTERVAL_NIGHT, DEFAULT_UPDATE_INTERVAL_NIGHT
+                ),
+                CONF_FORECAST_UPDATE_INTERVAL_DAY: user_input.get(
+                    CONF_FORECAST_UPDATE_INTERVAL_DAY, DEFAULT_FORECAST_UPDATE_INTERVAL_DAY
+                ),
+                CONF_FORECAST_UPDATE_INTERVAL_NIGHT: user_input.get(
+                    CONF_FORECAST_UPDATE_INTERVAL_NIGHT, DEFAULT_FORECAST_UPDATE_INTERVAL_NIGHT
+                ),
+                CONF_NIGHT_START_HOUR: user_input.get(
+                    CONF_NIGHT_START_HOUR, DEFAULT_NIGHT_START_HOUR
+                ),
+                CONF_NIGHT_END_HOUR: user_input.get(
+                    CONF_NIGHT_END_HOUR, DEFAULT_NIGHT_END_HOUR
+                ),
+            }
+
+            # Add forecast sensor options if they were configured
+            if hasattr(self, '_forecast_sensor_options'):
+                # Convert day strings to integers
+                forecast_days = self._forecast_sensor_options.get(CONF_FORECAST_DAYS, [])
+                if isinstance(forecast_days, list) and forecast_days:
+                    options_data[CONF_FORECAST_DAYS] = [int(d) if isinstance(d, str) else d for d in forecast_days]
+                else:
+                    options_data[CONF_FORECAST_DAYS] = self.config_entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4, 5, 6])
+
+                options_data[CONF_FORECAST_MONITORED] = self._forecast_sensor_options.get(
+                    CONF_FORECAST_MONITORED, list(FORECAST_SENSOR_TYPES.keys())
+                )
+            else:
+                # Preserve existing forecast sensor config if step was skipped
+                options_data[CONF_FORECAST_DAYS] = self.config_entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4, 5, 6])
+                options_data[CONF_FORECAST_MONITORED] = self.config_entry.options.get(CONF_FORECAST_MONITORED, list(FORECAST_SENSOR_TYPES.keys()))
+
             return self.async_create_entry(
                 title="",
-                data={
-                    **self._sensor_options,
-                    **self._warning_options,
-                    # Preserve existing forecast sensor config
-                    CONF_FORECAST_DAYS: self.config_entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4, 5, 6]),
-                    CONF_FORECAST_MONITORED: self.config_entry.options.get(CONF_FORECAST_MONITORED, list(FORECAST_SENSOR_TYPES.keys())),
-                    CONF_UPDATE_INTERVAL_DAY: user_input.get(
-                        CONF_UPDATE_INTERVAL_DAY, DEFAULT_UPDATE_INTERVAL_DAY
-                    ),
-                    CONF_UPDATE_INTERVAL_NIGHT: user_input.get(
-                        CONF_UPDATE_INTERVAL_NIGHT, DEFAULT_UPDATE_INTERVAL_NIGHT
-                    ),
-                    CONF_FORECAST_UPDATE_INTERVAL_DAY: user_input.get(
-                        CONF_FORECAST_UPDATE_INTERVAL_DAY, DEFAULT_FORECAST_UPDATE_INTERVAL_DAY
-                    ),
-                    CONF_FORECAST_UPDATE_INTERVAL_NIGHT: user_input.get(
-                        CONF_FORECAST_UPDATE_INTERVAL_NIGHT, DEFAULT_FORECAST_UPDATE_INTERVAL_NIGHT
-                    ),
-                    CONF_NIGHT_START_HOUR: user_input.get(
-                        CONF_NIGHT_START_HOUR, DEFAULT_NIGHT_START_HOUR
-                    ),
-                    CONF_NIGHT_END_HOUR: user_input.get(
-                        CONF_NIGHT_END_HOUR, DEFAULT_NIGHT_END_HOUR
-                    ),
-                },
+                data=options_data,
             )
 
         return self.async_show_form(
@@ -344,37 +504,49 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
                         default=self.config_entry.options.get(
                             CONF_UPDATE_INTERVAL_DAY, DEFAULT_UPDATE_INTERVAL_DAY
                         ),
-                    ): vol.All(vol.Coerce(int), vol.Range(min=5, max=60)),
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(min=5, max=60, mode=selector.NumberSelectorMode.SLIDER, unit_of_measurement="minutes")
+                    ),
                     vol.Required(
                         CONF_UPDATE_INTERVAL_NIGHT,
                         default=self.config_entry.options.get(
                             CONF_UPDATE_INTERVAL_NIGHT, DEFAULT_UPDATE_INTERVAL_NIGHT
                         ),
-                    ): vol.All(vol.Coerce(int), vol.Range(min=10, max=120)),
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(min=10, max=120, mode=selector.NumberSelectorMode.SLIDER, unit_of_measurement="minutes")
+                    ),
                     vol.Required(
                         CONF_FORECAST_UPDATE_INTERVAL_DAY,
                         default=self.config_entry.options.get(
                             CONF_FORECAST_UPDATE_INTERVAL_DAY, DEFAULT_FORECAST_UPDATE_INTERVAL_DAY
                         ),
-                    ): vol.All(vol.Coerce(int), vol.Range(min=30, max=240)),
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(min=30, max=240, mode=selector.NumberSelectorMode.SLIDER, unit_of_measurement="minutes")
+                    ),
                     vol.Required(
                         CONF_FORECAST_UPDATE_INTERVAL_NIGHT,
                         default=self.config_entry.options.get(
                             CONF_FORECAST_UPDATE_INTERVAL_NIGHT, DEFAULT_FORECAST_UPDATE_INTERVAL_NIGHT
                         ),
-                    ): vol.All(vol.Coerce(int), vol.Range(min=60, max=480)),
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(min=60, max=480, mode=selector.NumberSelectorMode.SLIDER, unit_of_measurement="minutes")
+                    ),
                     vol.Required(
                         CONF_NIGHT_START_HOUR,
                         default=self.config_entry.options.get(
                             CONF_NIGHT_START_HOUR, DEFAULT_NIGHT_START_HOUR
                         ),
-                    ): vol.All(vol.Coerce(int), vol.Range(min=0, max=23)),
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(min=0, max=23, mode=selector.NumberSelectorMode.SLIDER, unit_of_measurement="hour")
+                    ),
                     vol.Required(
                         CONF_NIGHT_END_HOUR,
                         default=self.config_entry.options.get(
                             CONF_NIGHT_END_HOUR, DEFAULT_NIGHT_END_HOUR
                         ),
-                    ): vol.All(vol.Coerce(int), vol.Range(min=0, max=23)),
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(min=0, max=23, mode=selector.NumberSelectorMode.SLIDER, unit_of_measurement="hour")
+                    ),
                 }
             ),
         )
