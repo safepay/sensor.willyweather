@@ -169,7 +169,8 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self._warning_options = user_input
             # If forecast sensors enabled, go to forecast sensor selection
-            if self._forecast_options.get(CONF_INCLUDE_FORECAST_SENSORS, False):
+            forecast_sensors_enabled = getattr(self, '_forecast_options', {}).get(CONF_INCLUDE_FORECAST_SENSORS, False)
+            if forecast_sensors_enabled:
                 return await self.async_step_forecast_sensors()
             # Otherwise go to update intervals
             return await self.async_step_update_intervals()
@@ -252,16 +253,21 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             await self.async_set_unique_id(f"{DOMAIN}_{self._station_id}")
             self._abort_if_unique_id_configured()
 
+            # Get stored options with defaults in case state was lost
+            observational_options = getattr(self, '_observational_options', {})
+            forecast_options = getattr(self, '_forecast_options', {})
+            warning_options = getattr(self, '_warning_options', {})
+
             # Build options dict from observational options
             options = {
-                CONF_INCLUDE_OBSERVATIONAL: self._observational_options.get(CONF_INCLUDE_OBSERVATIONAL, True),
-                CONF_INCLUDE_UV: self._observational_options.get(CONF_INCLUDE_UV, True),
-                CONF_INCLUDE_TIDES: self._observational_options.get(CONF_INCLUDE_TIDES, False),
-                CONF_INCLUDE_SWELL: self._observational_options.get(CONF_INCLUDE_SWELL, False),
-                CONF_INCLUDE_WIND: self._forecast_options.get(CONF_INCLUDE_WIND, True),
-                CONF_INCLUDE_FORECAST_SENSORS: self._forecast_options.get(CONF_INCLUDE_FORECAST_SENSORS, False),
-                CONF_INCLUDE_WARNINGS: self._warning_options.get(CONF_INCLUDE_WARNINGS, True),
-                CONF_WARNING_MONITORED: self._warning_options.get(CONF_WARNING_MONITORED, list(WARNING_BINARY_SENSOR_TYPES.keys())),
+                CONF_INCLUDE_OBSERVATIONAL: observational_options.get(CONF_INCLUDE_OBSERVATIONAL, True),
+                CONF_INCLUDE_UV: observational_options.get(CONF_INCLUDE_UV, True),
+                CONF_INCLUDE_TIDES: observational_options.get(CONF_INCLUDE_TIDES, False),
+                CONF_INCLUDE_SWELL: observational_options.get(CONF_INCLUDE_SWELL, False),
+                CONF_INCLUDE_WIND: forecast_options.get(CONF_INCLUDE_WIND, True),
+                CONF_INCLUDE_FORECAST_SENSORS: forecast_options.get(CONF_INCLUDE_FORECAST_SENSORS, False),
+                CONF_INCLUDE_WARNINGS: warning_options.get(CONF_INCLUDE_WARNINGS, True),
+                CONF_WARNING_MONITORED: warning_options.get(CONF_WARNING_MONITORED, list(WARNING_BINARY_SENSOR_TYPES.keys())),
                 CONF_UPDATE_INTERVAL_DAY: user_input.get(CONF_UPDATE_INTERVAL_DAY, DEFAULT_UPDATE_INTERVAL_DAY),
                 CONF_UPDATE_INTERVAL_NIGHT: user_input.get(CONF_UPDATE_INTERVAL_NIGHT, DEFAULT_UPDATE_INTERVAL_NIGHT),
                 CONF_FORECAST_UPDATE_INTERVAL_DAY: user_input.get(CONF_FORECAST_UPDATE_INTERVAL_DAY, DEFAULT_FORECAST_UPDATE_INTERVAL_DAY),
@@ -404,7 +410,8 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
         if user_input is not None:
             self._warning_options = user_input
             # If forecast sensors enabled, go to forecast sensor selection
-            if self._forecast_options.get(CONF_INCLUDE_FORECAST_SENSORS, False):
+            forecast_sensors_enabled = getattr(self, '_forecast_options', {}).get(CONF_INCLUDE_FORECAST_SENSORS, False)
+            if forecast_sensors_enabled:
                 return await self.async_step_forecast_sensors()
             # Otherwise go to update intervals
             return await self.async_step_update_intervals()
@@ -487,11 +494,16 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
     ) -> FlowResult:
         """Manage the update interval options."""
         if user_input is not None:
+            # Get stored options with defaults in case state was lost
+            observational_options = getattr(self, '_observational_options', {})
+            forecast_options = getattr(self, '_forecast_options', {})
+            warning_options = getattr(self, '_warning_options', {})
+
             # Merge all options together
             options_data = {
-                **self._observational_options,
-                **self._forecast_options,
-                **self._warning_options,
+                **observational_options,
+                **forecast_options,
+                **warning_options,
                 CONF_UPDATE_INTERVAL_DAY: user_input.get(
                     CONF_UPDATE_INTERVAL_DAY, DEFAULT_UPDATE_INTERVAL_DAY
                 ),
