@@ -105,7 +105,7 @@ async def async_setup_entry(
             )
 
     # Add wind forecast sensors if enabled
-    if entry.options.get(CONF_INCLUDE_WIND, False):
+    if entry.options.get(CONF_INCLUDE_WIND, True):
         for sensor_type in WIND_FORECAST_TYPES:
             entities.append(
                 WillyWeatherWindForecastSensor(

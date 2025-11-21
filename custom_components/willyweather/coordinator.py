@@ -154,16 +154,19 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                     "moonphases",
                     "rainfall",
                     "temperature",
-                    "wind",
                 ]
 
+                include_wind = self.entry.options.get(CONF_INCLUDE_WIND, True)
                 include_tides = self.entry.options.get(CONF_INCLUDE_TIDES, False)
                 include_uv = self.entry.options.get(CONF_INCLUDE_UV, False)
                 include_swell = self.entry.options.get(CONF_INCLUDE_SWELL, False)
 
-                _LOGGER.debug("Options - Tides: %s, UV: %s, Swell: %s",
-                             include_tides, include_uv, include_swell)
+                _LOGGER.debug("Options - Wind: %s, Tides: %s, UV: %s, Swell: %s",
+                             include_wind, include_tides, include_uv, include_swell)
 
+                if include_wind:
+                    forecast_types.append("wind")
+                    _LOGGER.debug("Added wind to forecast types")
                 if include_tides:
                     forecast_types.append("tides")
                     _LOGGER.debug("Added tides to forecast types")
@@ -196,13 +199,15 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                         "moonphases",
                         "rainfall",
                         "temperature",
-                        "wind",
                     ]
 
+                    include_wind = self.entry.options.get(CONF_INCLUDE_WIND, True)
                     include_tides = self.entry.options.get(CONF_INCLUDE_TIDES, False)
                     include_uv = self.entry.options.get(CONF_INCLUDE_UV, False)
                     include_swell = self.entry.options.get(CONF_INCLUDE_SWELL, False)
 
+                    if include_wind:
+                        forecast_types.append("wind")
                     if include_tides:
                         forecast_types.append("tides")
                     if include_uv:
