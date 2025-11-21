@@ -295,9 +295,54 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER.error("Network error fetching observational data: %s", err)
             raise UpdateFailed(f"Network error: {err}") from err
 
-    async def _fetch_forecast_data(self, forecast_types: list[str]) -> dict[str, Any]:
-        """Fetch forecast weather data."""
+    async def _fetch_forecast_data_simple(self, forecast_types: list[str]) -> dict[str, Any]:
+        """Fetch forecast data without retry logic (used for fallback requests)."""
         url = f"{API_BASE_URL}/{self.api_key}/locations/{self.station_id}/weather.json"
+        params = {
+            "forecasts": ",".join(forecast_types),
+            "days": "7",
+            "units": "distance:km,temperature:c,amount:mm,speed:km/h,pressure:hpa,tideHeight:m,swellHeight:m",
+        }
+
+        headers = {
+            "Content-Type": "application/json",
+            "x-payload": '{"regionPrecis": true, "days": 7}',
+        }
+
+        _LOGGER.info("Retrying forecast fetch with core types only: %s", forecast_types)
+
+        async with async_timeout.timeout(API_TIMEOUT):
+            async with self._session.get(url, params=params, headers=headers) as response:
+                if response.status != 200:
+                    response_text = await response.text()
+                    _LOGGER.error("Core forecast types also failed: HTTP %s - %s", response.status, response_text[:500])
+                    raise UpdateFailed(f"Forecast fetch failed: HTTP {response.status}")
+
+                data = await response.json()
+                location = data.get("location", {})
+
+                if "regionPrecis" in data:
+                    _LOGGER.debug("Received regionPrecis data: %s", data["regionPrecis"].get("name"))
+
+                return {
+                    "location": location,
+                    "forecasts": data.get("forecasts", {}),
+                    "regionPrecis": data.get("regionPrecis", {}),
+                    "timezone": location.get("timezone"),
+                }
+
+    async def _fetch_forecast_data(self, forecast_types: list[str]) -> dict[str, Any]:
+        """Fetch forecast weather data.
+
+        If optional forecast types (uv, tides, swell, wind) are not available on the API key,
+        they will be automatically removed and the request retried with core types only.
+        """
+        url = f"{API_BASE_URL}/{self.api_key}/locations/{self.station_id}/weather.json"
+
+        # Core forecast types that should always be available
+        core_types = ["weather", "sunrisesunset", "moonphases", "rainfall", "temperature"]
+        optional_types = ["uv", "tides", "swell", "wind"]
+
         params = {
             "forecasts": ",".join(forecast_types),
             "days": "7",
@@ -316,7 +361,7 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
             async with async_timeout.timeout(API_TIMEOUT):
                 async with self._session.get(url, params=params, headers=headers) as response:
                     response_text = await response.text()
-                    
+
                     if response.status == 401:
                         _LOGGER.error("API key is invalid (401 Unauthorized)")
                         raise UpdateFailed("Invalid API key")
@@ -327,6 +372,18 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                         _LOGGER.error("Station ID %s not found (404)", self.station_id)
                         raise UpdateFailed(f"Station ID {self.station_id} not found")
                     elif response.status == 400:
+                        # Check if this is an invalid forecast parameter error
+                        if "invalid-request-parameters" in response_text and any(t in forecast_types for t in optional_types):
+                            # Retry with only core forecast types
+                            _LOGGER.warning(
+                                "Optional forecast types not available on API key. "
+                                "Retrying with core types only. "
+                                "To enable UV/tides/swell/wind forecasts, visit your WillyWeather API key settings."
+                            )
+                            # Remove optional types and retry
+                            core_only = [t for t in forecast_types if t in core_types]
+                            if core_only != forecast_types:
+                                return await self._fetch_forecast_data_simple(core_only)
                         _LOGGER.error("Bad request (400): %s", response_text[:500])
                         raise UpdateFailed(f"Bad request: {response_text[:200]}")
                     elif response.status != 200:
@@ -336,7 +393,7 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                             response_text[:500],
                         )
                         raise UpdateFailed(f"HTTP error {response.status}")
-                    
+
                     data = await response.json()
                     location = data.get("location", {})
 
