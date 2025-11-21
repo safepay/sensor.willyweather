@@ -150,7 +150,6 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                 # Build forecast parameters based on enabled options
                 forecast_types = [
                     "weather",
-                    "precis",
                     "sunrisesunset",
                     "moonphases",
                     "rainfall",
@@ -193,7 +192,6 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                     _LOGGER.info("No cached forecast data, fetching now")
                     forecast_types = [
                         "weather",
-                        "precis",
                         "sunrisesunset",
                         "moonphases",
                         "rainfall",

@@ -18,6 +18,7 @@ from .const import (
     CONF_INCLUDE_WARNINGS,
     CONF_STATION_ID,
     CONF_STATION_NAME,
+    CONF_WARNING_MONITORED,
     DOMAIN,
     MANUFACTURER,
     WARNING_BINARY_SENSOR_TYPES,
@@ -45,15 +46,23 @@ async def async_setup_entry(
 
     # Add warning sensors if enabled
     if entry.options.get(CONF_INCLUDE_WARNINGS, False):
+        # Get list of monitored warning types
+        monitored_warnings = entry.options.get(
+            CONF_WARNING_MONITORED,
+            list(WARNING_BINARY_SENSOR_TYPES.keys())
+        )
+
         for sensor_type in WARNING_BINARY_SENSOR_TYPES:
-            entities.append(
-                WillyWeatherWarningBinarySensor(
-                    coordinator,
-                    station_id,
-                    station_name,
-                    sensor_type,
+            # Only add if this warning type is in the monitored list
+            if sensor_type in monitored_warnings:
+                entities.append(
+                    WillyWeatherWarningBinarySensor(
+                        coordinator,
+                        station_id,
+                        station_name,
+                        sensor_type,
+                    )
                 )
-            )
 
     async_add_entities(entities)
 
