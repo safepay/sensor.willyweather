@@ -67,6 +67,7 @@ When setting up, you can configure:
 - **Include observational sensors** - Enables current weather measurement sensors (default: Yes)
 - **Include wind forecast data** - Includes wind speed and direction forecasts (default: Yes)
 - **Include UV index sensors** - Includes UV index and alert levels (default: Yes)
+- **Include extended forecast text** - Adds detailed forecast text for today (optional, extra API call - default: No)
 - **Include tide information** - Includes tide times and heights for coastal locations (default: No)
 - **Include swell data** - Includes wave height, period, and direction for coastal locations (default: No)
 - **Include warning sensors** - Enables binary sensors for weather warnings (default: Yes)
@@ -78,25 +79,36 @@ These options match the [WillyWeather API configuration screen](https://www.will
 
 When enabled, the integration creates individual sensors for each forecast day (0-6), similar to the BOM Australia integration. These sensors are perfect for building custom forecast cards and automations.
 
-**Available forecast sensor types:**
+**Optimized for Platinum Weather Card:**
+
+The default sensor selection is optimized for the popular [Platinum Weather Card](https://github.com/Makin-Things/platinum-weather-card):
+- Icon
+- Short Forecast (precis text)
+- Min Temperature / Max Temperature
+- Rain Probability
+- Rain Amount Range
+
+**All available forecast sensor types:**
+- Icon / Short Forecast (precis text)
 - Max Temperature / Min Temperature
 - Rain Amount (Min/Max/Range)
 - Rain Probability
-- Short Forecast (precis text)
 - UV Index / UV Alert
 - Sunrise / Sunset times
 
 **Benefits:**
 - No additional API calls (uses existing forecast data)
+- Default selection works out-of-the-box with Platinum Weather Card
 - Compatible with custom Lovelace cards that expect individual day sensors
 - Easy to use in automations (e.g., "if tomorrow's max temp > 30°C")
 - Each sensor updates automatically with the forecast data
+- Configurable: Choose 1-7 days of forecast (default: 5 days)
 
 **Example sensors created:**
-- `sensor.willyweather_max_temperature_0`
-- `sensor.willyweather_max_temperature_1`
-- `sensor.willyweather_rain_probability_2`
-- `sensor.willyweather_uv_index_3`
+- `sensor.willyweather_icon_0`
+- `sensor.willyweather_short_forecast_1`
+- `sensor.willyweather_max_temperature_2`
+- `sensor.willyweather_rain_probability_3`
 
 All forecast sensors are grouped under a separate "Forecast Sensors" device for easy organization.
 
@@ -213,6 +225,12 @@ When observational sensors are enabled, the following sensors are created:
 - **Rain Last Hour** - Rainfall in the last hour in mm
 - **Rain Today** - Total rainfall today in mm
 - **Rain Since 9am** - Rainfall since 9am in mm
+
+#### Today's Forecast
+- **Today's Forecast** - Short forecast text for today (e.g., "Rainy")
+  - When **extended forecast text** is enabled, includes detailed forecast as an attribute:
+    - **extended_forecast** attribute - Detailed forecast text (e.g., "Cloudy. High chance of showers, most likely later this evening. Light winds becoming southerly 15 to 20 km/h in the evening then becoming light in the late evening.")
+    - **Note:** Requires 'Region Precis' enabled in WillyWeather API admin (extra API call, optional)
 
 ### Sun & Moon Sensors
 Always included with observational sensors:
