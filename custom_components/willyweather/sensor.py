@@ -211,6 +211,20 @@ class WillyWeatherSensor(CoordinatorEntity, SensorEntity):
                 return weather_days[0]["entries"][0].get("precis")
             return None
 
+        # Special handling for forecast_extended - uses regionPrecis data (truncated to 255 chars)
+        if self._sensor_type == "forecast_extended":
+            forecast_data = self.coordinator.data.get("forecast", {})
+            region_precis = forecast_data.get("regionPrecis", {})
+            region_precis_days = region_precis.get("days", [])
+            if region_precis_days and region_precis_days[0].get("entries"):
+                entries = region_precis_days[0]["entries"]
+                # Try both French-accented and non-accented versions
+                extended_text = entries[0].get("précis") or entries[0].get("precis")
+                if extended_text:
+                    # Truncate to 255 characters for state value
+                    return extended_text[:255]
+            return None
+
         observations = self.coordinator.data.get("observational", {}).get("observations", {})
 
         sensor_info = self._sensor_types_dict[self._sensor_type]
@@ -228,21 +242,21 @@ class WillyWeatherSensor(CoordinatorEntity, SensorEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return additional attributes."""
-        # Special handling for forecast_summary - add extended forecast text
-        if self._sensor_type == "forecast_summary" and self.coordinator.data:
+        # Special handling for forecast_extended - add full text as attribute
+        if self._sensor_type == "forecast_extended" and self.coordinator.data:
             forecast_data = self.coordinator.data.get("forecast", {})
             region_precis = forecast_data.get("regionPrecis", {})
             region_precis_days = region_precis.get("days", [])
 
             attributes = {}
 
-            # Add extended forecast text as attribute
+            # Add full extended forecast text as attribute
             if region_precis_days and region_precis_days[0].get("entries"):
                 entries = region_precis_days[0]["entries"]
                 # Try both French-accented and non-accented versions
                 extended_text = entries[0].get("précis") or entries[0].get("precis")
                 if extended_text:
-                    attributes["extended_forecast"] = extended_text
+                    attributes["full_text"] = extended_text
 
             return attributes
 

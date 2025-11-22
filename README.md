@@ -228,9 +228,10 @@ When observational sensors are enabled, the following sensors are created:
 
 #### Today's Forecast
 - **Today's Forecast** - Short forecast text for today (e.g., "Rainy")
-  - When **extended forecast text** is enabled, includes detailed forecast as an attribute:
-    - **extended_forecast** attribute - Detailed forecast text (e.g., "Cloudy. High chance of showers, most likely later this evening. Light winds becoming southerly 15 to 20 km/h in the evening then becoming light in the late evening.")
-    - **Note:** Requires 'Region Precis' enabled in WillyWeather API admin (extra API call, optional)
+- **Today's Extended Forecast** - Detailed narrative forecast for today (optional)
+  - State: Truncated to 255 characters (e.g., "Cloudy. High chance of showers, most likely later this evening. Light winds...")
+  - **full_text** attribute - Complete untruncated forecast text
+  - **Note:** Requires 'Region Precis' enabled in WillyWeather API admin (extra API call, optional)
 
 ### Sun & Moon Sensors
 Always included with observational sensors:
