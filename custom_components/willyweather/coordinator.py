@@ -24,6 +24,7 @@ from .const import (
     CONF_INCLUDE_WIND,
     CONF_INCLUDE_SWELL,
     CONF_INCLUDE_WARNINGS,
+    CONF_INCLUDE_FORECAST_SENSORS,
     CONF_UPDATE_INTERVAL_DAY,
     CONF_UPDATE_INTERVAL_NIGHT,
     CONF_FORECAST_UPDATE_INTERVAL_DAY,
@@ -181,6 +182,13 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                 forecast_data = await self._fetch_forecast_data(forecast_types)
                 self._last_forecast_fetch = now
 
+                # Fetch regionPrecis data separately if forecast sensors are enabled
+                if self.entry.options.get(CONF_INCLUDE_FORECAST_SENSORS, False):
+                    region_precis = await self._fetch_region_precis()
+                    if region_precis and forecast_data:
+                        forecast_data["regionPrecis"] = region_precis
+                        _LOGGER.debug("Added regionPrecis data to forecast")
+
                 # Log what we got back
                 if forecast_data and "forecasts" in forecast_data:
                     available_forecasts = list(forecast_data["forecasts"].keys())
@@ -217,6 +225,13 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
 
                     forecast_data = await self._fetch_forecast_data(forecast_types)
                     self._last_forecast_fetch = now
+
+                    # Fetch regionPrecis data separately if forecast sensors are enabled
+                    if self.entry.options.get(CONF_INCLUDE_FORECAST_SENSORS, False):
+                        region_precis = await self._fetch_region_precis()
+                        if region_precis and forecast_data:
+                            forecast_data["regionPrecis"] = region_precis
+                            _LOGGER.debug("Added regionPrecis data to forecast (first run)")
 
             # Fetch warning data if enabled
             warning_data = None
@@ -404,6 +419,47 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER.error("Network error fetching forecast data: %s", err)
             raise UpdateFailed(f"Network error: {err}") from err
 
+    async def _fetch_region_precis(self) -> dict[str, Any]:
+        """Fetch regionPrecis data separately (requires different API format)."""
+        url = f"{API_BASE_URL}/{self.api_key}/locations/{self.station_id}/weather.json"
+
+        # RegionPrecis requires URL params, not headers
+        params = {
+            "regionPrecis": "true",
+            "days": "7",
+        }
+
+        _LOGGER.debug("Fetching regionPrecis data")
+
+        try:
+            async with async_timeout.timeout(API_TIMEOUT):
+                async with self._session.get(url, params=params) as response:
+                    if response.status != 200:
+                        response_text = await response.text()
+                        _LOGGER.warning(
+                            "Failed to fetch regionPrecis data: HTTP %s - %s",
+                            response.status,
+                            response_text[:200],
+                        )
+                        return {}
+
+                    data = await response.json()
+                    region_precis = data.get("regionPrecis", {})
+
+                    if region_precis:
+                        _LOGGER.debug("Received regionPrecis data: %s", region_precis.get("name"))
+                        return region_precis
+                    else:
+                        _LOGGER.debug("No regionPrecis data available for this location")
+                        return {}
+
+        except asyncio.TimeoutError:
+            _LOGGER.debug("Timeout fetching regionPrecis data")
+            return {}
+        except aiohttp.ClientError as err:
+            _LOGGER.debug("Network error fetching regionPrecis data: %s", err)
+            return {}
+
     async def _fetch_warning_data(self) -> dict[str, Any]:
         """Fetch warning data for location."""
         url = f"{API_BASE_URL}/{self.api_key}/locations/{self.station_id}/warnings.json"
@@ -465,7 +521,8 @@ async def async_get_station_id(
     _LOGGER.debug("Searching for station at lat=%s, lng=%s", lat, lng)
 
     try:
-        async with async_timeout.timeout(API_TIMEOUT):
+        # Use 30 second timeout for station search (one-time operation during setup)
+        async with async_timeout.timeout(30):
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, params=params) as response:
                     if response.status == 401:
@@ -480,7 +537,7 @@ async def async_get_station_id(
                             response.status,
                         )
                         return None
-                    
+
                     data = await response.json()
                     location = data.get("location")
                     if location:
@@ -497,9 +554,9 @@ async def async_get_station_id(
                     else:
                         _LOGGER.error("No location data in search response")
                         return None
-                        
+
     except asyncio.TimeoutError:
-        _LOGGER.error("Timeout while searching for station")
+        _LOGGER.error("Timeout while searching for station (30s limit)")
         return None
     except aiohttp.ClientError as err:
         _LOGGER.error("Network error while searching for station: %s", err)
@@ -522,7 +579,8 @@ async def async_get_station_name(
     _LOGGER.debug("Fetching station name for ID: %s", station_id)
 
     try:
-        async with async_timeout.timeout(API_TIMEOUT):
+        # Use 30 second timeout for station name fetch (one-time operation during setup)
+        async with async_timeout.timeout(30):
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, params=params) as response:
                     if response.status == 401:

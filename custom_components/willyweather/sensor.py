@@ -1045,36 +1045,20 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
             return None
 
         elif self._sensor_type == "uv_index":
-            entries = day_data.get("entries", [])
-            if entries:
-                value = entries[0].get("index")
-                if value is None:
-                    _LOGGER.warning(
-                        "uv_index: 'index' not found in entry. Available keys: %s",
-                        list(entries[0].keys())
-                    )
-                return value
-            _LOGGER.warning("uv_index: No entries found in day_data. Keys: %s", list(day_data.keys()))
+            # UV data has an 'alert' object at the day level with maxIndex
+            alert = day_data.get("alert")
+            if alert:
+                return alert.get("maxIndex")
+            # If no alert, UV is likely below 3 (no alert threshold)
+            return None
 
         elif self._sensor_type == "uv_alert":
-            entries = day_data.get("entries", [])
-            if entries:
-                alert = entries[0].get("alert")
-                if alert:
-                    value = alert.get("title")
-                    if value is None:
-                        _LOGGER.warning(
-                            "uv_alert: 'title' not found in alert. Alert keys: %s",
-                            list(alert.keys())
-                        )
-                    return value
-                else:
-                    _LOGGER.debug(
-                        "uv_alert: No 'alert' in entry. Available keys: %s",
-                        list(entries[0].keys())
-                    )
-            else:
-                _LOGGER.warning("uv_alert: No entries found in day_data. Keys: %s", list(day_data.keys()))
+            # UV alert uses the 'scale' from the alert object
+            alert = day_data.get("alert")
+            if alert:
+                return alert.get("scale")
+            # If no alert, UV is below alert threshold
+            return None
 
         elif self._sensor_type == "sunrise":
             entries = day_data.get("entries", [])
