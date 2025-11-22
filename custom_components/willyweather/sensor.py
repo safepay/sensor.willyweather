@@ -130,7 +130,7 @@ async def async_setup_entry(
 
     # Add forecast sensors if enabled
     if entry.options.get(CONF_INCLUDE_FORECAST_SENSORS, False):
-        forecast_days = entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4, 5, 6])
+        forecast_days = entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4])
         monitored_conditions = entry.options.get(
             CONF_FORECAST_MONITORED,
             list(FORECAST_SENSOR_TYPES.keys())
