@@ -250,13 +250,16 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
         )
         _LOGGER.warning("FORECAST_SENSORS: Creating SelectSelector for forecast_days")
-        days_selector = selector.SelectSelector(
-            selector.SelectSelectorConfig(
-                options=day_options,
-                multiple=False,
-                mode=selector.SelectSelectorMode.DROPDOWN,
-            )
+        _LOGGER.warning("FORECAST_SENSORS: day_options = %s", day_options)
+        _LOGGER.warning("FORECAST_SENSORS: Creating SelectSelectorConfig")
+        days_config = selector.SelectSelectorConfig(
+            options=day_options,
+            multiple=False,
+            mode=selector.SelectSelectorMode.DROPDOWN,
         )
+        _LOGGER.warning("FORECAST_SENSORS: SelectSelectorConfig created, now creating SelectSelector")
+        days_selector = selector.SelectSelector(days_config)
+        _LOGGER.warning("FORECAST_SENSORS: days_selector created successfully")
 
         _LOGGER.warning("FORECAST_SENSORS: Building vol.Schema")
         data_schema = vol.Schema(
