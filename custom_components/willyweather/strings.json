@@ -37,10 +37,10 @@
       },
       "forecast_sensors": {
         "title": "WillyWeather Setup - Forecast Sensor Selection",
-        "description": "Step 5 of 6: Select which forecast sensors to create for {station_name}\n\n**Select Sensors:**\nChoose which data points to track for each forecast day.\n\n**Number of Days:**\nSelect how many days to forecast (1 = today only, 7 = today + next 6 days).",
+        "description": "Step 5 of 6: Select which forecast sensors to create for {station_name}\n\n**Select Sensors:**\nChoose which data points to track for each forecast day.\n\n**Number of Days:**\nUse the slider to select forecast days (1 = today only, 7 = today + next 6 days).",
         "data": {
           "forecast_monitored": "Forecast sensors to monitor",
-          "forecast_days": "Number of forecast days (1-7)"
+          "forecast_days": "Number of forecast days"
         }
       },
       "update_intervals": {
@@ -89,10 +89,10 @@
       },
       "forecast_sensors": {
         "title": "WillyWeather Forecast Sensor Selection",
-        "description": "Select which forecast sensors to create.\n\n**Sensors:** Choose data points to track.\n**Days:** Number of forecast days (1 = today only, 7 = today + next 6 days).\n\nChanging these options will reload the integration.",
+        "description": "Select which forecast sensors to create.\n\n**Sensors:** Choose data points to track.\n**Days:** Use the slider to select forecast days (1 = today only, 7 = today + next 6 days).\n\nChanging these options will reload the integration.",
         "data": {
           "forecast_monitored": "Forecast sensors to monitor",
-          "forecast_days": "Number of forecast days (1-7)"
+          "forecast_days": "Number of forecast days"
         }
       },
       "warnings": {
