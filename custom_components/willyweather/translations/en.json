@@ -17,7 +17,7 @@
           "include_uv": "Include UV index sensors",
           "include_tides": "Include tide information (Note: Not all areas have tidal information)",
           "include_swell": "Include swell data (coastal locations only, Note: Not all areas have swell information)",
-          "include_extended_forecast": "Include extended forecast text (extra API call, requires regionPrecis enabled on your API key)"
+          "include_extended_forecast": "Include extended forecast text (extra API call, requires 'Region Precis' enabled in WillyWeather API admin)"
         }
       },
       "forecast_options": {
@@ -78,7 +78,7 @@
           "include_uv": "Include UV index sensors",
           "include_tides": "Include tide information (Note: Not all areas have tidal information)",
           "include_swell": "Include swell data (Note: Not all areas have swell information)",
-          "include_extended_forecast": "Include extended forecast text (extra API call, requires regionPrecis enabled on your API key)"
+          "include_extended_forecast": "Include extended forecast text (extra API call, requires 'Region Precis' enabled in WillyWeather API admin)"
         }
       },
       "forecast_options": {
