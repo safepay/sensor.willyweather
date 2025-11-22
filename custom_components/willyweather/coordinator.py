@@ -420,20 +420,20 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
             raise UpdateFailed(f"Network error: {err}") from err
 
     async def _fetch_region_precis(self) -> dict[str, Any]:
-        """Fetch regionPrecis data separately (requires different API format)."""
+        """Fetch regionPrecis data separately (requires x-payload header format)."""
         url = f"{API_BASE_URL}/{self.api_key}/locations/{self.station_id}/weather.json"
 
-        # RegionPrecis requires URL params, not headers
-        params = {
-            "regionPrecis": "true",
-            "days": "7",
+        # RegionPrecis requires x-payload header with JSON body
+        headers = {
+            "Content-Type": "application/json",
+            "x-payload": '{"regionPrecis": true, "days": 7}',
         }
 
-        _LOGGER.debug("Fetching regionPrecis data")
+        _LOGGER.debug("Fetching regionPrecis data for 7 days")
 
         try:
             async with async_timeout.timeout(API_TIMEOUT):
-                async with self._session.get(url, params=params) as response:
+                async with self._session.get(url, headers=headers) as response:
                     if response.status != 200:
                         response_text = await response.text()
                         _LOGGER.warning(
@@ -447,7 +447,15 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                     region_precis = data.get("regionPrecis", {})
 
                     if region_precis:
-                        _LOGGER.debug("Received regionPrecis data: %s", region_precis.get("name"))
+                        days = region_precis.get("days", [])
+                        _LOGGER.info(
+                            "Received regionPrecis data: %s with %s days",
+                            region_precis.get("name"),
+                            len(days)
+                        )
+                        # Log the structure to debug
+                        if days:
+                            _LOGGER.debug("First day structure: %s", days[0] if days else "none")
                         return region_precis
                     else:
                         _LOGGER.debug("No regionPrecis data available for this location")
