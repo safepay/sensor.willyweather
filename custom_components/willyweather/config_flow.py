@@ -232,14 +232,6 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
         _LOGGER.warning("FORECAST_SENSORS: Built %d forecast selector options", len(forecast_options))
 
-        day_options = []
-        for i in range(1, 8):
-            label = f"{i} day{'s' if i > 1 else ''} (Day 0-{i-1})" if i > 1 else "1 day (Today only)"
-            day_options.append(
-                selector.SelectOptionDict(value=i, label=label)
-            )
-        _LOGGER.warning("FORECAST_SENSORS: Built %d day selector options", len(day_options))
-
         # Build the schema
         _LOGGER.warning("FORECAST_SENSORS: Creating SelectSelector for forecast_monitored")
         forecast_selector = selector.SelectSelector(
@@ -249,16 +241,18 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 mode=selector.SelectSelectorMode.LIST,
             )
         )
-        _LOGGER.warning("FORECAST_SENSORS: Creating SelectSelector for forecast_days")
-        _LOGGER.warning("FORECAST_SENSORS: day_options = %s", day_options)
-        _LOGGER.warning("FORECAST_SENSORS: Creating SelectSelectorConfig")
-        days_config = selector.SelectSelectorConfig(
-            options=day_options,
-            multiple=False,
-            mode=selector.SelectSelectorMode.DROPDOWN,
+        _LOGGER.warning("FORECAST_SENSORS: forecast_selector created successfully")
+
+        # Use NumberSelector for days instead of SelectSelector with DROPDOWN
+        # DROPDOWN mode appears to cause issues in some Home Assistant versions
+        _LOGGER.warning("FORECAST_SENSORS: Creating NumberSelector for forecast_days")
+        days_selector = selector.NumberSelector(
+            selector.NumberSelectorConfig(
+                min=1,
+                max=7,
+                mode=selector.NumberSelectorMode.SLIDER,
+            )
         )
-        _LOGGER.warning("FORECAST_SENSORS: SelectSelectorConfig created, now creating SelectSelector")
-        days_selector = selector.SelectSelector(days_config)
         _LOGGER.warning("FORECAST_SENSORS: days_selector created successfully")
 
         _LOGGER.warning("FORECAST_SENSORS: Building vol.Schema")
@@ -489,7 +483,7 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
             self._forecast_sensor_options = user_input
             return await self.async_step_update_intervals()
 
-        # Convert stored list of days to max days count for the dropdown
+        # Convert stored list of days to max days count for the slider
         stored_days = self.config_entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4, 5, 6])
         default_max_days = len(stored_days) if isinstance(stored_days, list) else 7
 
@@ -511,14 +505,11 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
                 vol.Optional(
                     CONF_FORECAST_DAYS,
                     default=default_max_days
-                ): selector.SelectSelector(
-                    selector.SelectSelectorConfig(
-                        options=[
-                            selector.SelectOptionDict(value=i, label=f"{i} day{'s' if i > 1 else ''} (Day 0-{i-1})" if i > 1 else "1 day (Today only)")
-                            for i in range(1, 8)
-                        ],
-                        multiple=False,
-                        mode=selector.SelectSelectorMode.DROPDOWN,
+                ): selector.NumberSelector(
+                    selector.NumberSelectorConfig(
+                        min=1,
+                        max=7,
+                        mode=selector.NumberSelectorMode.SLIDER,
                     )
                 ),
             }
