@@ -222,7 +222,15 @@ SENSOR_TYPES: Final = {
         "icon": "mdi:weather-partly-cloudy",
         "device_class": None,
         "state_class": None,
-        "path": None,  # Special handling - uses weather forecast + regionPrecis data
+        "path": None,  # Special handling - uses weather forecast data
+    },
+    "forecast_extended": {
+        "name": "Today's Extended Forecast",
+        "unit": None,
+        "icon": "mdi:text-long",
+        "device_class": None,
+        "state_class": None,
+        "path": None,  # Special handling - uses regionPrecis data (truncated to 255 chars)
     },
 }
 
