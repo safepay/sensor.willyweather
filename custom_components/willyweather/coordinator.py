@@ -420,22 +420,20 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
             raise UpdateFailed(f"Network error: {err}") from err
 
     async def _fetch_region_precis(self) -> dict[str, Any]:
-        """Fetch regionPrecis data separately (requires different API format)."""
+        """Fetch regionPrecis data separately (requires x-payload header format)."""
         url = f"{API_BASE_URL}/{self.api_key}/locations/{self.station_id}/weather.json"
 
-        # RegionPrecis with weather forecast to ensure days parameter works
-        params = {
-            "forecasts": "weather",
-            "regionPrecis": "true",
-            "days": "7",
-            "units": "distance:km,temperature:c,amount:mm,speed:km/h",
+        # RegionPrecis requires x-payload header with JSON body
+        headers = {
+            "Content-Type": "application/json",
+            "x-payload": '{"regionPrecis": true, "days": 7}',
         }
 
-        _LOGGER.debug("Fetching regionPrecis data with weather forecast")
+        _LOGGER.debug("Fetching regionPrecis data for 7 days")
 
         try:
             async with async_timeout.timeout(API_TIMEOUT):
-                async with self._session.get(url, params=params) as response:
+                async with self._session.get(url, headers=headers) as response:
                     if response.status != 200:
                         response_text = await response.text()
                         _LOGGER.warning(
