@@ -183,15 +183,25 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                 forecast_data = await self._fetch_forecast_data(forecast_types)
                 self._last_forecast_fetch = now
 
-                # Fetch regionPrecis data separately if forecast sensors are enabled
-                if self.entry.options.get(CONF_INCLUDE_FORECAST_SENSORS, False):
-                    # Get number of days from config (list length)
-                    forecast_days = self.entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4])
-                    num_days = len(forecast_days) if forecast_days else 5
+                # Fetch regionPrecis data separately
+                # - For observational sensors (forecast_summary): fetch 1 day
+                # - For forecast sensors: fetch configured number of days
+                include_observational = self.entry.options.get(CONF_INCLUDE_OBSERVATIONAL, True)
+                include_forecast_sensors = self.entry.options.get(CONF_INCLUDE_FORECAST_SENSORS, False)
+
+                if include_observational or include_forecast_sensors:
+                    if include_forecast_sensors:
+                        # Get number of days from config (list length)
+                        forecast_days = self.entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4])
+                        num_days = len(forecast_days) if forecast_days else 5
+                    else:
+                        # Just today for observational forecast_summary sensor
+                        num_days = 1
+
                     region_precis = await self._fetch_region_precis(num_days)
                     if region_precis and forecast_data:
                         forecast_data["regionPrecis"] = region_precis
-                        _LOGGER.debug("Added regionPrecis data to forecast")
+                        _LOGGER.debug("Added regionPrecis data to forecast (%d days)", num_days)
 
                 # Log what we got back
                 if forecast_data and "forecasts" in forecast_data:
@@ -230,15 +240,25 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                     forecast_data = await self._fetch_forecast_data(forecast_types)
                     self._last_forecast_fetch = now
 
-                    # Fetch regionPrecis data separately if forecast sensors are enabled
-                    if self.entry.options.get(CONF_INCLUDE_FORECAST_SENSORS, False):
-                        # Get number of days from config (list length)
-                        forecast_days = self.entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4])
-                        num_days = len(forecast_days) if forecast_days else 5
+                    # Fetch regionPrecis data separately (first run)
+                    # - For observational sensors (forecast_summary): fetch 1 day
+                    # - For forecast sensors: fetch configured number of days
+                    include_observational = self.entry.options.get(CONF_INCLUDE_OBSERVATIONAL, True)
+                    include_forecast_sensors = self.entry.options.get(CONF_INCLUDE_FORECAST_SENSORS, False)
+
+                    if include_observational or include_forecast_sensors:
+                        if include_forecast_sensors:
+                            # Get number of days from config (list length)
+                            forecast_days = self.entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4])
+                            num_days = len(forecast_days) if forecast_days else 5
+                        else:
+                            # Just today for observational forecast_summary sensor
+                            num_days = 1
+
                         region_precis = await self._fetch_region_precis(num_days)
                         if region_precis and forecast_data:
                             forecast_data["regionPrecis"] = region_precis
-                            _LOGGER.debug("Added regionPrecis data to forecast (first run)")
+                            _LOGGER.debug("Added regionPrecis data to forecast (%d days, first run)", num_days)
 
             # Fetch warning data if enabled
             warning_data = None

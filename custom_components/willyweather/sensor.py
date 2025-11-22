@@ -202,19 +202,51 @@ class WillyWeatherSensor(CoordinatorEntity, SensorEntity):
         if not self.coordinator.data:
             return None
 
+        # Special handling for forecast_summary - uses weather forecast data
+        if self._sensor_type == "forecast_summary":
+            forecast_data = self.coordinator.data.get("forecast", {})
+            forecasts = forecast_data.get("forecasts", {})
+            weather_days = forecasts.get("weather", {}).get("days", [])
+            if weather_days and weather_days[0].get("entries"):
+                return weather_days[0]["entries"][0].get("precis")
+            return None
+
         observations = self.coordinator.data.get("observational", {}).get("observations", {})
-        
+
         sensor_info = self._sensor_types_dict[self._sensor_type]
         path = sensor_info["path"]
-        
+
         value = observations
         for key in path:
             if isinstance(value, dict):
                 value = value.get(key)
             else:
                 return None
-                
+
         return value
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional attributes."""
+        # Special handling for forecast_summary - add extended forecast text
+        if self._sensor_type == "forecast_summary" and self.coordinator.data:
+            forecast_data = self.coordinator.data.get("forecast", {})
+            region_precis = forecast_data.get("regionPrecis", {})
+            region_precis_days = region_precis.get("days", [])
+
+            attributes = {}
+
+            # Add extended forecast text as attribute
+            if region_precis_days and region_precis_days[0].get("entries"):
+                entries = region_precis_days[0]["entries"]
+                # Try both French-accented and non-accented versions
+                extended_text = entries[0].get("précis") or entries[0].get("precis")
+                if extended_text:
+                    attributes["extended_forecast"] = extended_text
+
+            return attributes
+
+        return {}
 
 
 class WillyWeatherSunMoonSensor(CoordinatorEntity, SensorEntity):
@@ -841,19 +873,6 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
         # Add precis code for weather condition
         if self._sensor_type == "precis" and "precisCode" in day_data:
             attributes["precis_code"] = day_data["precisCode"]
-
-        # Add extended forecast text as an attribute for precis sensor
-        if self._sensor_type == "precis":
-            region_precis = forecast_data.get("regionPrecis", {})
-            region_precis_days = region_precis.get("days", [])
-            if self._forecast_day < len(region_precis_days):
-                region_day_data = region_precis_days[self._forecast_day]
-                entries = region_day_data.get("entries", [])
-                if entries:
-                    # Try both French-accented and non-accented versions
-                    extended_text = entries[0].get("précis") or entries[0].get("precis")
-                    if extended_text:
-                        attributes["extended_forecast"] = extended_text
 
         return attributes
 

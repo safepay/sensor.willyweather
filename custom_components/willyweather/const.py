@@ -215,6 +215,14 @@ SENSOR_TYPES: Final = {
         "state_class": SensorStateClass.TOTAL_INCREASING,
         "path": ["rainfall", "since9AMAmount"],
     },
+    "forecast_summary": {
+        "name": "Today's Forecast",
+        "unit": None,
+        "icon": "mdi:weather-partly-cloudy",
+        "device_class": None,
+        "state_class": None,
+        "path": None,  # Special handling - uses weather forecast + regionPrecis data
+    },
 }
 
 # Swell sensor types (if swell enabled)
