@@ -433,17 +433,22 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
         # Get today's date in YYYY-MM-DD format
         today = dt_util.now().strftime("%Y-%m-%d")
 
-        # RegionPrecis requires x-payload header with JSON body including startDate
+        # RegionPrecis requires x-payload header with JSON body - use POST method
         headers = {
             "Content-Type": "application/json",
-            "x-payload": f'{{"regionPrecis": true, "days": {days}, "startDate": "{today}"}}',
+        }
+
+        payload = {
+            "regionPrecis": True,
+            "days": days,
+            "startDate": today,
         }
 
         _LOGGER.debug("Fetching regionPrecis data for %s days starting from %s", days, today)
 
         try:
             async with async_timeout.timeout(API_TIMEOUT):
-                async with self._session.get(url, headers=headers) as response:
+                async with self._session.post(url, headers=headers, json=payload) as response:
                     if response.status != 200:
                         response_text = await response.text()
                         _LOGGER.warning(
