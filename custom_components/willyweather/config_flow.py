@@ -223,67 +223,64 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         _LOGGER.warning("FORECAST_SENSORS: Building schema - FORECAST_SENSOR_TYPES has %d entries", len(FORECAST_SENSOR_TYPES))
 
-        try:
-            # Build selector options
-            forecast_options = [
+        # Build selector options
+        forecast_options = []
+        for k, v in FORECAST_SENSOR_TYPES.items():
+            _LOGGER.warning("FORECAST_SENSORS: Processing sensor type '%s' with name '%s'", k, v.get("name"))
+            forecast_options.append(
                 selector.SelectOptionDict(value=k, label=v["name"])
-                for k, v in FORECAST_SENSOR_TYPES.items()
-            ]
-            _LOGGER.warning("FORECAST_SENSORS: Built %d forecast selector options", len(forecast_options))
-
-            day_options = [
-                selector.SelectOptionDict(
-                    value=i,
-                    label=f"{i} day{'s' if i > 1 else ''} (Day 0-{i-1})" if i > 1 else "1 day (Today only)"
-                )
-                for i in range(1, 8)
-            ]
-            _LOGGER.warning("FORECAST_SENSORS: Built %d day selector options", len(day_options))
-
-            # Build the schema
-            data_schema = vol.Schema(
-                {
-                    vol.Optional(
-                        CONF_FORECAST_MONITORED,
-                        default=list(FORECAST_SENSOR_TYPES.keys())
-                    ): selector.SelectSelector(
-                        selector.SelectSelectorConfig(
-                            options=forecast_options,
-                            multiple=True,
-                            mode=selector.SelectSelectorMode.LIST,
-                        )
-                    ),
-                    vol.Optional(
-                        CONF_FORECAST_DAYS,
-                        default=7
-                    ): selector.SelectSelector(
-                        selector.SelectSelectorConfig(
-                            options=day_options,
-                            multiple=False,
-                            mode=selector.SelectSelectorMode.DROPDOWN,
-                        )
-                    ),
-                }
             )
-            _LOGGER.warning("FORECAST_SENSORS: Schema built successfully")
+        _LOGGER.warning("FORECAST_SENSORS: Built %d forecast selector options", len(forecast_options))
 
-        except Exception as err:
-            _LOGGER.error("FORECAST_SENSORS: ERROR building schema: %s", err, exc_info=True)
-            # Return to previous step with error
-            return await self.async_step_warnings({"include_warnings": True, "warning_monitored": list(WARNING_BINARY_SENSOR_TYPES.keys())})
-
-        try:
-            _LOGGER.warning("FORECAST_SENSORS: Calling async_show_form")
-            result = self.async_show_form(
-                step_id="forecast_sensors",
-                data_schema=data_schema,
-                description_placeholders={"station_name": getattr(self, '_station_name', 'Weather Station')},
+        day_options = []
+        for i in range(1, 8):
+            label = f"{i} day{'s' if i > 1 else ''} (Day 0-{i-1})" if i > 1 else "1 day (Today only)"
+            day_options.append(
+                selector.SelectOptionDict(value=i, label=label)
             )
-            _LOGGER.warning("FORECAST_SENSORS: async_show_form completed successfully")
-            return result
-        except Exception as err:
-            _LOGGER.error("FORECAST_SENSORS: ERROR in async_show_form: %s", err, exc_info=True)
-            raise
+        _LOGGER.warning("FORECAST_SENSORS: Built %d day selector options", len(day_options))
+
+        # Build the schema
+        _LOGGER.warning("FORECAST_SENSORS: Creating SelectSelector for forecast_monitored")
+        forecast_selector = selector.SelectSelector(
+            selector.SelectSelectorConfig(
+                options=forecast_options,
+                multiple=True,
+                mode=selector.SelectSelectorMode.LIST,
+            )
+        )
+        _LOGGER.warning("FORECAST_SENSORS: Creating SelectSelector for forecast_days")
+        days_selector = selector.SelectSelector(
+            selector.SelectSelectorConfig(
+                options=day_options,
+                multiple=False,
+                mode=selector.SelectSelectorMode.DROPDOWN,
+            )
+        )
+
+        _LOGGER.warning("FORECAST_SENSORS: Building vol.Schema")
+        data_schema = vol.Schema(
+            {
+                vol.Optional(
+                    CONF_FORECAST_MONITORED,
+                    default=list(FORECAST_SENSOR_TYPES.keys())
+                ): forecast_selector,
+                vol.Optional(
+                    CONF_FORECAST_DAYS,
+                    default=7
+                ): days_selector,
+            }
+        )
+        _LOGGER.warning("FORECAST_SENSORS: Schema built successfully")
+
+        _LOGGER.warning("FORECAST_SENSORS: Calling async_show_form")
+        result = self.async_show_form(
+            step_id="forecast_sensors",
+            data_schema=data_schema,
+            description_placeholders={"station_name": getattr(self, '_station_name', 'Weather Station')},
+        )
+        _LOGGER.warning("FORECAST_SENSORS: async_show_form completed successfully")
+        return result
 
     async def async_step_update_intervals(
         self, user_input: dict[str, Any] | None = None
