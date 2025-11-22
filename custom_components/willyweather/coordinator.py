@@ -423,13 +423,15 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
         """Fetch regionPrecis data separately (requires different API format)."""
         url = f"{API_BASE_URL}/{self.api_key}/locations/{self.station_id}/weather.json"
 
-        # RegionPrecis requires URL params, not headers
+        # RegionPrecis with weather forecast to ensure days parameter works
         params = {
+            "forecasts": "weather",
             "regionPrecis": "true",
             "days": "7",
+            "units": "distance:km,temperature:c,amount:mm,speed:km/h",
         }
 
-        _LOGGER.debug("Fetching regionPrecis data")
+        _LOGGER.debug("Fetching regionPrecis data with weather forecast")
 
         try:
             async with async_timeout.timeout(API_TIMEOUT):
@@ -447,7 +449,15 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                     region_precis = data.get("regionPrecis", {})
 
                     if region_precis:
-                        _LOGGER.debug("Received regionPrecis data: %s", region_precis.get("name"))
+                        days = region_precis.get("days", [])
+                        _LOGGER.info(
+                            "Received regionPrecis data: %s with %s days",
+                            region_precis.get("name"),
+                            len(days)
+                        )
+                        # Log the structure to debug
+                        if days:
+                            _LOGGER.debug("First day structure: %s", days[0] if days else "none")
                         return region_precis
                     else:
                         _LOGGER.debug("No regionPrecis data available for this location")
