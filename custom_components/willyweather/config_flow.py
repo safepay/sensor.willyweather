@@ -22,6 +22,7 @@ from .const import (
     CONF_INCLUDE_UV,
     CONF_INCLUDE_TIDES,
     CONF_INCLUDE_SWELL,
+    CONF_INCLUDE_EXTENDED_FORECAST,
     CONF_STATION_ID,
     CONF_STATION_NAME,
     CONF_UPDATE_INTERVAL_DAY,
@@ -44,6 +45,9 @@ from .const import (
 from .coordinator import async_get_station_id, async_get_station_name
 
 _LOGGER = logging.getLogger(__name__)
+
+# Default forecast sensors for Platinum Weather card compatibility
+DEFAULT_FORECAST_SENSORS = ["icon", "precis", "temp_min", "temp_max", "rain_probability", "rain_amount_range"]
 
 
 class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -132,6 +136,7 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional(CONF_INCLUDE_UV, default=True): cv.boolean,
                 vol.Optional(CONF_INCLUDE_TIDES, default=False): cv.boolean,
                 vol.Optional(CONF_INCLUDE_SWELL, default=False): cv.boolean,
+                vol.Optional(CONF_INCLUDE_EXTENDED_FORECAST, default=False): cv.boolean,
             }
         )
 
@@ -256,11 +261,12 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         _LOGGER.warning("FORECAST_SENSORS: days_selector created successfully")
 
         _LOGGER.warning("FORECAST_SENSORS: Building vol.Schema")
+        # Default to Platinum Weather card essentials
         data_schema = vol.Schema(
             {
                 vol.Optional(
                     CONF_FORECAST_MONITORED,
-                    default=list(FORECAST_SENSOR_TYPES.keys())
+                    default=DEFAULT_FORECAST_SENSORS
                 ): forecast_selector,
                 vol.Optional(
                     CONF_FORECAST_DAYS,
@@ -298,6 +304,7 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_INCLUDE_UV: observational_options.get(CONF_INCLUDE_UV, True),
                 CONF_INCLUDE_TIDES: observational_options.get(CONF_INCLUDE_TIDES, False),
                 CONF_INCLUDE_SWELL: observational_options.get(CONF_INCLUDE_SWELL, False),
+                CONF_INCLUDE_EXTENDED_FORECAST: observational_options.get(CONF_INCLUDE_EXTENDED_FORECAST, False),
                 CONF_INCLUDE_WIND: forecast_options.get(CONF_INCLUDE_WIND, True),
                 CONF_INCLUDE_FORECAST_SENSORS: forecast_options.get(CONF_INCLUDE_FORECAST_SENSORS, False),
                 CONF_INCLUDE_WARNINGS: warning_options.get(CONF_INCLUDE_WARNINGS, True),
@@ -318,12 +325,12 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 options[CONF_FORECAST_DAYS] = list(range(max_days))
 
                 options[CONF_FORECAST_MONITORED] = self._forecast_sensor_options.get(
-                    CONF_FORECAST_MONITORED, list(FORECAST_SENSOR_TYPES.keys())
+                    CONF_FORECAST_MONITORED, DEFAULT_FORECAST_SENSORS
                 )
             else:
                 # Defaults if forecast sensors step was skipped
                 options[CONF_FORECAST_DAYS] = [0, 1, 2, 3, 4]
-                options[CONF_FORECAST_MONITORED] = list(FORECAST_SENSOR_TYPES.keys())
+                options[CONF_FORECAST_MONITORED] = DEFAULT_FORECAST_SENSORS
 
             return self.async_create_entry(
                 title=self._station_name or f"Station {self._station_id}",
@@ -409,6 +416,10 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
                         CONF_INCLUDE_SWELL,
                         default=self.config_entry.options.get(CONF_INCLUDE_SWELL, False),
                     ): cv.boolean,
+                    vol.Optional(
+                        CONF_INCLUDE_EXTENDED_FORECAST,
+                        default=self.config_entry.options.get(CONF_INCLUDE_EXTENDED_FORECAST, False),
+                    ): cv.boolean,
                 }
             ),
         )
@@ -492,7 +503,7 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
             {
                 vol.Optional(
                     CONF_FORECAST_MONITORED,
-                    default=self.config_entry.options.get(CONF_FORECAST_MONITORED, list(FORECAST_SENSOR_TYPES.keys()))
+                    default=self.config_entry.options.get(CONF_FORECAST_MONITORED, DEFAULT_FORECAST_SENSORS)
                 ): selector.SelectSelector(
                     selector.SelectSelectorConfig(
                         options=[
@@ -564,12 +575,12 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
                 options_data[CONF_FORECAST_DAYS] = list(range(max_days))
 
                 options_data[CONF_FORECAST_MONITORED] = self._forecast_sensor_options.get(
-                    CONF_FORECAST_MONITORED, list(FORECAST_SENSOR_TYPES.keys())
+                    CONF_FORECAST_MONITORED, DEFAULT_FORECAST_SENSORS
                 )
             else:
                 # Preserve existing forecast sensor config if step was skipped
                 options_data[CONF_FORECAST_DAYS] = self.config_entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4])
-                options_data[CONF_FORECAST_MONITORED] = self.config_entry.options.get(CONF_FORECAST_MONITORED, list(FORECAST_SENSOR_TYPES.keys()))
+                options_data[CONF_FORECAST_MONITORED] = self.config_entry.options.get(CONF_FORECAST_MONITORED, DEFAULT_FORECAST_SENSORS)
 
             return self.async_create_entry(
                 title="",

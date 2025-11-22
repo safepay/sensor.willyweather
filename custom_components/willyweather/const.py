@@ -40,6 +40,7 @@ CONF_INCLUDE_UV: Final = "include_uv"
 CONF_INCLUDE_TIDES: Final = "include_tides"
 CONF_INCLUDE_WIND: Final = "include_wind"
 CONF_INCLUDE_SWELL: Final = "include_swell"
+CONF_INCLUDE_EXTENDED_FORECAST: Final = "include_extended_forecast"
 
 # API
 API_BASE_URL: Final = "https://api.willyweather.com.au/v2"
@@ -215,6 +216,14 @@ SENSOR_TYPES: Final = {
         "state_class": SensorStateClass.TOTAL_INCREASING,
         "path": ["rainfall", "since9AMAmount"],
     },
+    "forecast_summary": {
+        "name": "Today's Forecast",
+        "unit": None,
+        "icon": "mdi:weather-partly-cloudy",
+        "device_class": None,
+        "state_class": None,
+        "path": None,  # Special handling - uses weather forecast + regionPrecis data
+    },
 }
 
 # Swell sensor types (if swell enabled)
@@ -389,20 +398,14 @@ WARNING_BINARY_SENSOR_TYPES: Final = {
 }
 
 # Forecast sensor types (for multi-day forecast sensors)
+# Ordered with Platinum Weather card compatibility in mind (icon, precis, temps, rain first)
 FORECAST_SENSOR_TYPES: Final = {
-    "temp_max": {
-        "name": "Max Temperature",
-        "unit": UnitOfTemperature.CELSIUS,
-        "icon": "mdi:thermometer-high",
-        "device_class": SensorDeviceClass.TEMPERATURE,
-        "state_class": SensorStateClass.MEASUREMENT,
-    },
-    "temp_min": {
-        "name": "Min Temperature",
-        "unit": UnitOfTemperature.CELSIUS,
-        "icon": "mdi:thermometer-low",
-        "device_class": SensorDeviceClass.TEMPERATURE,
-        "state_class": SensorStateClass.MEASUREMENT,
+    "icon": {
+        "name": "Icon",
+        "unit": None,
+        "icon": "mdi:weather-partly-cloudy",
+        "device_class": None,
+        "state_class": None,
     },
     "precis": {
         "name": "Short Forecast",
@@ -411,10 +414,31 @@ FORECAST_SENSOR_TYPES: Final = {
         "device_class": None,
         "state_class": None,
     },
-    "icon": {
-        "name": "Icon",
+    "temp_min": {
+        "name": "Min Temperature",
+        "unit": UnitOfTemperature.CELSIUS,
+        "icon": "mdi:thermometer-low",
+        "device_class": SensorDeviceClass.TEMPERATURE,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "temp_max": {
+        "name": "Max Temperature",
+        "unit": UnitOfTemperature.CELSIUS,
+        "icon": "mdi:thermometer-high",
+        "device_class": SensorDeviceClass.TEMPERATURE,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "rain_probability": {
+        "name": "Rain Probability",
+        "unit": PERCENTAGE,
+        "icon": "mdi:water-percent",
+        "device_class": None,
+        "state_class": SensorStateClass.MEASUREMENT,
+    },
+    "rain_amount_range": {
+        "name": "Rain Amount Range",
         "unit": None,
-        "icon": "mdi:weather-partly-cloudy",
+        "icon": "mdi:weather-rainy",
         "device_class": None,
         "state_class": None,
     },
@@ -430,20 +454,6 @@ FORECAST_SENSOR_TYPES: Final = {
         "unit": UnitOfPrecipitationDepth.MILLIMETERS,
         "icon": "mdi:weather-rainy",
         "device_class": SensorDeviceClass.PRECIPITATION,
-        "state_class": SensorStateClass.MEASUREMENT,
-    },
-    "rain_amount_range": {
-        "name": "Rain Amount Range",
-        "unit": None,
-        "icon": "mdi:weather-rainy",
-        "device_class": None,
-        "state_class": None,
-    },
-    "rain_probability": {
-        "name": "Rain Probability",
-        "unit": PERCENTAGE,
-        "icon": "mdi:water-percent",
-        "device_class": None,
         "state_class": SensorStateClass.MEASUREMENT,
     },
     "uv_index": {
