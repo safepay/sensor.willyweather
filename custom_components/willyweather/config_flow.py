@@ -178,16 +178,9 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             # If forecast sensors enabled, go to forecast sensor selection
             forecast_options = getattr(self, '_forecast_options', {})
             forecast_sensors_enabled = forecast_options.get(CONF_INCLUDE_FORECAST_SENSORS, False)
-            _LOGGER.warning(
-                "WARNINGS: Step complete - forecast_sensors_enabled=%s, forecast_options=%s",
-                forecast_sensors_enabled,
-                forecast_options,
-            )
             if forecast_sensors_enabled:
-                _LOGGER.warning("WARNINGS: Forecast sensors enabled, calling async_step_forecast_sensors()")
                 return await self.async_step_forecast_sensors()
             # Otherwise go to update intervals
-            _LOGGER.warning("WARNINGS: Forecast sensors NOT enabled, going to update_intervals")
             return await self.async_step_update_intervals()
 
         data_schema = vol.Schema(
@@ -219,26 +212,18 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle forecast sensor selection step."""
-        _LOGGER.warning("FORECAST_SENSORS: Step called with user_input=%s", user_input)
-
         if user_input is not None:
             self._forecast_sensor_options = user_input
-            _LOGGER.warning("FORECAST_SENSORS: Stored options and proceeding to update_intervals")
             return await self.async_step_update_intervals()
-
-        _LOGGER.warning("FORECAST_SENSORS: Building schema - FORECAST_SENSOR_TYPES has %d entries", len(FORECAST_SENSOR_TYPES))
 
         # Build selector options
         forecast_options = []
         for k, v in FORECAST_SENSOR_TYPES.items():
-            _LOGGER.warning("FORECAST_SENSORS: Processing sensor type '%s' with name '%s'", k, v.get("name"))
             forecast_options.append(
                 selector.SelectOptionDict(value=k, label=v["name"])
             )
-        _LOGGER.warning("FORECAST_SENSORS: Built %d forecast selector options", len(forecast_options))
 
         # Build the schema
-        _LOGGER.warning("FORECAST_SENSORS: Creating SelectSelector for forecast_monitored")
         forecast_selector = selector.SelectSelector(
             selector.SelectSelectorConfig(
                 options=forecast_options,
@@ -246,11 +231,9 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 mode=selector.SelectSelectorMode.LIST,
             )
         )
-        _LOGGER.warning("FORECAST_SENSORS: forecast_selector created successfully")
 
         # Use NumberSelector for days instead of SelectSelector with DROPDOWN
         # DROPDOWN mode appears to cause issues in some Home Assistant versions
-        _LOGGER.warning("FORECAST_SENSORS: Creating NumberSelector for forecast_days")
         days_selector = selector.NumberSelector(
             selector.NumberSelectorConfig(
                 min=1,
@@ -258,9 +241,7 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 mode=selector.NumberSelectorMode.SLIDER,
             )
         )
-        _LOGGER.warning("FORECAST_SENSORS: days_selector created successfully")
 
-        _LOGGER.warning("FORECAST_SENSORS: Building vol.Schema")
         # Default to Platinum Weather card essentials
         data_schema = vol.Schema(
             {
@@ -274,16 +255,12 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 ): days_selector,
             }
         )
-        _LOGGER.warning("FORECAST_SENSORS: Schema built successfully")
 
-        _LOGGER.warning("FORECAST_SENSORS: Calling async_show_form")
-        result = self.async_show_form(
+        return self.async_show_form(
             step_id="forecast_sensors",
             data_schema=data_schema,
             description_placeholders={"station_name": getattr(self, '_station_name', 'Weather Station')},
         )
-        _LOGGER.warning("FORECAST_SENSORS: async_show_form completed successfully")
-        return result
 
     async def async_step_update_intervals(
         self, user_input: dict[str, Any] | None = None
