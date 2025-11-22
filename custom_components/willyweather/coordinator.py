@@ -465,7 +465,8 @@ async def async_get_station_id(
     _LOGGER.debug("Searching for station at lat=%s, lng=%s", lat, lng)
 
     try:
-        async with async_timeout.timeout(API_TIMEOUT):
+        # Use 30 second timeout for station search (one-time operation during setup)
+        async with async_timeout.timeout(30):
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, params=params) as response:
                     if response.status == 401:
@@ -480,7 +481,7 @@ async def async_get_station_id(
                             response.status,
                         )
                         return None
-                    
+
                     data = await response.json()
                     location = data.get("location")
                     if location:
@@ -497,9 +498,9 @@ async def async_get_station_id(
                     else:
                         _LOGGER.error("No location data in search response")
                         return None
-                        
+
     except asyncio.TimeoutError:
-        _LOGGER.error("Timeout while searching for station")
+        _LOGGER.error("Timeout while searching for station (30s limit)")
         return None
     except aiohttp.ClientError as err:
         _LOGGER.error("Network error while searching for station: %s", err)
@@ -522,7 +523,8 @@ async def async_get_station_name(
     _LOGGER.debug("Fetching station name for ID: %s", station_id)
 
     try:
-        async with async_timeout.timeout(API_TIMEOUT):
+        # Use 30 second timeout for station name fetch (one-time operation during setup)
+        async with async_timeout.timeout(30):
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, params=params) as response:
                     if response.status == 401:
