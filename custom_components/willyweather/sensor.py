@@ -850,21 +850,23 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
         # We need to look in the right place for each sensor type
         forecasts = forecast_data.get("forecasts", {})
 
-        if self._sensor_type in ["temp_max", "temp_min"]:
-            temp_data = forecasts.get("temperature", {}).get("days", [])
-            if self._forecast_day < len(temp_data):
-                day_data = temp_data[self._forecast_day]
+        # temp_max, temp_min, precis, and icon all come from the "weather" forecast
+        if self._sensor_type in ["temp_max", "temp_min", "precis", "icon"]:
+            weather_data = forecasts.get("weather", {}).get("days", [])
+            if self._forecast_day < len(weather_data):
+                day_data = weather_data[self._forecast_day]
                 _LOGGER.debug(
-                    "Temperature data for day %s: %s",
+                    "Weather forecast data for day %s (%s sensor): %s",
                     self._forecast_day,
+                    self._sensor_type,
                     day_data
                 )
                 return day_data
             else:
                 _LOGGER.warning(
-                    "No temperature data for day %s (available days: %s)",
+                    "No weather forecast data for day %s (available days: %s)",
                     self._forecast_day,
-                    len(temp_data)
+                    len(weather_data)
                 )
 
         elif self._sensor_type in ["rain_amount_min", "rain_amount_max", "rain_amount_range", "rain_probability"]:
@@ -882,41 +884,6 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
                     "No rainfall data for day %s (available days: %s)",
                     self._forecast_day,
                     len(rainfall_data)
-                )
-
-        elif self._sensor_type == "precis":
-            precis_data = forecasts.get("precis", {}).get("days", [])
-            if self._forecast_day < len(precis_data):
-                day_data = precis_data[self._forecast_day]
-                _LOGGER.debug(
-                    "Precis data for day %s: %s",
-                    self._forecast_day,
-                    day_data
-                )
-                return day_data
-            else:
-                _LOGGER.warning(
-                    "No precis data for day %s (available days: %s)",
-                    self._forecast_day,
-                    len(precis_data)
-                )
-
-        elif self._sensor_type == "icon":
-            # Icon uses precis data to get the precisCode
-            precis_data = forecasts.get("precis", {}).get("days", [])
-            if self._forecast_day < len(precis_data):
-                day_data = precis_data[self._forecast_day]
-                _LOGGER.debug(
-                    "Icon (precis) data for day %s: %s",
-                    self._forecast_day,
-                    day_data
-                )
-                return day_data
-            else:
-                _LOGGER.warning(
-                    "No icon (precis) data for day %s (available days: %s)",
-                    self._forecast_day,
-                    len(precis_data)
                 )
 
         elif self._sensor_type == "extended_text":
@@ -986,68 +953,48 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
 
         # Handle different sensor types
         if self._sensor_type == "temp_max":
+            # Weather forecast has min/max in the first entry
             entries = day_data.get("entries", [])
             if entries:
-                value = entries[0].get("max")
-                if value is None:
-                    _LOGGER.warning(
-                        "temp_max: 'max' not found in entry. Available keys: %s",
-                        list(entries[0].keys())
-                    )
-                return value
-            _LOGGER.warning("temp_max: No entries found in day_data. Keys: %s", list(day_data.keys()))
+                return entries[0].get("max")
+            return None
 
         elif self._sensor_type == "temp_min":
+            # Weather forecast has min/max in the first entry
             entries = day_data.get("entries", [])
             if entries:
-                value = entries[0].get("min")
-                if value is None:
-                    _LOGGER.warning(
-                        "temp_min: 'min' not found in entry. Available keys: %s",
-                        list(entries[0].keys())
-                    )
-                return value
-            _LOGGER.warning("temp_min: No entries found in day_data. Keys: %s", list(day_data.keys()))
+                return entries[0].get("min")
+            return None
 
         elif self._sensor_type == "rain_amount_min":
             entries = day_data.get("entries", [])
             if entries:
-                value = entries[0].get("startRange")
-                if value is None:
-                    _LOGGER.warning(
-                        "rain_amount_min: 'startRange' not found in entry. Available keys: %s",
-                        list(entries[0].keys())
-                    )
-                return value
-            _LOGGER.warning("rain_amount_min: No entries found in day_data. Keys: %s", list(day_data.keys()))
+                start = entries[0].get("startRange")
+                # startRange can be None for < 1mm
+                return start if start is not None else 0
+            return None
 
         elif self._sensor_type == "rain_amount_max":
             entries = day_data.get("entries", [])
             if entries:
-                value = entries[0].get("endRange")
-                if value is None:
-                    _LOGGER.warning(
-                        "rain_amount_max: 'endRange' not found in entry. Available keys: %s",
-                        list(entries[0].keys())
-                    )
-                return value
-            _LOGGER.warning("rain_amount_max: No entries found in day_data. Keys: %s", list(day_data.keys()))
+                return entries[0].get("endRange")
+            return None
 
         elif self._sensor_type == "rain_amount_range":
             entries = day_data.get("entries", [])
             if entries:
                 start = entries[0].get("startRange")
                 end = entries[0].get("endRange")
-                if start is None or end is None:
-                    _LOGGER.warning(
-                        "rain_amount_range: 'startRange' or 'endRange' not found. Available keys: %s",
-                        list(entries[0].keys())
-                    )
-                    return None
-                if start == end:
-                    return f"{start} mm"
-                return f"{start}-{end} mm"
-            _LOGGER.warning("rain_amount_range: No entries found in day_data. Keys: %s", list(day_data.keys()))
+
+                # Handle < 1mm case (startRange is None)
+                if start is None and end is not None:
+                    return f"<{end} mm"
+                elif start is not None and end is not None:
+                    if start == end:
+                        return f"{start} mm"
+                    return f"{start}-{end} mm"
+                return None
+            return None
 
         elif self._sensor_type == "rain_probability":
             entries = day_data.get("entries", [])
@@ -1062,44 +1009,21 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
             _LOGGER.warning("rain_probability: No entries found in day_data. Keys: %s", list(day_data.keys()))
 
         elif self._sensor_type == "precis":
-            # Try to get precis from entries first, then fallback to direct key
+            # Weather forecast has precis in the first entry
             entries = day_data.get("entries", [])
             if entries:
-                value = entries[0].get("precis")
-                if value:
-                    return value
-            # Fallback to direct key
-            value = day_data.get("precis")
-            if value is None:
-                _LOGGER.warning(
-                    "precis: 'precis' not found in day_data or entries. Day_data keys: %s, Entry keys: %s",
-                    list(day_data.keys()),
-                    list(entries[0].keys()) if entries else "No entries"
-                )
-            return value
+                return entries[0].get("precis")
+            return None
 
         elif self._sensor_type == "icon":
-            # Map precisCode to Home Assistant condition/icon
+            # Map precisCode from weather forecast to Home Assistant condition
             from .const import CONDITION_MAP
             entries = day_data.get("entries", [])
             if entries:
                 precis_code = entries[0].get("precisCode")
                 if precis_code:
-                    # Return the mapped condition which Home Assistant will use for icon
                     condition = CONDITION_MAP.get(precis_code, "unknown")
-                    _LOGGER.debug(
-                        "icon: Mapped precisCode '%s' to condition '%s'",
-                        precis_code,
-                        condition
-                    )
                     return condition
-                else:
-                    _LOGGER.warning(
-                        "icon: 'precisCode' not found in entry. Available keys: %s",
-                        list(entries[0].keys())
-                    )
-            else:
-                _LOGGER.warning("icon: No entries found in day_data. Keys: %s", list(day_data.keys()))
             return None
 
         elif self._sensor_type == "extended_text":
