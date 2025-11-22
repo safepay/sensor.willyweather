@@ -418,13 +418,6 @@ FORECAST_SENSOR_TYPES: Final = {
         "device_class": None,
         "state_class": None,
     },
-    "extended_text": {
-        "name": "Extended Forecast",
-        "unit": None,
-        "icon": "mdi:text-long",
-        "device_class": None,
-        "state_class": None,
-    },
     "rain_amount_min": {
         "name": "Rain Amount Min",
         "unit": UnitOfPrecipitationDepth.MILLIMETERS,
