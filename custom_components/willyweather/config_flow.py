@@ -249,7 +249,7 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         days_selector = selector.NumberSelector(
             selector.NumberSelectorConfig(
                 min=1,
-                max=5,
+                max=7,
                 mode=selector.NumberSelectorMode.SLIDER,
             )
         )
@@ -509,7 +509,7 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
                         min=1,
-                        max=5,
+                        max=7,
                         mode=selector.NumberSelectorMode.SLIDER,
                     )
                 ),
