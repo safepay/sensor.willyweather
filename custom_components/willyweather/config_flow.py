@@ -219,43 +219,40 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.debug("Stored forecast sensor options: %s", user_input)
             return await self.async_step_update_intervals()
 
-        try:
-            data_schema = vol.Schema(
-                {
-                    vol.Optional(
-                        CONF_FORECAST_MONITORED,
-                        default=list(FORECAST_SENSOR_TYPES.keys())
-                    ): selector.SelectSelector(
-                        selector.SelectSelectorConfig(
-                            options=[
-                                selector.SelectOptionDict(value=k, label=v["name"])
-                                for k, v in FORECAST_SENSOR_TYPES.items()
-                            ],
-                            multiple=True,
-                            mode=selector.SelectSelectorMode.LIST,
-                        )
-                    ),
-                    vol.Optional(
-                        CONF_FORECAST_DAYS,
-                        default=7
-                    ): selector.SelectSelector(
-                        selector.SelectSelectorConfig(
-                            options=[
-                                selector.SelectOptionDict(
-                                    value=i,
-                                    label=f"{i} day{'s' if i > 1 else ''} (Day 0-{i-1})" if i > 1 else "1 day (Today only)"
-                                )
-                                for i in range(1, 8)
-                            ],
-                            multiple=False,
-                            mode=selector.SelectSelectorMode.DROPDOWN,
-                        )
-                    ),
-                }
-            )
-        except Exception as err:
-            _LOGGER.error("Error building forecast sensors schema: %s", err, exc_info=True)
-            raise
+        # Build the schema for forecast sensor selection
+        data_schema = vol.Schema(
+            {
+                vol.Optional(
+                    CONF_FORECAST_MONITORED,
+                    default=list(FORECAST_SENSOR_TYPES.keys())
+                ): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=[
+                            selector.SelectOptionDict(value=k, label=v["name"])
+                            for k, v in FORECAST_SENSOR_TYPES.items()
+                        ],
+                        multiple=True,
+                        mode=selector.SelectSelectorMode.LIST,
+                    )
+                ),
+                vol.Optional(
+                    CONF_FORECAST_DAYS,
+                    default=7
+                ): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=[
+                            selector.SelectOptionDict(
+                                value=i,
+                                label=f"{i} day{'s' if i > 1 else ''} (Day 0-{i-1})" if i > 1 else "1 day (Today only)"
+                            )
+                            for i in range(1, 8)
+                        ],
+                        multiple=False,
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
+            }
+        )
 
         return self.async_show_form(
             step_id="forecast_sensors",
