@@ -173,14 +173,16 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             # If forecast sensors enabled, go to forecast sensor selection
             forecast_options = getattr(self, '_forecast_options', {})
             forecast_sensors_enabled = forecast_options.get(CONF_INCLUDE_FORECAST_SENSORS, False)
-            _LOGGER.debug(
-                "Warnings step complete - forecast_sensors_enabled: %s, forecast_options: %s",
+            _LOGGER.warning(
+                "WARNINGS: Step complete - forecast_sensors_enabled=%s, forecast_options=%s",
                 forecast_sensors_enabled,
                 forecast_options,
             )
             if forecast_sensors_enabled:
+                _LOGGER.warning("WARNINGS: Forecast sensors enabled, calling async_step_forecast_sensors()")
                 return await self.async_step_forecast_sensors()
             # Otherwise go to update intervals
+            _LOGGER.warning("WARNINGS: Forecast sensors NOT enabled, going to update_intervals")
             return await self.async_step_update_intervals()
 
         data_schema = vol.Schema(
@@ -212,53 +214,76 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle forecast sensor selection step."""
-        _LOGGER.debug("Forecast sensors step - user_input: %s", user_input)
+        _LOGGER.warning("FORECAST_SENSORS: Step called with user_input=%s", user_input)
 
         if user_input is not None:
             self._forecast_sensor_options = user_input
-            _LOGGER.debug("Stored forecast sensor options: %s", user_input)
+            _LOGGER.warning("FORECAST_SENSORS: Stored options and proceeding to update_intervals")
             return await self.async_step_update_intervals()
 
-        # Build the schema for forecast sensor selection
-        data_schema = vol.Schema(
-            {
-                vol.Optional(
-                    CONF_FORECAST_MONITORED,
-                    default=list(FORECAST_SENSOR_TYPES.keys())
-                ): selector.SelectSelector(
-                    selector.SelectSelectorConfig(
-                        options=[
-                            selector.SelectOptionDict(value=k, label=v["name"])
-                            for k, v in FORECAST_SENSOR_TYPES.items()
-                        ],
-                        multiple=True,
-                        mode=selector.SelectSelectorMode.LIST,
-                    )
-                ),
-                vol.Optional(
-                    CONF_FORECAST_DAYS,
-                    default=7
-                ): selector.SelectSelector(
-                    selector.SelectSelectorConfig(
-                        options=[
-                            selector.SelectOptionDict(
-                                value=i,
-                                label=f"{i} day{'s' if i > 1 else ''} (Day 0-{i-1})" if i > 1 else "1 day (Today only)"
-                            )
-                            for i in range(1, 8)
-                        ],
-                        multiple=False,
-                        mode=selector.SelectSelectorMode.DROPDOWN,
-                    )
-                ),
-            }
-        )
+        _LOGGER.warning("FORECAST_SENSORS: Building schema - FORECAST_SENSOR_TYPES has %d entries", len(FORECAST_SENSOR_TYPES))
 
-        return self.async_show_form(
-            step_id="forecast_sensors",
-            data_schema=data_schema,
-            description_placeholders={"station_name": getattr(self, '_station_name', 'Weather Station')},
-        )
+        try:
+            # Build selector options
+            forecast_options = [
+                selector.SelectOptionDict(value=k, label=v["name"])
+                for k, v in FORECAST_SENSOR_TYPES.items()
+            ]
+            _LOGGER.warning("FORECAST_SENSORS: Built %d forecast selector options", len(forecast_options))
+
+            day_options = [
+                selector.SelectOptionDict(
+                    value=i,
+                    label=f"{i} day{'s' if i > 1 else ''} (Day 0-{i-1})" if i > 1 else "1 day (Today only)"
+                )
+                for i in range(1, 8)
+            ]
+            _LOGGER.warning("FORECAST_SENSORS: Built %d day selector options", len(day_options))
+
+            # Build the schema
+            data_schema = vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_FORECAST_MONITORED,
+                        default=list(FORECAST_SENSOR_TYPES.keys())
+                    ): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=forecast_options,
+                            multiple=True,
+                            mode=selector.SelectSelectorMode.LIST,
+                        )
+                    ),
+                    vol.Optional(
+                        CONF_FORECAST_DAYS,
+                        default=7
+                    ): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=day_options,
+                            multiple=False,
+                            mode=selector.SelectSelectorMode.DROPDOWN,
+                        )
+                    ),
+                }
+            )
+            _LOGGER.warning("FORECAST_SENSORS: Schema built successfully")
+
+        except Exception as err:
+            _LOGGER.error("FORECAST_SENSORS: ERROR building schema: %s", err, exc_info=True)
+            # Return to previous step with error
+            return await self.async_step_warnings({"include_warnings": True, "warning_monitored": list(WARNING_BINARY_SENSOR_TYPES.keys())})
+
+        try:
+            _LOGGER.warning("FORECAST_SENSORS: Calling async_show_form")
+            result = self.async_show_form(
+                step_id="forecast_sensors",
+                data_schema=data_schema,
+                description_placeholders={"station_name": getattr(self, '_station_name', 'Weather Station')},
+            )
+            _LOGGER.warning("FORECAST_SENSORS: async_show_form completed successfully")
+            return result
+        except Exception as err:
+            _LOGGER.error("FORECAST_SENSORS: ERROR in async_show_form: %s", err, exc_info=True)
+            raise
 
     async def async_step_update_intervals(
         self, user_input: dict[str, Any] | None = None
