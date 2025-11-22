@@ -25,6 +25,7 @@ from .const import (
     CONF_INCLUDE_SWELL,
     CONF_INCLUDE_WARNINGS,
     CONF_INCLUDE_FORECAST_SENSORS,
+    CONF_FORECAST_DAYS,
     CONF_UPDATE_INTERVAL_DAY,
     CONF_UPDATE_INTERVAL_NIGHT,
     CONF_FORECAST_UPDATE_INTERVAL_DAY,
@@ -184,7 +185,10 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
 
                 # Fetch regionPrecis data separately if forecast sensors are enabled
                 if self.entry.options.get(CONF_INCLUDE_FORECAST_SENSORS, False):
-                    region_precis = await self._fetch_region_precis()
+                    # Get number of days from config (list length)
+                    forecast_days = self.entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4])
+                    num_days = len(forecast_days) if forecast_days else 5
+                    region_precis = await self._fetch_region_precis(num_days)
                     if region_precis and forecast_data:
                         forecast_data["regionPrecis"] = region_precis
                         _LOGGER.debug("Added regionPrecis data to forecast")
@@ -228,7 +232,10 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
 
                     # Fetch regionPrecis data separately if forecast sensors are enabled
                     if self.entry.options.get(CONF_INCLUDE_FORECAST_SENSORS, False):
-                        region_precis = await self._fetch_region_precis()
+                        # Get number of days from config (list length)
+                        forecast_days = self.entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4])
+                        num_days = len(forecast_days) if forecast_days else 5
+                        region_precis = await self._fetch_region_precis(num_days)
                         if region_precis and forecast_data:
                             forecast_data["regionPrecis"] = region_precis
                             _LOGGER.debug("Added regionPrecis data to forecast (first run)")
@@ -419,17 +426,20 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER.error("Network error fetching forecast data: %s", err)
             raise UpdateFailed(f"Network error: {err}") from err
 
-    async def _fetch_region_precis(self) -> dict[str, Any]:
+    async def _fetch_region_precis(self, days: int = 5) -> dict[str, Any]:
         """Fetch regionPrecis data separately (requires x-payload header format)."""
         url = f"{API_BASE_URL}/{self.api_key}/locations/{self.station_id}/weather.json"
 
-        # RegionPrecis requires x-payload header with JSON body
+        # Get today's date in YYYY-MM-DD format
+        today = dt_util.now().strftime("%Y-%m-%d")
+
+        # RegionPrecis requires x-payload header with JSON body including startDate
         headers = {
             "Content-Type": "application/json",
-            "x-payload": '{"regionPrecis": true, "days": 7}',
+            "x-payload": f'{{"regionPrecis": true, "days": {days}, "startDate": "{today}"}}',
         }
 
-        _LOGGER.debug("Fetching regionPrecis data for 7 days")
+        _LOGGER.debug("Fetching regionPrecis data for %s days starting from %s", days, today)
 
         try:
             async with async_timeout.timeout(API_TIMEOUT):

@@ -249,7 +249,7 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         days_selector = selector.NumberSelector(
             selector.NumberSelectorConfig(
                 min=1,
-                max=7,
+                max=5,
                 mode=selector.NumberSelectorMode.SLIDER,
             )
         )
@@ -264,7 +264,7 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 ): forecast_selector,
                 vol.Optional(
                     CONF_FORECAST_DAYS,
-                    default=7
+                    default=5
                 ): days_selector,
             }
         )
@@ -314,7 +314,7 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if hasattr(self, '_forecast_sensor_options'):
                 # Convert max days (single integer/float) to list of days [0, 1, ..., max_days-1]
                 # NumberSelector returns float, so convert to int for range()
-                max_days = int(self._forecast_sensor_options.get(CONF_FORECAST_DAYS, 7))
+                max_days = int(self._forecast_sensor_options.get(CONF_FORECAST_DAYS, 5))
                 options[CONF_FORECAST_DAYS] = list(range(max_days))
 
                 options[CONF_FORECAST_MONITORED] = self._forecast_sensor_options.get(
@@ -322,7 +322,7 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
             else:
                 # Defaults if forecast sensors step was skipped
-                options[CONF_FORECAST_DAYS] = [0, 1, 2, 3, 4, 5, 6]
+                options[CONF_FORECAST_DAYS] = [0, 1, 2, 3, 4]
                 options[CONF_FORECAST_MONITORED] = list(FORECAST_SENSOR_TYPES.keys())
 
             return self.async_create_entry(
@@ -485,8 +485,8 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
             return await self.async_step_update_intervals()
 
         # Convert stored list of days to max days count for the slider
-        stored_days = self.config_entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4, 5, 6])
-        default_max_days = len(stored_days) if isinstance(stored_days, list) else 7
+        stored_days = self.config_entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4])
+        default_max_days = len(stored_days) if isinstance(stored_days, list) else 5
 
         data_schema = vol.Schema(
             {
@@ -509,7 +509,7 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
                         min=1,
-                        max=7,
+                        max=5,
                         mode=selector.NumberSelectorMode.SLIDER,
                     )
                 ),
@@ -560,7 +560,7 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
             if hasattr(self, '_forecast_sensor_options'):
                 # Convert max days (single integer/float) to list of days [0, 1, ..., max_days-1]
                 # NumberSelector returns float, so convert to int for range()
-                max_days = int(self._forecast_sensor_options.get(CONF_FORECAST_DAYS, 7))
+                max_days = int(self._forecast_sensor_options.get(CONF_FORECAST_DAYS, 5))
                 options_data[CONF_FORECAST_DAYS] = list(range(max_days))
 
                 options_data[CONF_FORECAST_MONITORED] = self._forecast_sensor_options.get(
@@ -568,7 +568,7 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
                 )
             else:
                 # Preserve existing forecast sensor config if step was skipped
-                options_data[CONF_FORECAST_DAYS] = self.config_entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4, 5, 6])
+                options_data[CONF_FORECAST_DAYS] = self.config_entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4])
                 options_data[CONF_FORECAST_MONITORED] = self.config_entry.options.get(CONF_FORECAST_MONITORED, list(FORECAST_SENSOR_TYPES.keys()))
 
             return self.async_create_entry(
