@@ -25,6 +25,7 @@ from .const import (
     CONF_INCLUDE_SWELL,
     CONF_INCLUDE_WARNINGS,
     CONF_INCLUDE_FORECAST_SENSORS,
+    CONF_INCLUDE_EXTENDED_FORECAST,
     CONF_FORECAST_DAYS,
     CONF_UPDATE_INTERVAL_DAY,
     CONF_UPDATE_INTERVAL_NIGHT,
@@ -183,21 +184,13 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                 forecast_data = await self._fetch_forecast_data(forecast_types)
                 self._last_forecast_fetch = now
 
-                # Fetch regionPrecis data separately
-                # - For observational sensors (forecast_summary): fetch 1 day
-                # - For forecast sensors: fetch configured number of days
-                include_observational = self.entry.options.get(CONF_INCLUDE_OBSERVATIONAL, True)
-                include_forecast_sensors = self.entry.options.get(CONF_INCLUDE_FORECAST_SENSORS, False)
+                # Fetch regionPrecis data separately (optional extra API call)
+                # Only fetch when extended forecast text is enabled
+                include_extended_forecast = self.entry.options.get(CONF_INCLUDE_EXTENDED_FORECAST, False)
 
-                if include_observational or include_forecast_sensors:
-                    if include_forecast_sensors:
-                        # Get number of days from config (list length)
-                        forecast_days = self.entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4])
-                        num_days = len(forecast_days) if forecast_days else 5
-                    else:
-                        # Just today for observational forecast_summary sensor
-                        num_days = 1
-
+                if include_extended_forecast:
+                    # Fetch 1 day for the forecast_summary observational sensor
+                    num_days = 1
                     region_precis = await self._fetch_region_precis(num_days)
                     if region_precis and forecast_data:
                         forecast_data["regionPrecis"] = region_precis
@@ -240,21 +233,13 @@ class WillyWeatherDataUpdateCoordinator(DataUpdateCoordinator):
                     forecast_data = await self._fetch_forecast_data(forecast_types)
                     self._last_forecast_fetch = now
 
-                    # Fetch regionPrecis data separately (first run)
-                    # - For observational sensors (forecast_summary): fetch 1 day
-                    # - For forecast sensors: fetch configured number of days
-                    include_observational = self.entry.options.get(CONF_INCLUDE_OBSERVATIONAL, True)
-                    include_forecast_sensors = self.entry.options.get(CONF_INCLUDE_FORECAST_SENSORS, False)
+                    # Fetch regionPrecis data separately (first run, optional extra API call)
+                    # Only fetch when extended forecast text is enabled
+                    include_extended_forecast = self.entry.options.get(CONF_INCLUDE_EXTENDED_FORECAST, False)
 
-                    if include_observational or include_forecast_sensors:
-                        if include_forecast_sensors:
-                            # Get number of days from config (list length)
-                            forecast_days = self.entry.options.get(CONF_FORECAST_DAYS, [0, 1, 2, 3, 4])
-                            num_days = len(forecast_days) if forecast_days else 5
-                        else:
-                            # Just today for observational forecast_summary sensor
-                            num_days = 1
-
+                    if include_extended_forecast:
+                        # Fetch 1 day for the forecast_summary observational sensor
+                        num_days = 1
                         region_precis = await self._fetch_region_precis(num_days)
                         if region_precis and forecast_data:
                             forecast_data["regionPrecis"] = region_precis
