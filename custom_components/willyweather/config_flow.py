@@ -312,8 +312,9 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             # Add forecast sensor options if they were configured
             if hasattr(self, '_forecast_sensor_options'):
-                # Convert max days (single integer) to list of days [0, 1, ..., max_days-1]
-                max_days = self._forecast_sensor_options.get(CONF_FORECAST_DAYS, 7)
+                # Convert max days (single integer/float) to list of days [0, 1, ..., max_days-1]
+                # NumberSelector returns float, so convert to int for range()
+                max_days = int(self._forecast_sensor_options.get(CONF_FORECAST_DAYS, 7))
                 options[CONF_FORECAST_DAYS] = list(range(max_days))
 
                 options[CONF_FORECAST_MONITORED] = self._forecast_sensor_options.get(
@@ -557,8 +558,9 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
 
             # Add forecast sensor options if they were configured
             if hasattr(self, '_forecast_sensor_options'):
-                # Convert max days (single integer) to list of days [0, 1, ..., max_days-1]
-                max_days = self._forecast_sensor_options.get(CONF_FORECAST_DAYS, 7)
+                # Convert max days (single integer/float) to list of days [0, 1, ..., max_days-1]
+                # NumberSelector returns float, so convert to int for range()
+                max_days = int(self._forecast_sensor_options.get(CONF_FORECAST_DAYS, 7))
                 options_data[CONF_FORECAST_DAYS] = list(range(max_days))
 
                 options_data[CONF_FORECAST_MONITORED] = self._forecast_sensor_options.get(
