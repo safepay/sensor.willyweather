@@ -11,7 +11,7 @@
       },
       "prefix": {
         "title": "WillyWeather Setup - Entity Prefix",
-        "description": "Step 2 of 7: Configure the entity ID prefix for {station_name}\n\n**Default Entity Prefix:**\nThe default prefix includes your location name (e.g., \"ww_melbourne_\" creates entities like sensor.ww_melbourne_temperature).\n\n**Customization:**\nYou can edit the entire prefix to your preference, or leave it empty for no prefix.",
+        "description": "Step 2 of 7: Configure the entity ID prefix for {station_name}\n\n**Default Entity Prefix:**\nThe default prefix includes your location name (e.g., \"ww_melbourne\" creates entities like sensor.ww_melbourne_temperature).\n\n**Customization:**\nYou can edit the entire prefix to your preference, or leave it empty for no prefix.",
         "data": {
           "sensor_prefix": "Default entity prefix"
         }
