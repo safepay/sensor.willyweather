@@ -3,15 +3,22 @@
     "step": {
       "user": {
         "title": "WillyWeather Setup - Station Selection",
-        "description": "Step 1 of 6: Enter your WillyWeather API key.\n\n**Get your API key:**\nVisit https://www.willyweather.com.au/api/register.html to register and obtain your free API key.\n\n**Station ID:**\nLeaving the Station ID blank will automatically set it to the closest WillyWeather station to your Home Assistant Home Zone location. You can also manually enter a specific station ID if preferred.",
+        "description": "Step 1 of 7: Enter your WillyWeather API key.\n\n**Get your API key:**\nVisit https://www.willyweather.com.au/api/register.html to register and obtain your free API key.\n\n**Station ID:**\nLeaving the Station ID blank will automatically set it to the closest WillyWeather station to your Home Assistant Home Zone location. You can also manually enter a specific station ID if preferred.",
         "data": {
           "api_key": "WillyWeather API Key",
           "station_id": "Station ID (optional)"
         }
       },
+      "prefix": {
+        "title": "WillyWeather Setup - Entity Prefix",
+        "description": "Step 2 of 7: Configure the entity ID prefix for {station_name}\n\n**Default Entity Prefix:**\nSpecify a prefix for all entity IDs created by this integration (e.g., \"ww_\" will create entities like sensor.ww_temperature, weather.ww_12345).\n\n**Tip:** Leave empty for no prefix, or use a custom prefix to organize your entities.",
+        "data": {
+          "sensor_prefix": "Default entity prefix (e.g., 'ww_')"
+        }
+      },
       "observational": {
         "title": "WillyWeather Setup - Observation Sensors",
-        "description": "Step 2 of 6: Configure optional observation sensors for {station_name}\n\n**Observation Sensors** provide current weather conditions (updated every 10-30 minutes):\n- Temperature, humidity, wind, pressure (always included when observational is enabled)\n- UV index (requires UV forecast enabled on your API key)\n- Tide information (requires tides enabled on your API key, coastal locations only)\n- Swell data (requires swell enabled on your API key, coastal locations only)\n\n**Extended Forecast Text:**\n- Detailed forecast text for today (e.g., \"Mostly sunny day. Slight chance of shower...\")\n- Creates a 'Today's Extended Forecast' sensor (state truncated to 255 chars, full text in 'full_text' attribute)\n- **IMPORTANT: Requires extra API call (adds cost) and must be enabled in WillyWeather API admin**\n\n**Note:** If optional features aren't enabled on your API key, they will be silently skipped.",
+        "description": "Step 3 of 7: Configure optional observation sensors for {station_name}\n\n**Observation Sensors** provide current weather conditions (updated every 10-30 minutes):\n- Temperature, humidity, wind, pressure (always included when observational is enabled)\n- UV index (requires UV forecast enabled on your API key)\n- Tide information (requires tides enabled on your API key, coastal locations only)\n- Swell data (requires swell enabled on your API key, coastal locations only)\n\n**Extended Forecast Text:**\n- Detailed forecast text for today (e.g., \"Mostly sunny day. Slight chance of shower...\")\n- Creates a 'Today's Extended Forecast' sensor (state truncated to 255 chars, full text in 'full_text' attribute)\n- **IMPORTANT: Requires extra API call (adds cost) and must be enabled in WillyWeather API admin**\n\n**Note:** If optional features aren't enabled on your API key, they will be silently skipped.",
         "data": {
           "include_observational": "Include observational sensors (temperature, humidity, wind, pressure, etc.)",
           "include_uv": "Include UV index sensors",
@@ -22,15 +29,15 @@
       },
       "forecast_options": {
         "title": "WillyWeather Setup - Forecast Data Options",
-        "description": "Step 3 of 6: Configure forecast data options for {station_name}\n\n**Forecast Data** (retrieved via weather.get_forecasts service call):\n- Wind forecast data adds wind speed/direction to forecast (requires wind enabled on your API key)\n\n**Forecast Sensors** create individual sensors for each day with temperature, rain, UV, etc.:\n- Enable the checkbox below to configure forecast sensors later\n- No additional API calls required\n- Perfect for custom Lovelace cards\n- Easy automation triggers",
+        "description": "Step 4 of 7: Configure forecast data options for {station_name}\n\n**Forecast Data** (retrieved via weather.get_forecasts service call):\n- Wind forecast data adds wind speed/direction to forecast (requires wind enabled on your API key)\n\n**Forecast Sensors** create individual sensors for each day with temperature, rain, UV, etc.:\n- Enable the checkbox below to configure forecast sensors later\n- No additional API calls required\n- Perfect for custom Lovelace cards\n- Easy automation triggers",
         "data": {
           "include_wind": "Include wind forecast data (adds wind to weather.get_forecasts)",
-          "include_forecast_sensors": "Include daily forecast sensors (if enabled, you'll select which sensors in step 5)"
+          "include_forecast_sensors": "Include daily forecast sensors (if enabled, you'll select which sensors in step 6)"
         }
       },
       "warnings": {
         "title": "WillyWeather Setup - Weather Warning Sensors",
-        "description": "Step 4 of 6: Configure weather warning sensors for {station_name}\n\n**Weather Warnings:**\nBinary sensors that alert you to dangerous weather conditions such as storms, floods, fires, and extreme temperatures.",
+        "description": "Step 5 of 7: Configure weather warning sensors for {station_name}\n\n**Weather Warnings:**\nBinary sensors that alert you to dangerous weather conditions such as storms, floods, fires, and extreme temperatures.",
         "data": {
           "include_warnings": "Include weather warning binary sensors",
           "warning_monitored": "Warning types to monitor"
@@ -38,7 +45,7 @@
       },
       "forecast_sensors": {
         "title": "WillyWeather Setup - Forecast Sensor Selection",
-        "description": "Step 5 of 6: Select which forecast sensors to create for {station_name}\n\n**Select Sensors:**\nChoose which data points to track for each forecast day.\n\n**Number of Days:**\nSelect how many days to forecast (1 = today only, 7 = today + next 6 days).\n\n**Note:** Extended forecast text is available in the 'Today's Extended Forecast' observational sensor (if enabled in Step 2).",
+        "description": "Step 6 of 7: Select which forecast sensors to create for {station_name}\n\n**Select Sensors:**\nChoose which data points to track for each forecast day.\n\n**Number of Days:**\nSelect how many days to forecast (1 = today only, 7 = today + next 6 days).\n\n**Note:** Extended forecast text is available in the 'Today's Extended Forecast' observational sensor (if enabled in Step 3).",
         "data": {
           "forecast_monitored": "Forecast sensors to monitor",
           "forecast_days": "Number of forecast days (1-7)"
@@ -46,7 +53,7 @@
       },
       "update_intervals": {
         "title": "WillyWeather Setup - Update Intervals",
-        "description": "Step 6 of 6: Configure update intervals for {station_name}\n\nSeparate intervals for observational (current conditions) and forecast data reduce API usage.\n\n**Default setup:**\n- Observational: 10/30 min (day/night)\n- Forecast: 30/60 min (day/night)\n- Total: ~7,920 API calls/month",
+        "description": "Step 7 of 7: Configure update intervals for {station_name}\n\nSeparate intervals for observational (current conditions) and forecast data reduce API usage.\n\n**Default setup:**\n- Observational: 10/30 min (day/night)\n- Forecast: 30/60 min (day/night)\n- Total: ~7,920 API calls/month",
         "data": {
           "update_interval_day": "Observational day interval (minutes, 5-60)",
           "update_interval_night": "Observational night interval (minutes, 10-120)",

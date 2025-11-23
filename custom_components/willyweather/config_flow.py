@@ -23,6 +23,7 @@ from .const import (
     CONF_INCLUDE_TIDES,
     CONF_INCLUDE_SWELL,
     CONF_INCLUDE_EXTENDED_FORECAST,
+    CONF_SENSOR_PREFIX,
     CONF_STATION_ID,
     CONF_STATION_NAME,
     CONF_UPDATE_INTERVAL_DAY,
@@ -32,6 +33,7 @@ from .const import (
     CONF_NIGHT_START_HOUR,
     CONF_NIGHT_END_HOUR,
     CONF_WARNING_MONITORED,
+    DEFAULT_SENSOR_PREFIX,
     DEFAULT_UPDATE_INTERVAL_DAY,
     DEFAULT_UPDATE_INTERVAL_NIGHT,
     DEFAULT_FORECAST_UPDATE_INTERVAL_DAY,
@@ -100,7 +102,7 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     else:
                         self._station_id = station_id
                         self._station_name = station_name
-                        return await self.async_step_observational()
+                        return await self.async_step_prefix()
                 except Exception as err:
                     _LOGGER.error("Error fetching station name: %s", err)
                     errors["base"] = "api_error"
@@ -119,6 +121,26 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             description_placeholders={
                 "api_url": "https://www.willyweather.com.au/info/api.html"
             },
+        )
+
+    async def async_step_prefix(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle sensor prefix configuration step."""
+        if user_input is not None:
+            self._sensor_prefix = user_input.get(CONF_SENSOR_PREFIX, DEFAULT_SENSOR_PREFIX)
+            return await self.async_step_observational()
+
+        data_schema = vol.Schema(
+            {
+                vol.Optional(CONF_SENSOR_PREFIX, default=DEFAULT_SENSOR_PREFIX): cv.string,
+            }
+        )
+
+        return self.async_show_form(
+            step_id="prefix",
+            data_schema=data_schema,
+            description_placeholders={"station_name": getattr(self, '_station_name', 'Weather Station')},
         )
 
     async def async_step_observational(
@@ -277,6 +299,7 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             # Build options dict from observational options
             options = {
+                CONF_SENSOR_PREFIX: getattr(self, '_sensor_prefix', DEFAULT_SENSOR_PREFIX),
                 CONF_INCLUDE_OBSERVATIONAL: observational_options.get(CONF_INCLUDE_OBSERVATIONAL, True),
                 CONF_INCLUDE_UV: observational_options.get(CONF_INCLUDE_UV, True),
                 CONF_INCLUDE_TIDES: observational_options.get(CONF_INCLUDE_TIDES, False),
