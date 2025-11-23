@@ -196,7 +196,7 @@ class WillyWeatherSensor(CoordinatorEntity, SensorEntity):
         sensor_info = sensor_types_dict[sensor_type]
         self._attr_name = sensor_info["name"]
         self._attr_unique_id = f"{station_id}_{sensor_type}"
-        self._attr_entity_id = f"sensor.{sensor_prefix}{sensor_type}"
+        self.entity_id = f"sensor.{sensor_prefix}{sensor_type}"
         self._attr_native_unit_of_measurement = sensor_info["unit"]
         self._attr_icon = sensor_info["icon"]
         self._attr_device_class = sensor_info.get("device_class")
@@ -300,7 +300,7 @@ class WillyWeatherSunMoonSensor(CoordinatorEntity, SensorEntity):
         sensor_info = SUNMOON_SENSOR_TYPES[sensor_type]
         self._attr_name = sensor_info["name"]
         self._attr_unique_id = f"{station_id}_{sensor_type}"
-        self._attr_entity_id = f"sensor.{sensor_prefix}{sensor_type}"
+        self.entity_id = f"sensor.{sensor_prefix}{sensor_type}"
         self._attr_native_unit_of_measurement = sensor_info.get("unit")
         # Don't set icon here for moon_phase - we'll do it dynamically
         if sensor_type != "moon_phase":
@@ -460,7 +460,7 @@ class WillyWeatherTideSensor(CoordinatorEntity, SensorEntity):
         sensor_info = TIDES_SENSOR_TYPES[sensor_type]
         self._attr_name = sensor_info["name"]
         self._attr_unique_id = f"{station_id}_{sensor_type}"
-        self._attr_entity_id = f"sensor.{sensor_prefix}{sensor_type}"
+        self.entity_id = f"sensor.{sensor_prefix}{sensor_type}"
         self._attr_native_unit_of_measurement = sensor_info.get("unit")
         self._attr_icon = sensor_info["icon"]
         self._attr_device_class = sensor_info.get("device_class")
@@ -618,7 +618,7 @@ class WillyWeatherUVSensor(CoordinatorEntity, SensorEntity):
         sensor_info = UV_SENSOR_TYPES[sensor_type]
         self._attr_name = sensor_info["name"]
         self._attr_unique_id = f"{station_id}_{sensor_type}"
-        self._attr_entity_id = f"sensor.{sensor_prefix}{sensor_type}"
+        self.entity_id = f"sensor.{sensor_prefix}{sensor_type}"
         self._attr_native_unit_of_measurement = sensor_info.get("unit")
         self._attr_icon = sensor_info["icon"]
 
@@ -692,7 +692,7 @@ class WillyWeatherWindForecastSensor(CoordinatorEntity, SensorEntity):
         sensor_info = WIND_FORECAST_TYPES[sensor_type]
         self._attr_name = sensor_info["name"]
         self._attr_unique_id = f"{station_id}_{sensor_type}"
-        self._attr_entity_id = f"sensor.{sensor_prefix}{sensor_type}"
+        self.entity_id = f"sensor.{sensor_prefix}{sensor_type}"
         self._attr_native_unit_of_measurement = sensor_info.get("unit")
         self._attr_icon = sensor_info["icon"]
         self._attr_device_class = sensor_info.get("device_class")
@@ -755,7 +755,7 @@ class WillyWeatherSwellSensor(CoordinatorEntity, SensorEntity):
         sensor_info = SWELL_SENSOR_TYPES[sensor_type]
         self._attr_name = sensor_info["name"]
         self._attr_unique_id = f"{station_id}_{sensor_type}"
-        self._attr_entity_id = f"sensor.{sensor_prefix}{sensor_type}"
+        self.entity_id = f"sensor.{sensor_prefix}{sensor_type}"
         self._attr_native_unit_of_measurement = sensor_info.get("unit")
         self._attr_icon = sensor_info["icon"]
 
@@ -846,7 +846,7 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
         self._sensor_type = sensor_type
         self._forecast_day = forecast_day
         self._attr_unique_id = f"{station_id}_forecast_{sensor_type}_day_{forecast_day}"
-        self._attr_entity_id = f"sensor.{sensor_prefix}{sensor_type}_{forecast_day}"
+        self.entity_id = f"sensor.{sensor_prefix}{sensor_type}_{forecast_day}"
 
         sensor_config = FORECAST_SENSOR_TYPES[sensor_type]
         day_label = f"{forecast_day}"
