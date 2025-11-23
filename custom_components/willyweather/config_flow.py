@@ -131,13 +131,13 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._sensor_prefix = user_input.get(CONF_SENSOR_PREFIX, DEFAULT_SENSOR_PREFIX)
             return await self.async_step_observational()
 
-        # Create default prefix with station name: "ww_{station_name}_"
+        # Create default prefix with station name: "ww_{station_name}"
         # Sanitize station name: lowercase, replace spaces with underscores, remove special chars
         station_name = getattr(self, '_station_name', 'weather')
         sanitized_name = station_name.lower().replace(' ', '_').replace('-', '_')
         # Remove any characters that aren't alphanumeric or underscore
         sanitized_name = ''.join(c for c in sanitized_name if c.isalnum() or c == '_')
-        default_prefix = f"ww_{sanitized_name}_"
+        default_prefix = f"ww_{sanitized_name}"
 
         data_schema = vol.Schema(
             {

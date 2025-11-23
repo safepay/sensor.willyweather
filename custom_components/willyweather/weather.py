@@ -62,7 +62,6 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
     """Implementation of a WillyWeather weather entity."""
 
     _attr_attribution = ATTRIBUTION
-    _attr_has_entity_name = True
     _attr_native_precipitation_unit = UnitOfPrecipitationDepth.MILLIMETERS
     _attr_native_pressure_unit = UnitOfPressure.HPA
     _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
@@ -81,14 +80,21 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
         super().__init__(coordinator)
         self._station_id = entry.data[CONF_STATION_ID]
         self._station_name = entry.data.get(CONF_STATION_NAME, f"Station {self._station_id}")
+        self._sensor_prefix = sensor_prefix
         self._attr_unique_id = f"{self._station_id}_weather"
-        self._attr_name = None  # No name so entity ID is just the device name
         self._entry = entry
+
+        # Format prefix for display: "ww_melbourne" -> "WW Melbourne"
+        if sensor_prefix:
+            self._attr_name = sensor_prefix.replace('_', ' ').title().replace('Ww ', 'WW ')
+        else:
+            self._attr_name = self._station_name
 
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
             identifiers={(DOMAIN, self._station_id)},
             manufacturer=MANUFACTURER,
+            name=self._station_name,
         )
 
     @property
