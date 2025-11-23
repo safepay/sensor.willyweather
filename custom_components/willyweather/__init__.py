@@ -42,15 +42,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     station_id = entry.data.get(CONF_STATION_ID)
     station_name = entry.data.get(CONF_STATION_NAME, f"Station {station_id}")
 
-    # Get sensor prefix for device naming (backward compatibility: empty if not set)
+    # Get sensor prefix (backward compatibility: empty if not set)
     sensor_prefix = entry.options.get(CONF_SENSOR_PREFIX, "" if CONF_SENSOR_PREFIX not in entry.options else DEFAULT_SENSOR_PREFIX)
 
-    if sensor_prefix:
-        # Convert prefix like "ww_melbourne_" to display name "WW Melbourne"
-        device_name = sensor_prefix.rstrip('_').replace('_', ' ').title().replace('Ww ', 'WW ')
-    else:
-        # Backward compatibility: use station name without prefix
-        device_name = station_name
+    # Use station name for main device (no prefix needed for device)
+    device_name = station_name
 
     device_registry = async_get_device_registry(hass)
     device_registry.async_get_or_create(
