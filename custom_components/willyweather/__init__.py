@@ -10,7 +10,14 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.device_registry import async_get as async_get_device_registry
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 
-from .const import CONF_STATION_ID, CONF_STATION_NAME, DOMAIN, MANUFACTURER
+from .const import (
+    CONF_SENSOR_PREFIX,
+    CONF_STATION_ID,
+    CONF_STATION_NAME,
+    DEFAULT_SENSOR_PREFIX,
+    DOMAIN,
+    MANUFACTURER,
+)
 from .coordinator import WillyWeatherDataUpdateCoordinator
 
 if TYPE_CHECKING:
@@ -34,13 +41,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Create main parent device
     station_id = entry.data.get(CONF_STATION_ID)
     station_name = entry.data.get(CONF_STATION_NAME, f"Station {station_id}")
-    
+
+    # Get sensor prefix and format for device name
+    sensor_prefix = entry.options.get(CONF_SENSOR_PREFIX, DEFAULT_SENSOR_PREFIX)
+    # Strip trailing underscore and add space for device name
+    prefix_for_device = sensor_prefix.rstrip('_') + ' ' if sensor_prefix else ''
+
     device_registry = async_get_device_registry(hass)
     device_registry.async_get_or_create(
         config_entry_id=entry.entry_id,
         identifiers={(DOMAIN, station_id)},
         manufacturer=MANUFACTURER,
-        name=station_name,
+        name=f"{prefix_for_device}{station_name}",
     )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

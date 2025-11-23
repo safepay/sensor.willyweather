@@ -62,7 +62,7 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
     """Implementation of a WillyWeather weather entity."""
 
     _attr_attribution = ATTRIBUTION
-    _attr_has_entity_name = False
+    _attr_has_entity_name = True
     _attr_native_precipitation_unit = UnitOfPrecipitationDepth.MILLIMETERS
     _attr_native_pressure_unit = UnitOfPressure.HPA
     _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
@@ -82,8 +82,7 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
         self._station_id = entry.data[CONF_STATION_ID]
         self._station_name = entry.data.get(CONF_STATION_NAME, f"Station {self._station_id}")
         self._attr_unique_id = f"{self._station_id}_weather"
-        # Set full name with prefix for entity_id generation
-        self._attr_name = f"{sensor_prefix}{self._station_name}"
+        self._attr_name = self._station_name
         self._entry = entry
 
         self._attr_device_info = DeviceInfo(
