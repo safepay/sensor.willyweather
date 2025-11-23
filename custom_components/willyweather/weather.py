@@ -81,14 +81,17 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
         self._station_id = entry.data[CONF_STATION_ID]
         self._station_name = entry.data.get(CONF_STATION_NAME, f"Station {self._station_id}")
         self._sensor_prefix = sensor_prefix
-        self._attr_unique_id = f"{self._station_id}_weather"
         self._entry = entry
 
         # Format prefix for display: "ww_melbourne" -> "WW Melbourne"
         if sensor_prefix:
             self._attr_name = sensor_prefix.replace('_', ' ').title().replace('Ww ', 'WW ')
+            # Use prefix in unique_id for entity_id generation
+            self._attr_unique_id = f"{sensor_prefix}_weather"
         else:
             self._attr_name = self._station_name
+            # Backward compatibility: use station_id when no prefix
+            self._attr_unique_id = f"{self._station_id}_weather"
 
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,

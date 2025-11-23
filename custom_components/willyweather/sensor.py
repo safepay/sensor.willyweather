@@ -199,10 +199,12 @@ class WillyWeatherSensor(CoordinatorEntity, SensorEntity):
         if sensor_prefix:
             display_prefix = sensor_prefix.replace('_', ' ').title().replace('Ww ', 'WW ')
             self._attr_name = f"{display_prefix} {sensor_info['name']}"
+            # Use prefix in unique_id for entity_id generation
+            self._attr_unique_id = f"{sensor_prefix}_{sensor_type}"
         else:
             self._attr_name = sensor_info['name']
-
-        self._attr_unique_id = f"{station_id}_{sensor_type}"
+            # Backward compatibility: use station_id when no prefix
+            self._attr_unique_id = f"{station_id}_{sensor_type}"
         self._attr_native_unit_of_measurement = sensor_info["unit"]
         self._attr_icon = sensor_info["icon"]
         self._attr_device_class = sensor_info.get("device_class")
@@ -846,7 +848,6 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
         self._sensor_type = sensor_type
         self._forecast_day = forecast_day
         self._sensor_prefix = sensor_prefix
-        self._attr_unique_id = f"{station_id}_forecast_{sensor_type}_day_{forecast_day}"
 
         sensor_config = FORECAST_SENSOR_TYPES[sensor_type]
         day_label = f"{forecast_day}"
@@ -855,21 +856,25 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
         if sensor_prefix:
             display_prefix = sensor_prefix.replace('_', ' ').title().replace('Ww ', 'WW ')
             self._attr_name = f"{display_prefix} {sensor_config['name']} {day_label}"
+            # Use prefix in unique_id for entity_id generation
+            self._attr_unique_id = f"{sensor_prefix}_forecast_{sensor_type}_day_{forecast_day}"
         else:
             self._attr_name = f"{sensor_config['name']} {day_label}"
+            # Backward compatibility: use station_id when no prefix
+            self._attr_unique_id = f"{station_id}_forecast_{sensor_type}_day_{forecast_day}"
         self._attr_native_unit_of_measurement = sensor_config.get("unit")
         self._attr_device_class = sensor_config.get("device_class")
         self._attr_state_class = sensor_config.get("state_class")
         self._attr_icon = sensor_config.get("icon")
 
-        # Link to main device
+        # Link to forecast sensors device
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, f"{station_id}_sensors")},
+            identifiers={(DOMAIN, f"{station_id}_forecast_sensors")},
             manufacturer=MANUFACTURER,
-            name=f"{station_name} Sensors",
+            name=f"{station_name} Forecast Sensors",
             via_device=(DOMAIN, station_id),
-            )
+        )
 
     @property
     def available(self) -> bool:
