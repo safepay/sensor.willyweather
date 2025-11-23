@@ -99,10 +99,12 @@ class WillyWeatherWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
         if sensor_prefix:
             display_prefix = sensor_prefix.replace('_', ' ').title().replace('Ww ', 'WW ')
             self._attr_name = f"{display_prefix} {sensor_info['name']}"
+            # Use prefix in unique_id for entity_id generation
+            self._attr_unique_id = f"{sensor_prefix}_{sensor_type}"
         else:
             self._attr_name = sensor_info['name']
-
-        self._attr_unique_id = f"{station_id}_{sensor_type}"
+            # Backward compatibility: use station_id when no prefix
+            self._attr_unique_id = f"{station_id}_{sensor_type}"
         self._attr_icon = sensor_info["icon"]
         self._attr_device_class = sensor_info.get("device_class")
 
