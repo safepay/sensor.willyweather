@@ -131,9 +131,17 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._sensor_prefix = user_input.get(CONF_SENSOR_PREFIX, DEFAULT_SENSOR_PREFIX)
             return await self.async_step_observational()
 
+        # Create default prefix with station name: "ww_{station_name}_"
+        # Sanitize station name: lowercase, replace spaces with underscores, remove special chars
+        station_name = getattr(self, '_station_name', 'weather')
+        sanitized_name = station_name.lower().replace(' ', '_').replace('-', '_')
+        # Remove any characters that aren't alphanumeric or underscore
+        sanitized_name = ''.join(c for c in sanitized_name if c.isalnum() or c == '_')
+        default_prefix = f"ww_{sanitized_name}_"
+
         data_schema = vol.Schema(
             {
-                vol.Optional(CONF_SENSOR_PREFIX, default=DEFAULT_SENSOR_PREFIX): cv.string,
+                vol.Optional(CONF_SENSOR_PREFIX, default=default_prefix): cv.string,
             }
         )
 
@@ -298,8 +306,10 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             warning_options = getattr(self, '_warning_options', {})
 
             # Build options dict from observational options
+            # Use the stored prefix or empty string if not set (backward compatibility)
+            sensor_prefix = getattr(self, '_sensor_prefix', '')
             options = {
-                CONF_SENSOR_PREFIX: getattr(self, '_sensor_prefix', DEFAULT_SENSOR_PREFIX),
+                CONF_SENSOR_PREFIX: sensor_prefix,
                 CONF_INCLUDE_OBSERVATIONAL: observational_options.get(CONF_INCLUDE_OBSERVATIONAL, True),
                 CONF_INCLUDE_UV: observational_options.get(CONF_INCLUDE_UV, True),
                 CONF_INCLUDE_TIDES: observational_options.get(CONF_INCLUDE_TIDES, False),
