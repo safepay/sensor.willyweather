@@ -203,10 +203,8 @@ class WillyWeatherSensor(CoordinatorEntity, SensorEntity):
 
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, f"{station_id}_sensors")},
+            identifiers={(DOMAIN, station_id)},
             manufacturer=MANUFACTURER,
-            name=f"{station_name} Sensors",
-            via_device=(DOMAIN, station_id),
         )
 
     @property
@@ -307,10 +305,8 @@ class WillyWeatherSunMoonSensor(CoordinatorEntity, SensorEntity):
 
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, f"{station_id}_sensors")},
+            identifiers={(DOMAIN, station_id)},
             manufacturer=MANUFACTURER,
-            name=f"{station_name} Sensors",
-            via_device=(DOMAIN, station_id),
         )
 
     @staticmethod
@@ -464,10 +460,8 @@ class WillyWeatherTideSensor(CoordinatorEntity, SensorEntity):
 
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, f"{station_id}_sensors")},
+            identifiers={(DOMAIN, station_id)},
             manufacturer=MANUFACTURER,
-            name=f"{station_name} Sensors",
-            via_device=(DOMAIN, station_id),
         )
 
     @property
@@ -620,10 +614,8 @@ class WillyWeatherUVSensor(CoordinatorEntity, SensorEntity):
 
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, f"{station_id}_sensors")},
+            identifiers={(DOMAIN, station_id)},
             manufacturer=MANUFACTURER,
-            name=f"{station_name} Sensors",
-            via_device=(DOMAIN, station_id),
         )
 
     @property
@@ -694,10 +686,8 @@ class WillyWeatherWindForecastSensor(CoordinatorEntity, SensorEntity):
 
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, f"{station_id}_sensors")},
+            identifiers={(DOMAIN, station_id)},
             manufacturer=MANUFACTURER,
-            name=f"{station_name} Sensors",
-            via_device=(DOMAIN, station_id),
         )
 
     @property
@@ -755,10 +745,8 @@ class WillyWeatherSwellSensor(CoordinatorEntity, SensorEntity):
 
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, f"{station_id}_sensors")},
+            identifiers={(DOMAIN, station_id)},
             manufacturer=MANUFACTURER,
-            name=f"{station_name} Sensors",
-            via_device=(DOMAIN, station_id),
         )
 
     @property
@@ -850,13 +838,11 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
         self._attr_state_class = sensor_config.get("state_class")
         self._attr_icon = sensor_config.get("icon")
 
-        # Link to forecast sensors device
+        # Link to main device
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, f"{station_id}_forecast_sensors")},
-            name=f"{station_name} Forecast Sensors",
+            identifiers={(DOMAIN, station_id)},
             manufacturer=MANUFACTURER,
-            via_device=(DOMAIN, station_id),
         )
 
     @property

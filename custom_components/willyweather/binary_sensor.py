@@ -101,10 +101,8 @@ class WillyWeatherWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
 
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, f"{station_id}_binary_sensors")},
+            identifiers={(DOMAIN, station_id)},
             manufacturer=MANUFACTURER,
-            name=f"{station_name} Binary Sensors",
-            via_device=(DOMAIN, station_id),
         )
 
     @property

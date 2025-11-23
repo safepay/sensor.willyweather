@@ -82,14 +82,13 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
         self._station_id = entry.data[CONF_STATION_ID]
         self._station_name = entry.data.get(CONF_STATION_NAME, f"Station {self._station_id}")
         self._attr_unique_id = f"{self._station_id}_weather"
-        self._attr_name = self._station_name
+        self._attr_name = None  # No name so entity ID is just the device name
         self._entry = entry
 
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
             identifiers={(DOMAIN, self._station_id)},
             manufacturer=MANUFACTURER,
-            name=self._station_name,
         )
 
     @property
