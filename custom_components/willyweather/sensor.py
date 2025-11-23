@@ -175,7 +175,7 @@ class WillyWeatherSensor(CoordinatorEntity, SensorEntity):
     """Implementation of a WillyWeather observational sensor."""
 
     _attr_attribution = ATTRIBUTION
-    _attr_has_entity_name = True
+    _attr_has_entity_name = False
 
     def __init__(
         self,
@@ -194,9 +194,9 @@ class WillyWeatherSensor(CoordinatorEntity, SensorEntity):
         self._station_name = station_name
 
         sensor_info = sensor_types_dict[sensor_type]
-        self._attr_name = sensor_info["name"]
+        # Set full name with prefix for entity_id generation
+        self._attr_name = f"{sensor_prefix}{sensor_info['name']}"
         self._attr_unique_id = f"{station_id}_{sensor_type}"
-        self.entity_id = f"sensor.{sensor_prefix}{sensor_type}"
         self._attr_native_unit_of_measurement = sensor_info["unit"]
         self._attr_icon = sensor_info["icon"]
         self._attr_device_class = sensor_info.get("device_class")
@@ -281,7 +281,7 @@ class WillyWeatherSunMoonSensor(CoordinatorEntity, SensorEntity):
     """Implementation of a WillyWeather sun/moon sensor."""
 
     _attr_attribution = ATTRIBUTION
-    _attr_has_entity_name = True
+    _attr_has_entity_name = False
 
     def __init__(
         self,
@@ -298,9 +298,9 @@ class WillyWeatherSunMoonSensor(CoordinatorEntity, SensorEntity):
         self._station_name = station_name
 
         sensor_info = SUNMOON_SENSOR_TYPES[sensor_type]
-        self._attr_name = sensor_info["name"]
+        # Set full name with prefix for entity_id generation
+        self._attr_name = f"{sensor_prefix}{sensor_info['name']}"
         self._attr_unique_id = f"{station_id}_{sensor_type}"
-        self.entity_id = f"sensor.{sensor_prefix}{sensor_type}"
         self._attr_native_unit_of_measurement = sensor_info.get("unit")
         # Don't set icon here for moon_phase - we'll do it dynamically
         if sensor_type != "moon_phase":
@@ -441,7 +441,7 @@ class WillyWeatherTideSensor(CoordinatorEntity, SensorEntity):
     """Implementation of a WillyWeather tide sensor."""
 
     _attr_attribution = ATTRIBUTION
-    _attr_has_entity_name = True
+    _attr_has_entity_name = False
 
     def __init__(
         self,
@@ -458,9 +458,9 @@ class WillyWeatherTideSensor(CoordinatorEntity, SensorEntity):
         self._station_name = station_name
 
         sensor_info = TIDES_SENSOR_TYPES[sensor_type]
-        self._attr_name = sensor_info["name"]
+        # Set full name with prefix for entity_id generation
+        self._attr_name = f"{sensor_prefix}{sensor_info['name']}"
         self._attr_unique_id = f"{station_id}_{sensor_type}"
-        self.entity_id = f"sensor.{sensor_prefix}{sensor_type}"
         self._attr_native_unit_of_measurement = sensor_info.get("unit")
         self._attr_icon = sensor_info["icon"]
         self._attr_device_class = sensor_info.get("device_class")
@@ -599,7 +599,7 @@ class WillyWeatherUVSensor(CoordinatorEntity, SensorEntity):
     """Implementation of a WillyWeather UV sensor."""
 
     _attr_attribution = ATTRIBUTION
-    _attr_has_entity_name = True
+    _attr_has_entity_name = False
 
     def __init__(
         self,
@@ -616,9 +616,9 @@ class WillyWeatherUVSensor(CoordinatorEntity, SensorEntity):
         self._station_name = station_name
 
         sensor_info = UV_SENSOR_TYPES[sensor_type]
-        self._attr_name = sensor_info["name"]
+        # Set full name with prefix for entity_id generation
+        self._attr_name = f"{sensor_prefix}{sensor_info['name']}"
         self._attr_unique_id = f"{station_id}_{sensor_type}"
-        self.entity_id = f"sensor.{sensor_prefix}{sensor_type}"
         self._attr_native_unit_of_measurement = sensor_info.get("unit")
         self._attr_icon = sensor_info["icon"]
 
@@ -673,7 +673,7 @@ class WillyWeatherWindForecastSensor(CoordinatorEntity, SensorEntity):
     """Implementation of a WillyWeather wind forecast sensor."""
 
     _attr_attribution = ATTRIBUTION
-    _attr_has_entity_name = True
+    _attr_has_entity_name = False
 
     def __init__(
         self,
@@ -690,9 +690,9 @@ class WillyWeatherWindForecastSensor(CoordinatorEntity, SensorEntity):
         self._station_name = station_name
 
         sensor_info = WIND_FORECAST_TYPES[sensor_type]
-        self._attr_name = sensor_info["name"]
+        # Set full name with prefix for entity_id generation
+        self._attr_name = f"{sensor_prefix}{sensor_info['name']}"
         self._attr_unique_id = f"{station_id}_{sensor_type}"
-        self.entity_id = f"sensor.{sensor_prefix}{sensor_type}"
         self._attr_native_unit_of_measurement = sensor_info.get("unit")
         self._attr_icon = sensor_info["icon"]
         self._attr_device_class = sensor_info.get("device_class")
@@ -736,7 +736,7 @@ class WillyWeatherSwellSensor(CoordinatorEntity, SensorEntity):
     """Implementation of a WillyWeather swell sensor."""
 
     _attr_attribution = ATTRIBUTION
-    _attr_has_entity_name = True
+    _attr_has_entity_name = False
 
     def __init__(
         self,
@@ -753,9 +753,9 @@ class WillyWeatherSwellSensor(CoordinatorEntity, SensorEntity):
         self._station_name = station_name
 
         sensor_info = SWELL_SENSOR_TYPES[sensor_type]
-        self._attr_name = sensor_info["name"]
+        # Set full name with prefix for entity_id generation
+        self._attr_name = f"{sensor_prefix}{sensor_info['name']}"
         self._attr_unique_id = f"{station_id}_{sensor_type}"
-        self.entity_id = f"sensor.{sensor_prefix}{sensor_type}"
         self._attr_native_unit_of_measurement = sensor_info.get("unit")
         self._attr_icon = sensor_info["icon"]
 
@@ -826,7 +826,7 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
     """Representation of a WillyWeather forecast sensor."""
 
     _attr_attribution = ATTRIBUTION
-    _attr_has_entity_name = True
+    _attr_has_entity_name = False
 
     def __init__(
         self,
@@ -846,12 +846,12 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
         self._sensor_type = sensor_type
         self._forecast_day = forecast_day
         self._attr_unique_id = f"{station_id}_forecast_{sensor_type}_day_{forecast_day}"
-        self.entity_id = f"sensor.{sensor_prefix}{sensor_type}_{forecast_day}"
 
         sensor_config = FORECAST_SENSOR_TYPES[sensor_type]
         day_label = f"{forecast_day}"
 
-        self._attr_name = f"{sensor_config['name']} {day_label}"
+        # Set full name with prefix for entity_id generation
+        self._attr_name = f"{sensor_prefix}{sensor_config['name']} {day_label}"
         self._attr_native_unit_of_measurement = sensor_config.get("unit")
         self._attr_device_class = sensor_config.get("device_class")
         self._attr_state_class = sensor_config.get("state_class")

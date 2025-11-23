@@ -77,7 +77,7 @@ class WillyWeatherWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
     """Implementation of a WillyWeather warning binary sensor."""
 
     _attr_attribution = ATTRIBUTION
-    _attr_has_entity_name = True
+    _attr_has_entity_name = False
 
     def __init__(
         self,
@@ -94,9 +94,9 @@ class WillyWeatherWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
         self._station_name = station_name
 
         sensor_info = WARNING_BINARY_SENSOR_TYPES[sensor_type]
-        self._attr_name = sensor_info["name"]
+        # Set full name with prefix for entity_id generation
+        self._attr_name = f"{sensor_prefix}{sensor_info['name']}"
         self._attr_unique_id = f"{station_id}_{sensor_type}"
-        self.entity_id = f"binary_sensor.{sensor_prefix}{sensor_type}"
         self._attr_icon = sensor_info["icon"]
         self._attr_device_class = sensor_info.get("device_class")
 
