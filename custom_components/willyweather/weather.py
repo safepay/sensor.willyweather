@@ -83,7 +83,10 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
         self._station_id = entry.data[CONF_STATION_ID]
         self._station_name = entry.data.get(CONF_STATION_NAME, f"Station {self._station_id}")
         self._attr_unique_id = f"{self._station_id}_weather"
-        self._attr_entity_id = f"weather.{sensor_prefix}{self._station_id}"
+        # Sanitize station name for entity_id
+        sanitized_name = self._station_name.lower().replace(' ', '_').replace('-', '_')
+        sanitized_name = ''.join(c for c in sanitized_name if c.isalnum() or c == '_')
+        self.entity_id = f"weather.{sensor_prefix}{sanitized_name}"
         self._entry = entry
 
         self._attr_device_info = DeviceInfo(
