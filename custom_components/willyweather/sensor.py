@@ -23,8 +23,10 @@ from .const import (
     CONF_INCLUDE_TIDES,
     CONF_INCLUDE_WIND,
     CONF_INCLUDE_SWELL,
+    CONF_SENSOR_PREFIX,
     CONF_STATION_ID,
     CONF_STATION_NAME,
+    DEFAULT_SENSOR_PREFIX,
     DOMAIN,
     FORECAST_SENSOR_TYPES,
     MANUFACTURER,
@@ -52,9 +54,12 @@ async def async_setup_entry(
     coordinator: WillyWeatherDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     entities = []
-    
+
     station_id = entry.data[CONF_STATION_ID]
     station_name = entry.data.get(CONF_STATION_NAME, f"Station {station_id}")
+    # For backward compatibility: if CONF_SENSOR_PREFIX is not in options (existing installations),
+    # use empty string. New installations will have it set to DEFAULT_SENSOR_PREFIX ("ww_").
+    sensor_prefix = entry.options.get(CONF_SENSOR_PREFIX, "" if CONF_SENSOR_PREFIX not in entry.options else DEFAULT_SENSOR_PREFIX)
 
     # Add observational sensors if enabled
     if entry.options.get(CONF_INCLUDE_OBSERVATIONAL, True):
@@ -66,6 +71,7 @@ async def async_setup_entry(
                     station_name,
                     sensor_type,
                     SENSOR_TYPES,
+                    sensor_prefix,
                 )
             )
 
@@ -77,6 +83,7 @@ async def async_setup_entry(
                     station_id,
                     station_name,
                     sensor_type,
+                    sensor_prefix,
                 )
             )
 
@@ -89,6 +96,7 @@ async def async_setup_entry(
                     station_id,
                     station_name,
                     sensor_type,
+                    sensor_prefix,
                 )
             )
 
@@ -101,6 +109,7 @@ async def async_setup_entry(
                     station_id,
                     station_name,
                     sensor_type,
+                    sensor_prefix,
                 )
             )
 
@@ -113,6 +122,7 @@ async def async_setup_entry(
                     station_id,
                     station_name,
                     sensor_type,
+                    sensor_prefix,
                 )
             )
 
@@ -125,6 +135,7 @@ async def async_setup_entry(
                     station_id,
                     station_name,
                     sensor_type,
+                    sensor_prefix,
                 )
             )
 
@@ -153,6 +164,7 @@ async def async_setup_entry(
                             station_name,
                             condition,
                             day,
+                            sensor_prefix,
                         )
                     )
 
@@ -172,6 +184,7 @@ class WillyWeatherSensor(CoordinatorEntity, SensorEntity):
         station_name: str,
         sensor_type: str,
         sensor_types_dict: dict,
+        sensor_prefix: str = DEFAULT_SENSOR_PREFIX,
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
@@ -183,6 +196,7 @@ class WillyWeatherSensor(CoordinatorEntity, SensorEntity):
         sensor_info = sensor_types_dict[sensor_type]
         self._attr_name = sensor_info["name"]
         self._attr_unique_id = f"{station_id}_{sensor_type}"
+        self._attr_entity_id = f"sensor.{sensor_prefix}{sensor_type}"
         self._attr_native_unit_of_measurement = sensor_info["unit"]
         self._attr_icon = sensor_info["icon"]
         self._attr_device_class = sensor_info.get("device_class")
@@ -275,6 +289,7 @@ class WillyWeatherSunMoonSensor(CoordinatorEntity, SensorEntity):
         station_id: str,
         station_name: str,
         sensor_type: str,
+        sensor_prefix: str = DEFAULT_SENSOR_PREFIX,
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
@@ -285,6 +300,7 @@ class WillyWeatherSunMoonSensor(CoordinatorEntity, SensorEntity):
         sensor_info = SUNMOON_SENSOR_TYPES[sensor_type]
         self._attr_name = sensor_info["name"]
         self._attr_unique_id = f"{station_id}_{sensor_type}"
+        self._attr_entity_id = f"sensor.{sensor_prefix}{sensor_type}"
         self._attr_native_unit_of_measurement = sensor_info.get("unit")
         # Don't set icon here for moon_phase - we'll do it dynamically
         if sensor_type != "moon_phase":
@@ -433,6 +449,7 @@ class WillyWeatherTideSensor(CoordinatorEntity, SensorEntity):
         station_id: str,
         station_name: str,
         sensor_type: str,
+        sensor_prefix: str = DEFAULT_SENSOR_PREFIX,
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
@@ -443,6 +460,7 @@ class WillyWeatherTideSensor(CoordinatorEntity, SensorEntity):
         sensor_info = TIDES_SENSOR_TYPES[sensor_type]
         self._attr_name = sensor_info["name"]
         self._attr_unique_id = f"{station_id}_{sensor_type}"
+        self._attr_entity_id = f"sensor.{sensor_prefix}{sensor_type}"
         self._attr_native_unit_of_measurement = sensor_info.get("unit")
         self._attr_icon = sensor_info["icon"]
         self._attr_device_class = sensor_info.get("device_class")
@@ -589,6 +607,7 @@ class WillyWeatherUVSensor(CoordinatorEntity, SensorEntity):
         station_id: str,
         station_name: str,
         sensor_type: str,
+        sensor_prefix: str = DEFAULT_SENSOR_PREFIX,
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
@@ -599,6 +618,7 @@ class WillyWeatherUVSensor(CoordinatorEntity, SensorEntity):
         sensor_info = UV_SENSOR_TYPES[sensor_type]
         self._attr_name = sensor_info["name"]
         self._attr_unique_id = f"{station_id}_{sensor_type}"
+        self._attr_entity_id = f"sensor.{sensor_prefix}{sensor_type}"
         self._attr_native_unit_of_measurement = sensor_info.get("unit")
         self._attr_icon = sensor_info["icon"]
 
@@ -661,6 +681,7 @@ class WillyWeatherWindForecastSensor(CoordinatorEntity, SensorEntity):
         station_id: str,
         station_name: str,
         sensor_type: str,
+        sensor_prefix: str = DEFAULT_SENSOR_PREFIX,
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
@@ -671,6 +692,7 @@ class WillyWeatherWindForecastSensor(CoordinatorEntity, SensorEntity):
         sensor_info = WIND_FORECAST_TYPES[sensor_type]
         self._attr_name = sensor_info["name"]
         self._attr_unique_id = f"{station_id}_{sensor_type}"
+        self._attr_entity_id = f"sensor.{sensor_prefix}{sensor_type}"
         self._attr_native_unit_of_measurement = sensor_info.get("unit")
         self._attr_icon = sensor_info["icon"]
         self._attr_device_class = sensor_info.get("device_class")
@@ -722,6 +744,7 @@ class WillyWeatherSwellSensor(CoordinatorEntity, SensorEntity):
         station_id: str,
         station_name: str,
         sensor_type: str,
+        sensor_prefix: str = DEFAULT_SENSOR_PREFIX,
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
@@ -732,6 +755,7 @@ class WillyWeatherSwellSensor(CoordinatorEntity, SensorEntity):
         sensor_info = SWELL_SENSOR_TYPES[sensor_type]
         self._attr_name = sensor_info["name"]
         self._attr_unique_id = f"{station_id}_{sensor_type}"
+        self._attr_entity_id = f"sensor.{sensor_prefix}{sensor_type}"
         self._attr_native_unit_of_measurement = sensor_info.get("unit")
         self._attr_icon = sensor_info["icon"]
 
@@ -812,6 +836,7 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
         station_name: str,
         sensor_type: str,
         forecast_day: int,
+        sensor_prefix: str = DEFAULT_SENSOR_PREFIX,
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
@@ -821,6 +846,7 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
         self._sensor_type = sensor_type
         self._forecast_day = forecast_day
         self._attr_unique_id = f"{station_id}_forecast_{sensor_type}_day_{forecast_day}"
+        self._attr_entity_id = f"sensor.{sensor_prefix}{sensor_type}_{forecast_day}"
 
         sensor_config = FORECAST_SENSOR_TYPES[sensor_type]
         day_label = f"{forecast_day}"

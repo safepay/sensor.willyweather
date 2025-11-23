@@ -23,6 +23,7 @@ MANUFACTURER: Final = "WillyWeather"
 # Configuration
 CONF_STATION_ID: Final = "station_id"
 CONF_STATION_NAME: Final = "station_name"
+CONF_SENSOR_PREFIX: Final = "sensor_prefix"
 CONF_INCLUDE_OBSERVATIONAL: Final = "include_observational"
 CONF_INCLUDE_WARNINGS: Final = "include_warnings"
 CONF_ADDITIONAL_FORECAST: Final = "additional_forecast"
@@ -68,6 +69,9 @@ DEFAULT_NIGHT_END_HOUR: Final = 7  # 7 AM
 # Default values for forecast data
 DEFAULT_FORECAST_UPDATE_INTERVAL_DAY: Final = 30  # minutes
 DEFAULT_FORECAST_UPDATE_INTERVAL_NIGHT: Final = 60  # minutes
+
+# Default sensor prefix
+DEFAULT_SENSOR_PREFIX: Final = "ww_"
 
 # Condition mapping
 CONDITION_MAP: Final = {

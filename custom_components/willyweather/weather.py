@@ -28,8 +28,10 @@ from .const import (
     CONF_INCLUDE_UV,
     CONF_INCLUDE_TIDES,
     CONF_INCLUDE_SWELL,
+    CONF_SENSOR_PREFIX,
     CONF_STATION_ID,
     CONF_STATION_NAME,
+    DEFAULT_SENSOR_PREFIX,
     DOMAIN,
     MANUFACTURER,
 )
@@ -49,7 +51,11 @@ async def async_setup_entry(
     """Set up WillyWeather weather entity based on a config entry."""
     coordinator: WillyWeatherDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    async_add_entities([WillyWeatherEntity(coordinator, entry)])
+    # For backward compatibility: if CONF_SENSOR_PREFIX is not in options (existing installations),
+    # use empty string. New installations will have it set to DEFAULT_SENSOR_PREFIX ("ww_").
+    sensor_prefix = entry.options.get(CONF_SENSOR_PREFIX, "" if CONF_SENSOR_PREFIX not in entry.options else DEFAULT_SENSOR_PREFIX)
+
+    async_add_entities([WillyWeatherEntity(coordinator, entry, sensor_prefix)])
 
 
 class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
@@ -70,12 +76,14 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
         self,
         coordinator: WillyWeatherDataUpdateCoordinator,
         entry: ConfigEntry,
+        sensor_prefix: str = DEFAULT_SENSOR_PREFIX,
     ) -> None:
         """Initialize the weather entity."""
         super().__init__(coordinator)
         self._station_id = entry.data[CONF_STATION_ID]
         self._station_name = entry.data.get(CONF_STATION_NAME, f"Station {self._station_id}")
         self._attr_unique_id = f"{self._station_id}_weather"
+        self._attr_entity_id = f"weather.{sensor_prefix}{self._station_id}"
         self._entry = entry
 
         self._attr_device_info = DeviceInfo(

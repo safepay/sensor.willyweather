@@ -16,9 +16,11 @@ from homeassistant.util import dt as dt_util
 from .const import (
     ATTRIBUTION,
     CONF_INCLUDE_WARNINGS,
+    CONF_SENSOR_PREFIX,
     CONF_STATION_ID,
     CONF_STATION_NAME,
     CONF_WARNING_MONITORED,
+    DEFAULT_SENSOR_PREFIX,
     DOMAIN,
     MANUFACTURER,
     WARNING_BINARY_SENSOR_TYPES,
@@ -40,9 +42,12 @@ async def async_setup_entry(
     coordinator: WillyWeatherDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     entities = []
-    
+
     station_id = entry.data[CONF_STATION_ID]
     station_name = entry.data.get(CONF_STATION_NAME, f"Station {station_id}")
+    # For backward compatibility: if CONF_SENSOR_PREFIX is not in options (existing installations),
+    # use empty string. New installations will have it set to DEFAULT_SENSOR_PREFIX ("ww_").
+    sensor_prefix = entry.options.get(CONF_SENSOR_PREFIX, "" if CONF_SENSOR_PREFIX not in entry.options else DEFAULT_SENSOR_PREFIX)
 
     # Add warning sensors if enabled
     if entry.options.get(CONF_INCLUDE_WARNINGS, False):
@@ -61,6 +66,7 @@ async def async_setup_entry(
                         station_id,
                         station_name,
                         sensor_type,
+                        sensor_prefix,
                     )
                 )
 
@@ -79,6 +85,7 @@ class WillyWeatherWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
         station_id: str,
         station_name: str,
         sensor_type: str,
+        sensor_prefix: str = DEFAULT_SENSOR_PREFIX,
     ) -> None:
         """Initialize the binary sensor."""
         super().__init__(coordinator)
@@ -89,6 +96,7 @@ class WillyWeatherWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
         sensor_info = WARNING_BINARY_SENSOR_TYPES[sensor_type]
         self._attr_name = sensor_info["name"]
         self._attr_unique_id = f"{station_id}_{sensor_type}"
+        self._attr_entity_id = f"binary_sensor.{sensor_prefix}{sensor_type}"
         self._attr_icon = sensor_info["icon"]
         self._attr_device_class = sensor_info.get("device_class")
 
