@@ -175,7 +175,6 @@ class WillyWeatherSensor(CoordinatorEntity, SensorEntity):
     """Implementation of a WillyWeather observational sensor."""
 
     _attr_attribution = ATTRIBUTION
-    _attr_has_entity_name = True
 
     def __init__(
         self,
@@ -192,9 +191,17 @@ class WillyWeatherSensor(CoordinatorEntity, SensorEntity):
         self._sensor_types_dict = sensor_types_dict
         self._station_id = station_id
         self._station_name = station_name
+        self._sensor_prefix = sensor_prefix
 
         sensor_info = sensor_types_dict[sensor_type]
-        self._attr_name = sensor_info['name']
+
+        # Format prefix for display: "ww_melbourne" -> "WW Melbourne"
+        if sensor_prefix:
+            display_prefix = sensor_prefix.replace('_', ' ').title().replace('Ww ', 'WW ')
+            self._attr_name = f"{display_prefix} {sensor_info['name']}"
+        else:
+            self._attr_name = sensor_info['name']
+
         self._attr_unique_id = f"{station_id}_{sensor_type}"
         self._attr_native_unit_of_measurement = sensor_info["unit"]
         self._attr_icon = sensor_info["icon"]
@@ -203,8 +210,10 @@ class WillyWeatherSensor(CoordinatorEntity, SensorEntity):
 
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, station_id)},
+            identifiers={(DOMAIN, f"{station_id}_sensors")},
             manufacturer=MANUFACTURER,
+            name=f"{station_name} Sensors",
+            via_device=(DOMAIN, station_id),
         )
 
     @property
@@ -278,7 +287,6 @@ class WillyWeatherSunMoonSensor(CoordinatorEntity, SensorEntity):
     """Implementation of a WillyWeather sun/moon sensor."""
 
     _attr_attribution = ATTRIBUTION
-    _attr_has_entity_name = True
 
     def __init__(
         self,
@@ -293,6 +301,7 @@ class WillyWeatherSunMoonSensor(CoordinatorEntity, SensorEntity):
         self._sensor_type = sensor_type
         self._station_id = station_id
         self._station_name = station_name
+        self._sensor_prefix = sensor_prefix
 
         sensor_info = SUNMOON_SENSOR_TYPES[sensor_type]
         self._attr_name = sensor_info['name']
@@ -305,9 +314,11 @@ class WillyWeatherSunMoonSensor(CoordinatorEntity, SensorEntity):
 
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, station_id)},
+            identifiers={(DOMAIN, f"{station_id}_sensors")},
             manufacturer=MANUFACTURER,
-        )
+            name=f"{station_name} Sensors",
+            via_device=(DOMAIN, station_id),
+            )
 
     @staticmethod
     def _get_moon_phase_icon(phase: str) -> str:
@@ -435,7 +446,6 @@ class WillyWeatherTideSensor(CoordinatorEntity, SensorEntity):
     """Implementation of a WillyWeather tide sensor."""
 
     _attr_attribution = ATTRIBUTION
-    _attr_has_entity_name = True
 
     def __init__(
         self,
@@ -450,6 +460,7 @@ class WillyWeatherTideSensor(CoordinatorEntity, SensorEntity):
         self._sensor_type = sensor_type
         self._station_id = station_id
         self._station_name = station_name
+        self._sensor_prefix = sensor_prefix
 
         sensor_info = TIDES_SENSOR_TYPES[sensor_type]
         self._attr_name = sensor_info['name']
@@ -460,9 +471,11 @@ class WillyWeatherTideSensor(CoordinatorEntity, SensorEntity):
 
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, station_id)},
+            identifiers={(DOMAIN, f"{station_id}_sensors")},
             manufacturer=MANUFACTURER,
-        )
+            name=f"{station_name} Sensors",
+            via_device=(DOMAIN, station_id),
+            )
 
     @property
     def native_value(self) -> Any:
@@ -590,7 +603,6 @@ class WillyWeatherUVSensor(CoordinatorEntity, SensorEntity):
     """Implementation of a WillyWeather UV sensor."""
 
     _attr_attribution = ATTRIBUTION
-    _attr_has_entity_name = True
 
     def __init__(
         self,
@@ -605,6 +617,7 @@ class WillyWeatherUVSensor(CoordinatorEntity, SensorEntity):
         self._sensor_type = sensor_type
         self._station_id = station_id
         self._station_name = station_name
+        self._sensor_prefix = sensor_prefix
 
         sensor_info = UV_SENSOR_TYPES[sensor_type]
         self._attr_name = sensor_info['name']
@@ -614,9 +627,11 @@ class WillyWeatherUVSensor(CoordinatorEntity, SensorEntity):
 
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, station_id)},
+            identifiers={(DOMAIN, f"{station_id}_sensors")},
             manufacturer=MANUFACTURER,
-        )
+            name=f"{station_name} Sensors",
+            via_device=(DOMAIN, station_id),
+            )
 
     @property
     def native_value(self) -> Any:
@@ -661,7 +676,6 @@ class WillyWeatherWindForecastSensor(CoordinatorEntity, SensorEntity):
     """Implementation of a WillyWeather wind forecast sensor."""
 
     _attr_attribution = ATTRIBUTION
-    _attr_has_entity_name = True
 
     def __init__(
         self,
@@ -676,6 +690,7 @@ class WillyWeatherWindForecastSensor(CoordinatorEntity, SensorEntity):
         self._sensor_type = sensor_type
         self._station_id = station_id
         self._station_name = station_name
+        self._sensor_prefix = sensor_prefix
 
         sensor_info = WIND_FORECAST_TYPES[sensor_type]
         self._attr_name = sensor_info['name']
@@ -686,9 +701,11 @@ class WillyWeatherWindForecastSensor(CoordinatorEntity, SensorEntity):
 
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, station_id)},
+            identifiers={(DOMAIN, f"{station_id}_sensors")},
             manufacturer=MANUFACTURER,
-        )
+            name=f"{station_name} Sensors",
+            via_device=(DOMAIN, station_id),
+            )
 
     @property
     def native_value(self) -> Any:
@@ -721,7 +738,6 @@ class WillyWeatherSwellSensor(CoordinatorEntity, SensorEntity):
     """Implementation of a WillyWeather swell sensor."""
 
     _attr_attribution = ATTRIBUTION
-    _attr_has_entity_name = True
 
     def __init__(
         self,
@@ -736,6 +752,7 @@ class WillyWeatherSwellSensor(CoordinatorEntity, SensorEntity):
         self._sensor_type = sensor_type
         self._station_id = station_id
         self._station_name = station_name
+        self._sensor_prefix = sensor_prefix
 
         sensor_info = SWELL_SENSOR_TYPES[sensor_type]
         self._attr_name = sensor_info['name']
@@ -745,9 +762,11 @@ class WillyWeatherSwellSensor(CoordinatorEntity, SensorEntity):
 
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, station_id)},
+            identifiers={(DOMAIN, f"{station_id}_sensors")},
             manufacturer=MANUFACTURER,
-        )
+            name=f"{station_name} Sensors",
+            via_device=(DOMAIN, station_id),
+            )
 
     @property
     def native_value(self) -> Any:
@@ -808,7 +827,6 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
     """Representation of a WillyWeather forecast sensor."""
 
     _attr_attribution = ATTRIBUTION
-    _attr_has_entity_name = True
 
     def __init__(
         self,
@@ -827,12 +845,18 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
         self._station_name = station_name
         self._sensor_type = sensor_type
         self._forecast_day = forecast_day
+        self._sensor_prefix = sensor_prefix
         self._attr_unique_id = f"{station_id}_forecast_{sensor_type}_day_{forecast_day}"
 
         sensor_config = FORECAST_SENSOR_TYPES[sensor_type]
         day_label = f"{forecast_day}"
 
-        self._attr_name = f"{sensor_config['name']} {day_label}"
+        # Format prefix for display: "ww_melbourne" -> "WW Melbourne"
+        if sensor_prefix:
+            display_prefix = sensor_prefix.replace('_', ' ').title().replace('Ww ', 'WW ')
+            self._attr_name = f"{display_prefix} {sensor_config['name']} {day_label}"
+        else:
+            self._attr_name = f"{sensor_config['name']} {day_label}"
         self._attr_native_unit_of_measurement = sensor_config.get("unit")
         self._attr_device_class = sensor_config.get("device_class")
         self._attr_state_class = sensor_config.get("state_class")
@@ -841,9 +865,11 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
         # Link to main device
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, station_id)},
+            identifiers={(DOMAIN, f"{station_id}_sensors")},
             manufacturer=MANUFACTURER,
-        )
+            name=f"{station_name} Sensors",
+            via_device=(DOMAIN, station_id),
+            )
 
     @property
     def available(self) -> bool:

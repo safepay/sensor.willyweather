@@ -71,7 +71,7 @@ DEFAULT_FORECAST_UPDATE_INTERVAL_DAY: Final = 30  # minutes
 DEFAULT_FORECAST_UPDATE_INTERVAL_NIGHT: Final = 60  # minutes
 
 # Default sensor prefix
-DEFAULT_SENSOR_PREFIX: Final = "ww_"
+DEFAULT_SENSOR_PREFIX: Final = "ww"
 
 # Condition mapping
 CONDITION_MAP: Final = {
