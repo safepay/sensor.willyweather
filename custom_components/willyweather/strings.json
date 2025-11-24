@@ -29,9 +29,9 @@
       },
       "forecast_options": {
         "title": "WillyWeather Setup - Forecast Data Options",
-        "description": "Step 4 of 7: Configure forecast data options for {station_name}\n\n**Forecast Data** (retrieved via weather.get_forecasts service call):\n- Wind forecast data adds wind speed/direction to forecast (requires wind enabled on your API key)\n\n**Forecast Sensors** create individual sensors for each day with temperature, rain, UV, etc.:\n- Enable the checkbox below to configure forecast sensors later\n- No additional API calls required\n- Perfect for custom Lovelace cards\n- Easy automation triggers",
+        "description": "Step 4 of 7: Configure forecast data options for {station_name}\n\n**Wind Forecast:**\n- Adds wind speed/direction to weather.get_forecasts service and forecast sensors\n- **Requires:** Weather --> Forecasts --> Wind enabled in WillyWeather API admin\n\n**Forecast Sensors:**\n- Create individual sensors for each day (temperature, rain, UV, tides, swell, wind, etc.)\n- No additional API calls required (uses existing forecast data)\n- Perfect for custom Lovelace cards and automation triggers\n- Enable the checkbox below to select specific sensors in step 6\n\n**Important:** Both weather.get_forecasts service and forecast sensors only include data for features enabled in your WillyWeather API admin (this screen and previous observational sensors screen).",
         "data": {
-          "include_wind": "Include wind forecast data (adds wind to weather.get_forecasts)",
+          "include_wind": "Include wind forecast data",
           "include_forecast_sensors": "Include daily forecast sensors (if enabled, you'll select which sensors in step 6)"
         }
       },
@@ -90,9 +90,9 @@
       },
       "forecast_options": {
         "title": "WillyWeather Forecast Data Options",
-        "description": "Configure forecast data options.\n\n**Wind Forecast:** Adds wind speed/direction to weather.get_forecasts service.\n\n**Forecast Sensors:** Create individual sensors for each day. No additional API calls required.\n\nChanging these options will reload the integration.",
+        "description": "Configure forecast data options.\n\n**Wind Forecast:**\n- Adds wind speed/direction to weather.get_forecasts service and forecast sensors\n- **Requires:** Weather --> Forecasts --> Wind enabled in WillyWeather API admin\n\n**Forecast Sensors:**\n- Individual sensors for each day (no additional API calls required)\n\n**Important:** Both weather.get_forecasts service and forecast sensors only include data for features enabled in your WillyWeather API admin.\n\nChanging these options will reload the integration.",
         "data": {
-          "include_wind": "Include wind forecast data (adds wind to weather.get_forecasts)",
+          "include_wind": "Include wind forecast data",
           "include_forecast_sensors": "Include daily forecast sensors"
         }
       },
