@@ -381,6 +381,71 @@ class WillyWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             description_placeholders={"station_name": getattr(self, '_station_name', 'Weather Station')},
         )
 
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle reconfiguration of the integration."""
+        errors: dict[str, str] = {}
+        reconfigure_entry = self._get_reconfigure_entry()
+
+        if user_input is not None:
+            api_key = user_input[CONF_API_KEY].strip()
+            station_id = user_input.get(CONF_STATION_ID, "").strip()
+
+            # If no station ID provided, use the existing one
+            if not station_id:
+                station_id = reconfigure_entry.data[CONF_STATION_ID]
+
+            # Validate the API key and station ID
+            try:
+                station_name = await async_get_station_name(
+                    self.hass, station_id, api_key
+                )
+                if not station_name:
+                    errors["base"] = "invalid_station_or_key"
+                else:
+                    # Ensure unique ID hasn't changed
+                    await self.async_set_unique_id(f"{DOMAIN}_{station_id}")
+                    self._abort_if_unique_id_mismatch()
+
+                    # Update the config entry
+                    return self.async_update_reload_and_abort(
+                        reconfigure_entry,
+                        data={
+                            CONF_API_KEY: api_key,
+                            CONF_STATION_ID: station_id,
+                            CONF_STATION_NAME: station_name,
+                        },
+                    )
+            except Exception as err:
+                _LOGGER.error("Error validating credentials during reconfigure: %s", err)
+                errors["base"] = "cannot_connect"
+
+        # Show the reconfigure form
+        data_schema = vol.Schema(
+            {
+                vol.Required(
+                    CONF_API_KEY,
+                    default=reconfigure_entry.data.get(CONF_API_KEY, "")
+                ): cv.string,
+                vol.Optional(
+                    CONF_STATION_ID,
+                    description={
+                        "suggested_value": reconfigure_entry.data.get(CONF_STATION_ID, "")
+                    }
+                ): cv.string,
+            }
+        )
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=data_schema,
+            errors=errors,
+            description_placeholders={
+                "station_name": reconfigure_entry.data.get(CONF_STATION_NAME, "Weather Station")
+            },
+        )
+
     @staticmethod
     @callback
     def async_get_options_flow(

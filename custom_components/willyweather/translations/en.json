@@ -62,6 +62,14 @@
           "night_start_hour": "Night start hour (0-23, e.g., 21 for 9 PM)",
           "night_end_hour": "Night end hour (0-23, e.g., 7 for 7 AM)"
         }
+      },
+      "reconfigure": {
+        "title": "Reconfigure WillyWeather",
+        "description": "Update your WillyWeather API credentials or station for {station_name}.\n\n**Note:** Changing the station ID will update your integration to use a different weather station. Leave the station ID blank to keep the current station.",
+        "data": {
+          "api_key": "WillyWeather API Key",
+          "station_id": "Station ID (leave blank to keep current)"
+        }
       }
     },
     "error": {
