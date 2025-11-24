@@ -30,6 +30,51 @@ PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.WEATHER, Platform.BINARY_
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
+async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
+    """Migrate old entry."""
+    _LOGGER.debug(
+        "Migrating configuration from version %s.%s",
+        config_entry.version,
+        config_entry.minor_version,
+    )
+
+    # Prevent downgrading from future versions
+    if config_entry.version > 1:
+        _LOGGER.error(
+            "Cannot downgrade from version %s.%s to version 1.1",
+            config_entry.version,
+            config_entry.minor_version,
+        )
+        return False
+
+    # Handle version 1 migrations
+    if config_entry.version == 1:
+        new_data = {**config_entry.data}
+        new_options = {**config_entry.options}
+
+        # Example: Add migrations here as needed
+        # if config_entry.minor_version < 2:
+        #     # Migration for version 1.2
+        #     pass
+
+        # Update to current version
+        hass.config_entries.async_update_entry(
+            config_entry,
+            data=new_data,
+            options=new_options,
+            minor_version=1,
+            version=1,
+        )
+
+    _LOGGER.debug(
+        "Migration to configuration version %s.%s successful",
+        config_entry.version,
+        config_entry.minor_version,
+    )
+
+    return True
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up WillyWeather from a config entry."""
     coordinator = WillyWeatherDataUpdateCoordinator(hass, entry)
