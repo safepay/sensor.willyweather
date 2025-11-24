@@ -400,6 +400,41 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
+        """Start options flow - redirect to prefix step."""
+        return await self.async_step_prefix()
+
+    async def async_step_prefix(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle sensor prefix configuration in options."""
+        if user_input is not None:
+            self._sensor_prefix = user_input.get(CONF_SENSOR_PREFIX, DEFAULT_SENSOR_PREFIX)
+            return await self.async_step_observational()
+
+        # Get current prefix or generate default
+        current_prefix = self.config_entry.options.get(CONF_SENSOR_PREFIX)
+        if current_prefix is None:
+            # Generate default if not set
+            station_name = self.config_entry.data.get(CONF_STATION_NAME, 'weather')
+            sanitized_name = station_name.lower().replace(' ', '_').replace('-', '_')
+            sanitized_name = ''.join(c for c in sanitized_name if c.isalnum() or c == '_')
+            current_prefix = f"ww_{sanitized_name}"
+
+        data_schema = vol.Schema({
+            vol.Optional(CONF_SENSOR_PREFIX, default=current_prefix): cv.string,
+        })
+
+        return self.async_show_form(
+            step_id="prefix",
+            data_schema=data_schema,
+            description_placeholders={
+                "station_name": self.config_entry.data.get(CONF_STATION_NAME, 'Weather Station')
+            },
+        )
+
+    async def async_step_observational(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         """Manage the options for observational sensors."""
         if user_input is not None:
             self._observational_options = user_input
@@ -558,6 +593,7 @@ class WillyWeatherOptionsFlow(config_entries.OptionsFlow):
                 **observational_options,
                 **forecast_options,
                 **warning_options,
+                CONF_SENSOR_PREFIX: getattr(self, '_sensor_prefix', self.config_entry.options.get(CONF_SENSOR_PREFIX, DEFAULT_SENSOR_PREFIX)),
                 CONF_UPDATE_INTERVAL_DAY: user_input.get(
                     CONF_UPDATE_INTERVAL_DAY, DEFAULT_UPDATE_INTERVAL_DAY
                 ),
