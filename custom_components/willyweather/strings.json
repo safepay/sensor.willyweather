@@ -17,14 +17,14 @@
         }
       },
       "observational": {
-        "title": "WillyWeather Setup - Observation Sensors",
-        "description": "Step 3 of 7: Configure optional observation sensors for {station_name}\n\n**Observation Sensors** provide current weather conditions (updated every 10-30 minutes):\n- Temperature, humidity, wind, pressure (always included when observational is enabled)\n- UV index (requires UV forecast enabled on your API key)\n- Tide information (requires tides enabled on your API key, coastal locations only)\n- Swell data (requires swell enabled on your API key, coastal locations only)\n\n**Extended Forecast Text:**\n- Detailed forecast text for today (e.g., \"Mostly sunny day. Slight chance of shower...\")\n- Creates a 'Today's Extended Forecast' sensor (state truncated to 255 chars, full text in 'full_text' attribute)\n- **IMPORTANT: Requires extra API call (adds cost) and must be enabled in WillyWeather API admin**\n\n**Note:** If optional features aren't enabled on your API key, they will be silently skipped.",
+        "title": "WillyWeather Setup - Observational Sensors",
+        "description": "Step 3 of 7: Configure observational sensors for {station_name}\n\n**Observational Sensors** (base requirement):\n- Provides current weather conditions: temperature, humidity, wind, pressure, etc. (updated every 10-30 minutes)\n- **Requires:** Weather --> Observational enabled in your WillyWeather API admin\n\n**Optional Additional Sensors** (each requires corresponding API admin settings):\n\n**Extended Text:**\n- Detailed forecast text for today (e.g., \"Mostly sunny day. Slight chance of shower...\")\n- Creates 'Today's Extended Forecast' sensor (state truncated to 255 chars, full text in 'full_text' attribute)\n- **Requires:** Weather --> Region Precis enabled in WillyWeather API admin (extra API call, adds cost)\n\n**UV:**\n- UV index sensors\n- **Requires:** Weather --> Forecasts --> UV enabled in WillyWeather API admin (also enables UV in forecast calls via weather.get_forecasts)\n\n**Tides:**\n- Tide information (coastal locations only, not all areas have tidal information)\n- **Requires:** Weather --> Forecasts --> Tides enabled in WillyWeather API admin (also enables Tides in forecast calls via weather.get_forecasts)\n\n**Swell:**\n- Swell data (coastal locations only, not all areas have swell information)\n- **Requires:** Weather --> Forecasts --> Swell, Swell-Height and Swell-Period enabled in WillyWeather API admin (also enables Swell in forecast calls via weather.get_forecasts)\n\n**Note:** If features aren't enabled in your API admin, they will be silently skipped.",
         "data": {
           "include_observational": "Include observational sensors (temperature, humidity, wind, pressure, etc.)",
           "include_uv": "Include UV index sensors",
-          "include_tides": "Include tide information (Note: Not all areas have tidal information)",
-          "include_swell": "Include swell data (coastal locations only, Note: Not all areas have swell information)",
-          "include_extended_forecast": "Include extended forecast text (extra API call, requires 'Region Precis' enabled in WillyWeather API admin)"
+          "include_tides": "Include tide information",
+          "include_swell": "Include swell data",
+          "include_extended_forecast": "Include extended forecast text"
         }
       },
       "forecast_options": {
@@ -78,14 +78,14 @@
   "options": {
     "step": {
       "init": {
-        "title": "WillyWeather Observation Sensors",
-        "description": "Configure observation sensors (current weather conditions).\n\n**Observation Sensors** provide current weather data updated every 10-30 minutes.\n\n**Extended Forecast Text:**\n- Detailed forecast text for today (creates 'Today's Extended Forecast' sensor with state truncated to 255 chars, full text in 'full_text' attribute)\n- **IMPORTANT: Requires extra API call (adds cost) and must be enabled in WillyWeather API admin**\n\nChanging these options will reload the integration.",
+        "title": "WillyWeather Observational Sensors",
+        "description": "Configure observational sensors (current weather conditions).\n\n**Observational Sensors** (base requirement):\n- Current weather data updated every 10-30 minutes\n- **Requires:** Weather --> Observational enabled in your WillyWeather API admin\n\n**Optional Additional Sensors** (each requires corresponding API admin settings):\n\n**Extended Text:** Requires Weather --> Region Precis (extra API call, adds cost)\n**UV:** Requires Weather --> Forecasts --> UV (also enables UV in forecast calls via weather.get_forecasts)\n**Tides:** Requires Weather --> Forecasts --> Tides (also enables Tides in forecast calls via weather.get_forecasts)\n**Swell:** Requires Weather --> Forecasts --> Swell, Swell-Height and Swell-Period (also enables Swell in forecast calls via weather.get_forecasts)\n\nChanging these options will reload the integration.",
         "data": {
           "include_observational": "Include observational sensors (temperature, humidity, wind, pressure, etc.)",
           "include_uv": "Include UV index sensors",
-          "include_tides": "Include tide information (Note: Not all areas have tidal information)",
-          "include_swell": "Include swell data (Note: Not all areas have swell information)",
-          "include_extended_forecast": "Include extended forecast text (extra API call, requires 'Region Precis' enabled in WillyWeather API admin)"
+          "include_tides": "Include tide information",
+          "include_swell": "Include swell data",
+          "include_extended_forecast": "Include extended forecast text"
         }
       },
       "forecast_options": {
