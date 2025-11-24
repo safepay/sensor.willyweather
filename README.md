@@ -50,8 +50,9 @@ You need a WillyWeather API key to use this integration:
 1. Visit https://www.willyweather.com.au/info/api.html
 2. Sign up for a free API account
 3. Copy your API key to use during setup
-4. Tick single location, weather (observation and forecasts) and warnings
-5. Swell and tide sections are optional if your station does not support those features
+4. Tick "Single Location", "Weather" (observation and forecasts) and "Warnings" as a minimum.
+5. "Swell" and "tide" sections are optional if your station does not support those features
+6. Add "Region Precis" for the optional long forecast text sensor for today.
 
 ### Full API Configuration Example
 ![WillyWeather API Config](https://github.com/safepay/sensor.willyweather/blob/master/willyweather_api_config.png?raw=true)
