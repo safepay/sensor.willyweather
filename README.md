@@ -3,7 +3,7 @@
 
 A custom Home Assistant integration providing comprehensive weather data from WillyWeather Australia.
 
-This differs from the BoM integration by providing separate binary sensors for warnings as well as data that is unavailable such as tide and swell information. Also note that the WillyWeather API does cost about $1.20 a month, depending on your configuration. However, the BoM API used by this integration is not for use by 3rd parties.
+This differs from the BoM integration by providing separate binary sensors for warnings as well as data that is unavailable such as tide and swell information. Also note that the WillyWeather API does cost about $1.20 a month, depending on your configuration. Note also that the BoM API is not for use by 3rd parties.
 
 ## Features
 
