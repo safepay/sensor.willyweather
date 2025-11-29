@@ -166,6 +166,24 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
         """Return the dew point."""
         return self._get_observation_value(["dewPoint", "temperature"])
 
+    @property
+    def uv_index(self) -> float | None:
+        """Return the UV index."""
+        if not self.coordinator.data:
+            return None
+
+        try:
+            forecasts = self.coordinator.data.get("forecast", {}).get("forecasts", {})
+            uv_days = forecasts.get("uv", {}).get("days", [])
+
+            if not uv_days or not uv_days[0].get("entries"):
+                return None
+
+            entry = uv_days[0]["entries"][0]
+            return entry.get("index")
+        except (KeyError, IndexError, TypeError):
+            return None
+
     def _get_observation_value(self, path: list[str]) -> Any:
         """Get value from observational data using path."""
         if not self.coordinator.data:
