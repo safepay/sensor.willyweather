@@ -162,7 +162,7 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
         return None
 
     @property
-    def dew_point(self) -> float | None:
+    def native_dew_point(self) -> float | None:
         """Return the dew point."""
         return self._get_observation_value(["dewPoint", "temperature"])
 
