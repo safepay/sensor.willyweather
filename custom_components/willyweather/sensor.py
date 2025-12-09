@@ -644,28 +644,25 @@ class WillyWeatherUVSensor(CoordinatorEntity, SensorEntity):
         try:
             forecasts = self.coordinator.data.get("forecast", {}).get("forecasts", {})
             uv_days = forecasts.get("uv", {}).get("days", [])
-            
-            if not uv_days or not uv_days[0].get("entries"):
+
+            if not uv_days:
                 return None
-            
-            entry = uv_days[0]["entries"][0]
-            
+
+            # Use today's forecast UV data (day 0) which contains the alert with maxIndex
+            day_data = uv_days[0]
+            alert = day_data.get("alert")
+
             if self._sensor_type == "uv_index":
-                return entry.get("index")
+                # Get the maximum UV index for today from the alert object
+                if alert:
+                    return alert.get("maxIndex")
+                return None
             elif self._sensor_type == "uv_alert":
-                uv_index = entry.get("index")
-                if uv_index is None:
-                    return None
-                if uv_index >= 11:
-                    return "Extreme"
-                elif uv_index >= 8:
-                    return "Very High"
-                elif uv_index >= 6:
-                    return "High"
-                elif uv_index >= 3:
-                    return "Moderate"
-                else:
-                    return "Low"
+                # Get the UV alert level from the alert object
+                if alert:
+                    return alert.get("scale")
+                # If no alert, UV is below alert threshold
+                return None
 
         except (KeyError, IndexError, TypeError) as err:
             _LOGGER.debug("Error getting UV value for %s: %s", self._sensor_type, err)
