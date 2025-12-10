@@ -634,6 +634,8 @@ class WillyWeatherUVSensor(CoordinatorEntity, SensorEntity):
         self._attr_unique_id = f"{station_id}_{sensor_type}"
         self._attr_native_unit_of_measurement = sensor_info.get("unit")
         self._attr_icon = sensor_info["icon"]
+        self._attr_device_class = sensor_info.get("device_class")
+        self._attr_state_class = sensor_info.get("state_class")
 
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
