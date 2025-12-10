@@ -762,16 +762,50 @@ class WillyWeatherWindForecastSensor(CoordinatorEntity, SensorEntity):
         try:
             forecasts = self.coordinator.data.get("forecast", {}).get("forecasts", {})
             wind_days = forecasts.get("wind", {}).get("days", [])
-            
+
             if not wind_days or not wind_days[0].get("entries"):
                 return None
-            
-            entry = wind_days[0]["entries"][0]
-            
+
+            entries = wind_days[0]["entries"]
+
+            # Get current time and floor to the hour
+            now = dt_util.now()
+            current_hour = now.replace(minute=0, second=0, microsecond=0)
+
+            # Find the entry matching the current hour
+            current_entry = None
+
+            for entry in entries:
+                entry_time_str = entry.get("dateTime")
+                if not entry_time_str:
+                    continue
+
+                entry_time = dt_util.parse_datetime(entry_time_str)
+                if not entry_time:
+                    continue
+
+                # Ensure entry_time has timezone info
+                if entry_time.tzinfo is None:
+                    tz = dt_util.get_time_zone(self.coordinator.hass.config.time_zone)
+                    if tz:
+                        try:
+                            entry_time = tz.localize(entry_time)
+                        except AttributeError:
+                            entry_time = entry_time.replace(tzinfo=tz)
+
+                # Check if this entry matches the current hour
+                if entry_time.replace(minute=0, second=0, microsecond=0) == current_hour:
+                    current_entry = entry
+                    break
+
+            if not current_entry:
+                # Fallback to first entry if no match found
+                current_entry = entries[0]
+
             if self._sensor_type == "wind_speed_forecast":
-                return entry.get("speed")
+                return current_entry.get("speed")
             elif self._sensor_type == "wind_direction_forecast":
-                return entry.get("direction")
+                return current_entry.get("direction")
 
         except (KeyError, IndexError, TypeError) as err:
             _LOGGER.debug("Error getting wind forecast value for %s: %s", self._sensor_type, err)
@@ -825,42 +859,73 @@ class WillyWeatherSwellSensor(CoordinatorEntity, SensorEntity):
             if not forecasts:
                 _LOGGER.debug("No forecast data available for swell")
                 return None
-            
+
             forecasts_dict = forecasts.get("forecasts", {})
             if not forecasts_dict:
                 _LOGGER.debug("No forecasts dict available for swell")
                 return None
-            
+
             swell_data = forecasts_dict.get("swell")
-            
+
             if not swell_data:
                 _LOGGER.debug("No swell data in forecasts")
                 return None
-            
+
             days = swell_data.get("days", [])
-            
+
             if not days:
                 _LOGGER.debug("No days in swell data")
                 return None
-            
+
             first_day = days[0]
             entries = first_day.get("entries", [])
-            
+
             if not entries:
                 _LOGGER.debug("No entries in first swell day")
                 return None
-            
-            # Get the first swell entry (most current)
-            entry = entries[0]
-            
+
+            # Get current time and floor to the hour
+            now = dt_util.now()
+            current_hour = now.replace(minute=0, second=0, microsecond=0)
+
+            # Find the entry matching the current hour
+            current_entry = None
+
+            for entry in entries:
+                entry_time_str = entry.get("dateTime")
+                if not entry_time_str:
+                    continue
+
+                entry_time = dt_util.parse_datetime(entry_time_str)
+                if not entry_time:
+                    continue
+
+                # Ensure entry_time has timezone info
+                if entry_time.tzinfo is None:
+                    tz = dt_util.get_time_zone(self.coordinator.hass.config.time_zone)
+                    if tz:
+                        try:
+                            entry_time = tz.localize(entry_time)
+                        except AttributeError:
+                            entry_time = entry_time.replace(tzinfo=tz)
+
+                # Check if this entry matches the current hour
+                if entry_time.replace(minute=0, second=0, microsecond=0) == current_hour:
+                    current_entry = entry
+                    break
+
+            if not current_entry:
+                # Fallback to first entry if no match found
+                current_entry = entries[0]
+
             if self._sensor_type == "swell_height":
-                return entry.get("height")
+                return current_entry.get("height")
             elif self._sensor_type == "swell_period":
-                return entry.get("period")
+                return current_entry.get("period")
             elif self._sensor_type == "swell_direction":
-                return entry.get("direction")
+                return current_entry.get("direction")
             elif self._sensor_type == "swell_direction_text":
-                return entry.get("directionText")
+                return current_entry.get("directionText")
 
         except (KeyError, IndexError, TypeError) as err:
             _LOGGER.debug("Error getting swell value for %s: %s", self._sensor_type, err)
