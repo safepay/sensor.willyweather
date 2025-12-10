@@ -156,6 +156,14 @@ async def async_setup_entry(
         for day in forecast_days:
             for condition in monitored_conditions:
                 if condition in FORECAST_SENSOR_TYPES:
+                    # UV forecast data only provides 4 days (0-3), skip UV sensors beyond day 3
+                    if condition in ["uv_index", "uv_alert"] and day > 3:
+                        _LOGGER.debug(
+                            "Skipping UV forecast sensor for day %s (UV data only available for days 0-3)",
+                            day
+                        )
+                        continue
+
                     entities.append(
                         WillyWeatherForecastSensor(
                             coordinator,
@@ -645,23 +653,64 @@ class WillyWeatherUVSensor(CoordinatorEntity, SensorEntity):
             forecasts = self.coordinator.data.get("forecast", {}).get("forecasts", {})
             uv_days = forecasts.get("uv", {}).get("days", [])
 
-            if not uv_days:
+            if not uv_days or not uv_days[0].get("entries"):
                 return None
 
-            # Use today's forecast UV data (day 0) which contains the alert with maxIndex
-            day_data = uv_days[0]
-            alert = day_data.get("alert")
+            entries = uv_days[0]["entries"]
+
+            # Get current time in the location's timezone
+            now = dt_util.now()
+
+            # Find the entry closest to the current time
+            current_entry = None
+            min_time_diff = None
+
+            for entry in entries:
+                entry_time_str = entry.get("dateTime")
+                if not entry_time_str:
+                    continue
+
+                entry_time = dt_util.parse_datetime(entry_time_str)
+                if not entry_time:
+                    continue
+
+                # Ensure entry_time has timezone info
+                if entry_time.tzinfo is None:
+                    tz = dt_util.get_time_zone(self.coordinator.hass.config.time_zone)
+                    if tz:
+                        try:
+                            entry_time = tz.localize(entry_time)
+                        except AttributeError:
+                            entry_time = entry_time.replace(tzinfo=tz)
+
+                # Calculate time difference
+                time_diff = abs((entry_time - now).total_seconds())
+
+                if min_time_diff is None or time_diff < min_time_diff:
+                    min_time_diff = time_diff
+                    current_entry = entry
+
+            if not current_entry:
+                # Fallback to first entry if no match found
+                current_entry = entries[0]
 
             if self._sensor_type == "uv_index":
-                # Get the maximum UV index for today from the alert object
-                if alert:
-                    return alert.get("maxIndex")
-                return None
+                return current_entry.get("index")
             elif self._sensor_type == "uv_alert":
-                # Get the UV alert level from the alert object
-                if alert:
-                    return alert.get("scale")
-                # If no alert, UV is below alert threshold
+                # Use the scale directly from the API
+                scale = current_entry.get("scale")
+                if scale:
+                    # Convert API format to display format
+                    # API: "low", "moderate", "high", "very-high", "extreme"
+                    # Display: "Low", "Moderate", "High", "Very High", "Extreme"
+                    scale_map = {
+                        "low": "Low",
+                        "moderate": "Moderate",
+                        "high": "High",
+                        "very-high": "Very High",
+                        "extreme": "Extreme"
+                    }
+                    return scale_map.get(scale, scale.title())
                 return None
 
         except (KeyError, IndexError, TypeError) as err:
