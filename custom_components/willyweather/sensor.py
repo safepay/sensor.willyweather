@@ -1130,12 +1130,6 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
                 precis_code = entries[0].get("precisCode")
                 if precis_code:
                     condition = CONDITION_MAP.get(precis_code, "unknown")
-
-                    # Convert day conditions to night equivalents if it's nighttime
-                    # Check if we need to apply night variant for sunny condition
-                    if condition == "sunny" and self._is_nighttime(day_data):
-                        condition = "clear-night"
-
                     return condition
             return None
 
@@ -1182,79 +1176,6 @@ class WillyWeatherForecastSensor(CoordinatorEntity, SensorEntity):
                 _LOGGER.warning("sunset: No entries found in day_data. Keys: %s", list(day_data.keys()))
 
         return None
-
-    def _is_nighttime(self, day_data: dict) -> bool:
-        """Determine if the forecast time is during nighttime."""
-        try:
-            # Get the forecast datetime
-            entries = day_data.get("entries", [])
-            if not entries:
-                return False
-
-            forecast_time_str = entries[0].get("dateTime")
-            if not forecast_time_str:
-                return False
-
-            forecast_time = dt_util.parse_datetime(forecast_time_str)
-            if not forecast_time:
-                return False
-
-            # Ensure forecast_time has timezone info
-            if forecast_time.tzinfo is None:
-                tz = dt_util.get_time_zone(self.coordinator.hass.config.time_zone)
-                if tz:
-                    try:
-                        forecast_time = tz.localize(forecast_time)
-                    except AttributeError:
-                        forecast_time = forecast_time.replace(tzinfo=tz)
-
-            # Get sunrise/sunset data for this day
-            forecast_data = self.coordinator.data.get("forecast", {})
-            forecasts = forecast_data.get("forecasts", {})
-            sunrisesunset_days = forecasts.get("sunrisesunset", {}).get("days", [])
-
-            # Find the sunrise/sunset for the forecast day
-            if self._forecast_day < len(sunrisesunset_days):
-                sun_day = sunrisesunset_days[self._forecast_day]
-                sun_entries = sun_day.get("entries", [])
-
-                if sun_entries:
-                    sun_entry = sun_entries[0]
-
-                    # Get sunrise and sunset times
-                    sunrise_str = sun_entry.get("riseDateTime")
-                    sunset_str = sun_entry.get("setDateTime")
-
-                    if sunrise_str and sunset_str:
-                        sunrise = dt_util.parse_datetime(sunrise_str)
-                        sunset = dt_util.parse_datetime(sunset_str)
-
-                        if sunrise and sunset:
-                            # Ensure times have timezone info
-                            if sunrise.tzinfo is None:
-                                tz = dt_util.get_time_zone(self.coordinator.hass.config.time_zone)
-                                if tz:
-                                    try:
-                                        sunrise = tz.localize(sunrise)
-                                    except AttributeError:
-                                        sunrise = sunrise.replace(tzinfo=tz)
-
-                            if sunset.tzinfo is None:
-                                tz = dt_util.get_time_zone(self.coordinator.hass.config.time_zone)
-                                if tz:
-                                    try:
-                                        sunset = tz.localize(sunset)
-                                    except AttributeError:
-                                        sunset = sunset.replace(tzinfo=tz)
-
-                            # Check if forecast time is before sunrise or after sunset
-                            return forecast_time < sunrise or forecast_time >= sunset
-
-            return False
-
-        except (KeyError, IndexError, TypeError, ValueError) as err:
-            _LOGGER.debug("Error determining nighttime for forecast: %s", err)
-            return False
 
     def _parse_timestamp(self, timestamp: str) -> datetime | None:
         """Parse WillyWeather timestamp to datetime object."""
