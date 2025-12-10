@@ -327,11 +327,15 @@ UV_SENSOR_TYPES: Final = {
         "name": "UV Index",
         "unit": None,
         "icon": "mdi:weather-sunny-alert",
+        "device_class": None,
+        "state_class": SensorStateClass.MEASUREMENT,
     },
     "uv_alert": {
         "name": "UV Alert",
         "unit": None,
         "icon": "mdi:weather-sunny-alert",
+        "device_class": None,
+        "state_class": None,
     },
 }
 
