@@ -156,6 +156,14 @@ async def async_setup_entry(
         for day in forecast_days:
             for condition in monitored_conditions:
                 if condition in FORECAST_SENSOR_TYPES:
+                    # UV forecast data only provides 4 days (0-3), skip UV sensors beyond day 3
+                    if condition in ["uv_index", "uv_alert"] and day > 3:
+                        _LOGGER.debug(
+                            "Skipping UV forecast sensor for day %s (UV data only available for days 0-3)",
+                            day
+                        )
+                        continue
+
                     entities.append(
                         WillyWeatherForecastSensor(
                             coordinator,
