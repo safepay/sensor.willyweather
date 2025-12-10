@@ -648,24 +648,62 @@ class WillyWeatherUVSensor(CoordinatorEntity, SensorEntity):
             if not uv_days or not uv_days[0].get("entries"):
                 return None
 
-            entry = uv_days[0]["entries"][0]
+            entries = uv_days[0]["entries"]
+
+            # Get current time in the location's timezone
+            now = dt_util.now()
+
+            # Find the entry closest to the current time
+            current_entry = None
+            min_time_diff = None
+
+            for entry in entries:
+                entry_time_str = entry.get("dateTime")
+                if not entry_time_str:
+                    continue
+
+                entry_time = dt_util.parse_datetime(entry_time_str)
+                if not entry_time:
+                    continue
+
+                # Ensure entry_time has timezone info
+                if entry_time.tzinfo is None:
+                    tz = dt_util.get_time_zone(self.coordinator.hass.config.time_zone)
+                    if tz:
+                        try:
+                            entry_time = tz.localize(entry_time)
+                        except AttributeError:
+                            entry_time = entry_time.replace(tzinfo=tz)
+
+                # Calculate time difference
+                time_diff = abs((entry_time - now).total_seconds())
+
+                if min_time_diff is None or time_diff < min_time_diff:
+                    min_time_diff = time_diff
+                    current_entry = entry
+
+            if not current_entry:
+                # Fallback to first entry if no match found
+                current_entry = entries[0]
 
             if self._sensor_type == "uv_index":
-                return entry.get("index")
+                return current_entry.get("index")
             elif self._sensor_type == "uv_alert":
-                uv_index = entry.get("index")
-                if uv_index is None:
-                    return None
-                if uv_index >= 11:
-                    return "Extreme"
-                elif uv_index >= 8:
-                    return "Very High"
-                elif uv_index >= 6:
-                    return "High"
-                elif uv_index >= 3:
-                    return "Moderate"
-                else:
-                    return "Low"
+                # Use the scale directly from the API
+                scale = current_entry.get("scale")
+                if scale:
+                    # Convert API format to display format
+                    # API: "low", "moderate", "high", "very-high", "extreme"
+                    # Display: "Low", "Moderate", "High", "Very High", "Extreme"
+                    scale_map = {
+                        "low": "Low",
+                        "moderate": "Moderate",
+                        "high": "High",
+                        "very-high": "Very High",
+                        "extreme": "Extreme"
+                    }
+                    return scale_map.get(scale, scale.title())
+                return None
 
         except (KeyError, IndexError, TypeError) as err:
             _LOGGER.debug("Error getting UV value for %s: %s", self._sensor_type, err)
