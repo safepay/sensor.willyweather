@@ -658,12 +658,12 @@ class WillyWeatherUVSensor(CoordinatorEntity, SensorEntity):
 
             entries = uv_days[0]["entries"]
 
-            # Get current time in the location's timezone
+            # Get current time and floor to the hour
             now = dt_util.now()
+            current_hour = now.replace(minute=0, second=0, microsecond=0)
 
-            # Find the entry closest to the current time
+            # Find the entry matching the current hour
             current_entry = None
-            min_time_diff = None
 
             for entry in entries:
                 entry_time_str = entry.get("dateTime")
@@ -683,12 +683,10 @@ class WillyWeatherUVSensor(CoordinatorEntity, SensorEntity):
                         except AttributeError:
                             entry_time = entry_time.replace(tzinfo=tz)
 
-                # Calculate time difference
-                time_diff = abs((entry_time - now).total_seconds())
-
-                if min_time_diff is None or time_diff < min_time_diff:
-                    min_time_diff = time_diff
+                # Check if this entry matches the current hour
+                if entry_time.replace(minute=0, second=0, microsecond=0) == current_hour:
                     current_entry = entry
+                    break
 
             if not current_entry:
                 # Fallback to first entry if no match found
