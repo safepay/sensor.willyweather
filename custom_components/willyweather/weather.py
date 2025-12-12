@@ -190,6 +190,26 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
         except (KeyError, IndexError, TypeError):
             return None
 
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return additional state attributes."""
+        if not self.coordinator.data:
+            return None
+
+        try:
+            forecasts = self.coordinator.data.get("forecast", {}).get("forecasts", {})
+            weather_days = forecasts.get("weather", {}).get("days", [])
+
+            if weather_days and weather_days[0].get("entries"):
+                entry = weather_days[0]["entries"][0]
+                precis = entry.get("precis")
+                if precis:
+                    return {"forecast_summary": precis}
+        except (KeyError, IndexError, TypeError):
+            pass
+
+        return None
+
     def _get_observation_value(self, path: list[str]) -> Any:
         """Get value from observational data using path."""
         if not self.coordinator.data:

@@ -224,13 +224,23 @@ class WillyWeatherSensor(CoordinatorEntity, SensorEntity):
         if not self.coordinator.data:
             return None
 
-        # Special handling for forecast_summary - uses weather forecast data
+        # Special handling for forecast_summary - returns today's weather condition
         if self._sensor_type == "forecast_summary":
+            from .const import CONDITION_MAP
             forecast_data = self.coordinator.data.get("forecast", {})
             forecasts = forecast_data.get("forecasts", {})
             weather_days = forecasts.get("weather", {}).get("days", [])
             if weather_days and weather_days[0].get("entries"):
-                return weather_days[0]["entries"][0].get("precis")
+                entry = weather_days[0]["entries"][0]
+                precis_code = entry.get("precisCode")
+                if precis_code:
+                    condition = CONDITION_MAP.get(precis_code, "unknown")
+
+                    # Convert sunny to clear-night if it's currently nighttime
+                    if condition == "sunny" and self._is_nighttime():
+                        condition = "clear-night"
+
+                    return condition
             return None
 
         # Special handling for forecast_extended - uses regionPrecis data (truncated to 255 chars)
@@ -264,6 +274,20 @@ class WillyWeatherSensor(CoordinatorEntity, SensorEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return additional attributes."""
+        # Special handling for forecast_summary - add precis text as attribute
+        if self._sensor_type == "forecast_summary" and self.coordinator.data:
+            forecast_data = self.coordinator.data.get("forecast", {})
+            forecasts = forecast_data.get("forecasts", {})
+            weather_days = forecasts.get("weather", {}).get("days", [])
+
+            if weather_days and weather_days[0].get("entries"):
+                entry = weather_days[0]["entries"][0]
+                precis = entry.get("precis")
+                if precis:
+                    return {"precis": precis}
+
+            return {}
+
         # Special handling for forecast_extended - add full text as attribute
         if self._sensor_type == "forecast_extended" and self.coordinator.data:
             forecast_data = self.coordinator.data.get("forecast", {})
@@ -283,6 +307,59 @@ class WillyWeatherSensor(CoordinatorEntity, SensorEntity):
             return attributes
 
         return {}
+
+    def _is_nighttime(self) -> bool:
+        """Determine if it's currently nighttime based on sunrise/sunset."""
+        try:
+            if not self.coordinator.data:
+                return False
+
+            forecasts = self.coordinator.data.get("forecast", {}).get("forecasts", {})
+            sunrisesunset_days = forecasts.get("sunrisesunset", {}).get("days", [])
+
+            if not sunrisesunset_days or not sunrisesunset_days[0].get("entries"):
+                return False
+
+            sun_entry = sunrisesunset_days[0]["entries"][0]
+            sunrise_str = sun_entry.get("riseDateTime")
+            sunset_str = sun_entry.get("setDateTime")
+
+            if not sunrise_str or not sunset_str:
+                return False
+
+            # Parse sunrise and sunset times
+            sunrise = dt_util.parse_datetime(sunrise_str)
+            sunset = dt_util.parse_datetime(sunset_str)
+
+            if not sunrise or not sunset:
+                return False
+
+            # Ensure times have timezone info
+            if sunrise.tzinfo is None:
+                tz = dt_util.get_time_zone(self.coordinator.hass.config.time_zone)
+                if tz:
+                    try:
+                        sunrise = tz.localize(sunrise)
+                    except AttributeError:
+                        sunrise = sunrise.replace(tzinfo=tz)
+
+            if sunset.tzinfo is None:
+                tz = dt_util.get_time_zone(self.coordinator.hass.config.time_zone)
+                if tz:
+                    try:
+                        sunset = tz.localize(sunset)
+                    except AttributeError:
+                        sunset = sunset.replace(tzinfo=tz)
+
+            # Get current time
+            now = dt_util.now()
+
+            # Check if current time is before sunrise or after sunset
+            return now < sunrise or now >= sunset
+
+        except (KeyError, IndexError, TypeError, ValueError) as err:
+            _LOGGER.debug("Error determining nighttime for forecast_summary: %s", err)
+            return False
 
 
 class WillyWeatherSunMoonSensor(CoordinatorEntity, SensorEntity):
