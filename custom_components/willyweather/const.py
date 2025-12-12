@@ -220,8 +220,8 @@ SENSOR_TYPES: Final = {
         "state_class": SensorStateClass.TOTAL_INCREASING,
         "path": ["rainfall", "since9AMAmount"],
     },
-    "forecast_summary": {
-        "name": "Forecast Summary",
+    "precis": {
+        "name": "Precis",
         "unit": None,
         "icon": "mdi:weather-partly-cloudy",
         "device_class": None,

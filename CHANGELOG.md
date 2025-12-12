@@ -5,6 +5,24 @@ All notable changes to the WillyWeather Home Assistant integration will be docum
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2025-12-12
+
+### Changed
+- **BREAKING**: Precis Sensor renamed
+  - Sensor renamed from "Today's Forecast" to "Precis"
+  - Entity ID changed from `sensor.ww_{location}_today_s_forecast` to `sensor.ww_{location}_precis`
+  - Sensor behavior unchanged: still returns human-readable forecast text (e.g., "Mostly sunny", "Shower or two clearing")
+
+### Added
+- **Weather Entity Attribute**: Added `precis` attribute to weather entity
+  - Contains today's forecast precis text (e.g., "Mostly sunny", "Shower or two clearing")
+  - Always available on the weather entity
+
+### Fixed
+- Weather entity condition now properly returns standard condition codes
+  - Home Assistant automatically handles "sunny" to "clear-night" conversion based on sun position
+  - No custom nighttime detection required - follows Home Assistant best practices
+
 ## [2.2.0] - 2025-01-22
 
 ### Added
@@ -137,6 +155,15 @@ For changes prior to version 2.0.0, please see the git commit history.
 ---
 
 ## Upgrade Notes
+
+### Upgrading to 2.4.0
+- **BREAKING CHANGE**: The precis sensor entity ID has changed
+  - **Entity ID renamed**: `sensor.ww_{location}_today_s_forecast` → `sensor.ww_{location}_precis`
+  - **Behavior unchanged**: Still returns human-readable forecast text (e.g., "Mostly sunny")
+  - **Action required**: Update entity references in automations, dashboards, and scripts
+  - **No functional changes**: The sensor still provides the same forecast text as before
+- **New attribute**: Weather entity now has a `precis` attribute with today's forecast text
+- Weather entity follows Home Assistant best practices - returns condition codes and lets Home Assistant handle day/night conversion automatically
 
 ### Upgrading to 2.2.0
 - Extended forecast text is now **opt-in** (disabled by default)
