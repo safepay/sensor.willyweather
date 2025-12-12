@@ -220,13 +220,13 @@ SENSOR_TYPES: Final = {
         "state_class": SensorStateClass.TOTAL_INCREASING,
         "path": ["rainfall", "since9AMAmount"],
     },
-    "forecast_summary": {
-        "name": "Today's Forecast",
+    "precis": {
+        "name": "Precis",
         "unit": None,
         "icon": "mdi:weather-partly-cloudy",
         "device_class": None,
         "state_class": None,
-        "path": None,  # Special handling - uses weather forecast data
+        "path": None,  # Special handling - returns weather condition
     },
     "forecast_extended": {
         "name": "Today's Extended Forecast",

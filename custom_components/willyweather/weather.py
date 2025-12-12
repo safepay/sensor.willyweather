@@ -112,13 +112,7 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
 
             if weather_days and weather_days[0].get("entries"):
                 precis_code = weather_days[0]["entries"][0].get("precisCode")
-                condition = CONDITION_MAP.get(precis_code, "unknown")
-
-                # Convert sunny to clear-night if it's currently nighttime
-                if condition == "sunny" and self._is_nighttime():
-                    condition = "clear-night"
-
-                return condition
+                return CONDITION_MAP.get(precis_code, "unknown")
         except (KeyError, IndexError, TypeError):
             pass
 
@@ -190,6 +184,26 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
         except (KeyError, IndexError, TypeError):
             return None
 
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return additional state attributes."""
+        if not self.coordinator.data:
+            return None
+
+        try:
+            forecasts = self.coordinator.data.get("forecast", {}).get("forecasts", {})
+            weather_days = forecasts.get("weather", {}).get("days", [])
+
+            if weather_days and weather_days[0].get("entries"):
+                entry = weather_days[0]["entries"][0]
+                precis = entry.get("precis")
+                if precis:
+                    return {"precis": precis}
+        except (KeyError, IndexError, TypeError):
+            pass
+
+        return None
+
     def _get_observation_value(self, path: list[str]) -> Any:
         """Get value from observational data using path."""
         if not self.coordinator.data:
@@ -206,59 +220,6 @@ class WillyWeatherEntity(SingleCoordinatorWeatherEntity):
             return value
         except (KeyError, TypeError):
             return None
-
-    def _is_nighttime(self) -> bool:
-        """Determine if it's currently nighttime based on sunrise/sunset."""
-        try:
-            if not self.coordinator.data:
-                return False
-
-            forecasts = self.coordinator.data.get("forecast", {}).get("forecasts", {})
-            sunrisesunset_days = forecasts.get("sunrisesunset", {}).get("days", [])
-
-            if not sunrisesunset_days or not sunrisesunset_days[0].get("entries"):
-                return False
-
-            sun_entry = sunrisesunset_days[0]["entries"][0]
-            sunrise_str = sun_entry.get("riseDateTime")
-            sunset_str = sun_entry.get("setDateTime")
-
-            if not sunrise_str or not sunset_str:
-                return False
-
-            # Parse sunrise and sunset times
-            sunrise = dt_util.parse_datetime(sunrise_str)
-            sunset = dt_util.parse_datetime(sunset_str)
-
-            if not sunrise or not sunset:
-                return False
-
-            # Ensure times have timezone info
-            if sunrise.tzinfo is None:
-                tz = dt_util.get_time_zone(self.hass.config.time_zone)
-                if tz:
-                    try:
-                        sunrise = tz.localize(sunrise)
-                    except AttributeError:
-                        sunrise = sunrise.replace(tzinfo=tz)
-
-            if sunset.tzinfo is None:
-                tz = dt_util.get_time_zone(self.hass.config.time_zone)
-                if tz:
-                    try:
-                        sunset = tz.localize(sunset)
-                    except AttributeError:
-                        sunset = sunset.replace(tzinfo=tz)
-
-            # Get current time
-            now = dt_util.now()
-
-            # Check if current time is before sunrise or after sunset
-            return now < sunrise or now >= sunset
-
-        except (KeyError, IndexError, TypeError, ValueError) as err:
-            _LOGGER.debug("Error determining nighttime: %s", err)
-            return False
 
     @callback
     def _async_forecast_daily(self) -> list[Forecast] | None:

@@ -232,8 +232,8 @@ class WillyWeatherSensor(CoordinatorEntity, SensorEntity):
         if not self.coordinator.data:
             return None
 
-        # Special handling for forecast_summary - uses weather forecast data
-        if self._sensor_type == "forecast_summary":
+        # Special handling for precis - returns today's forecast text
+        if self._sensor_type == "precis":
             forecast_data = self.coordinator.data.get("forecast", {})
             forecasts = forecast_data.get("forecasts", {})
             weather_days = forecasts.get("weather", {}).get("days", [])
